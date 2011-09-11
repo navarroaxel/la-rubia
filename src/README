@@ -1,5 +1,6 @@
 == Normas de codificacion ==
 
+
 Todos los tipos de datos definidos por nosotros comenzarán con el prefijo 't_'
 
 Todas las variables y nombres de funciones deben estar en INGLES.
