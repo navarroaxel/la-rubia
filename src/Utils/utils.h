@@ -1,6 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include "Logs.h"
+#include "logs.h"
 
 char* charmalloc(int len);
 

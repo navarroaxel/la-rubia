@@ -1,4 +1,4 @@
-#include "Utils.h"
+#include "utils.h"
 
 char* charmalloc(int len) {
 	return (char*) calloc(len + 1, sizeof(char));
