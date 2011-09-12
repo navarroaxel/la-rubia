@@ -1,7 +1,7 @@
 #ifndef CONFIG_C
 #define CONFIG_C
 
-typedef t_xmlFile;
+typedef struct t_xmlFile t_xmlFile;
 
 int xmlFileGetFileSize(t_xmlFile xmlFile);
 char* xmlFileReadFile(t_xmlFile xmlFile, int from, int to);
