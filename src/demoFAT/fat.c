@@ -16,7 +16,7 @@
 #include "disk.h"
 
 
-int main(){
+int main3(){
 	t_fat32_bootsector bootSector;
 	disk_initialize();
 	bootSector = fat_readBootSector();

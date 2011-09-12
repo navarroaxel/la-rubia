@@ -1,14 +1,14 @@
 #include "utils.h"
 
-char* charmalloc(int len) {
+char *charmalloc(int len) {
 	return (char*) calloc(len + 1, sizeof(char));
 }
 
-char* charrealloc(char* mem, int len) {
+char *charrealloc(char *mem, int len) {
 	return (char*)realloc(mem, (strlen(mem) + len + 1) * sizeof(char));
 }
 
-char* substring(char *str, int begin, int end) {
+char *substring(char *str, int begin, int end) {
 	int i, j;
 	char *substr = charmalloc(end - begin + 1);
 	for (i = begin, j = 0; i <= end; i++, j++) {
@@ -18,7 +18,7 @@ char* substring(char *str, int begin, int end) {
 	return substr;
 }
 
-void stringconcat(char* str1, char* str2) {
+void stringconcat(char *str1, char *str2) {
 	int i,j;
 	for(i=0;str1[i];i++)
 		i++;

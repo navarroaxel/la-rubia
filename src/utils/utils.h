@@ -1,11 +1,12 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include "logs.h"
 
-char* charmalloc(int len);
+#include "log.h"
 
-char* substring(char* string, int begin, int end);
+char *charmalloc(int len);
 
-void stringconcat(char* str1, char* str2);
+char *substring(char *string, int begin, int end);
+
+void stringconcat(char *str1, char *str2);
 
 #endif

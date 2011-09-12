@@ -4,13 +4,7 @@
 #include "config.h"
 #include "utils.c"
 
-struct t_xmlFile {
-	FILE* f;
-	char* Content;
-	int Size;
-};
-
-int xmlFileGetFileSize(t_xmlFile xmlFile) {
+int xmlFileGetFileSize(t_xmlFile *xmlFile) {
 	int fsize;
 	fseek(xmlFile->f, 0, SEEK_END);
 	fsize = ftell(xmlFile->f);
@@ -18,7 +12,7 @@ int xmlFileGetFileSize(t_xmlFile xmlFile) {
 	return fsize;
 }
 
-char* xmlFileReadFile(t_xmlFile xmlFile, int from, int to) {
+char* xmlFileReadFile(t_xmlFile *xmlFile, int from, int to) {
 	int len = to - from;
 	char* buffer = (char*) malloc(len);
 	fseek(xmlFile->f, from, SEEK_SET);
@@ -27,7 +21,7 @@ char* xmlFileReadFile(t_xmlFile xmlFile, int from, int to) {
 	return buffer;
 }
 
-char* xmlFileGetEndSection(const char* section) {
+char *xmlFileGetEndSection(const char *section) {
 	int i;
 	char* endSection = charmalloc(strlen(section)+1);
 	endSection[0] = '/';
@@ -37,7 +31,7 @@ char* xmlFileGetEndSection(const char* section) {
 	return endSection;
 }
 
-char* xmlFileGetParam(t_xmlFile xmlFile, const char* param) {
+char *xmlFileGetParam(t_xmlFile *xmlFile, const char* param) {
 	char* paramValue;
 	int beginSection = strstr(xmlFile->Content, param) - xmlFile->Content + strlen(param) + 1;
 	char* endParam = xmlFileGetEndSection(param);
@@ -46,28 +40,28 @@ char* xmlFileGetParam(t_xmlFile xmlFile, const char* param) {
 	if (beginSection < 0 || endSection < 0)
 		return NULL;
 
-	paramValue = SubString(xmlFile->Content, beginSection, endSection);
+	paramValue = substring(xmlFile->Content, beginSection, endSection);
 	return paramValue;
 }
 
-t_xmlFile newXmlFile(char* path) {
-	t_xmlFile xmlFile = (t_xmlFile) malloc(sizeof(struct t_xmlFile));
+t_xmlFile *newXmlFile(char *path) {
+	t_xmlFile *xmlFile = (t_xmlFile*)malloc(sizeof(t_xmlFile));
 	xmlFile->f = fopen(path, "r+");
 	xmlFile->Size = xmlFileGetFileSize(xmlFile);
 	xmlFile->Content = xmlFileReadFile(xmlFile, 0, xmlFile->Size);
 	return xmlFile;
 }
 
-void freeXmlFile(t_xmlFile xmlFile) {
+void freeXmlFile(t_xmlFile *xmlFile) {
 	free(xmlFile->Content);
 	free(xmlFile);
 }
 
-t_xmlFile loadConfig(char* path) {
+t_xmlFile *loadConfig(char* path) {
 	return newXmlFile(path);
 }
 
-char* xmlStreamGetParam(char * xmlStream, const char* param) {
+char *xmlStreamGetParam(char *xmlStream, const char *param) {
 	char* paramValue;
 	int beginSection = strstr(xmlStream, param) - xmlStream + strlen(param) + 1;
 	char* endParam = xmlFileGetEndSection(param);
