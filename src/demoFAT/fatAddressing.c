@@ -23,8 +23,7 @@ int fat_addressing_readCluster(uint32_t clusterNumber, cluster_t * buffer,t_fat3
 
 	uint32_t clusterFirstSector=clusterNumber*bs.sectorPerCluster;
 	uint32_t sectorSize=bs.bytesPerSector;
-	uint8_t sectorN;
-	for (sectorN = 0 ; sectorN < bs.sectorPerCluster ; sectorN++) {
+	for (uint8_t sectorN = 0 ; sectorN < bs.sectorPerCluster ; sectorN++) {
 		if (!disk_readSector(clusterFirstSector + sectorN , &sector)){
 			return 0;
 		}else{

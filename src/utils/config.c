@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "config.h"
-#include "utils.c"
+#include "utils.h"
 
 int xmlFileGetFileSize(t_xmlFile *xmlFile) {
 	int fsize;

@@ -1,4 +1,6 @@
-#include "utils.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 char *charmalloc(int len) {
 	return (char*) calloc(len + 1, sizeof(char));
@@ -18,11 +20,12 @@ char *substring(char *str, int begin, int end) {
 	return substr;
 }
 
-void stringconcat(char *str1, char *str2) {
+/*void stringconcat2(char *str1, char *str2) {
 	int i,j;
 	for(i=0;str1[i];i++)
 		i++;
 	for(j=0;str2[j];j++,i++)
 		str1[i] = str2[j];
 	str1[i] = '\0';
-}
+}*/
+
