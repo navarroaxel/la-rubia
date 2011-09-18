@@ -5,8 +5,8 @@
 #include <pthread.h>
 
 typedef struct  {
-    struct t_queue_node *next;
     void *data;
+    struct t_queue_node *next;
 } t_queue_node;
 
 typedef struct {

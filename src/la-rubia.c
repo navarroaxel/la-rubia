@@ -23,7 +23,7 @@ int main(void) {
 
 void *produce(void* queue){
 	t_queue *q = (t_queue *)queue;
-	int i;
+	int i=0;
 	while (i < 100) {
 		int *e = (int*)malloc(sizeof(int));
 		*e = i;

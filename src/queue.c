@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "queue.h"
+#include <stdlib.h>
 
 t_queue *queue_create(int size) {
 	t_queue *q = (t_queue *)malloc(sizeof(t_queue));
@@ -21,7 +22,7 @@ void enqueue(t_queue *q, const void *value) {
         q->head = q->tail = node;
     else {
         q->tail->next = node;
-        q->head = node;
+        q->tail = node;
     }
     node->next = NULL;
     pthread_mutex_unlock(&q->mutex);
@@ -36,7 +37,7 @@ void *dequeue(t_queue *q) {
     if (q->head == q->tail)
         q->head = q->tail = NULL;
     else
-        q->head = q->tail->next;
+        q->head = q->head->next;
 
     pthread_mutex_unlock(&q->mutex);
     sem_post(&q->full);
