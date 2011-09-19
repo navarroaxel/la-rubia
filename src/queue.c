@@ -12,7 +12,7 @@ t_queue *queue_create(int size) {
 	return q;
 }
 
-void enqueue(t_queue *q, const void *value) {
+void queue_push(t_queue *q, const void *value) {
 	t_queue_node *node = (t_queue_node *)malloc(sizeof(t_queue_node));
     node->data = value;
 
@@ -29,7 +29,7 @@ void enqueue(t_queue *q, const void *value) {
     sem_post(&q->empty);
 }
 
-void *dequeue(t_queue *q) {
+void *queue_pop(t_queue *q) {
 	sem_wait(&q->empty);
 	pthread_mutex_lock(&q->mutex);
     void *value = q->head->data;

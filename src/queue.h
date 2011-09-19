@@ -18,8 +18,8 @@ typedef struct {
 } t_queue;
 
 t_queue *queue_create(int size);
-void enqueue(t_queue *q, const void *data);
-void *dequeue(t_queue *q);
+void queue_push(t_queue *q, const void *data);
+void *queue_pop(t_queue *q);
 void queue_destroy(t_queue *q);
 
 #endif
