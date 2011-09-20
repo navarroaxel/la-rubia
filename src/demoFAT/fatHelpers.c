@@ -58,8 +58,8 @@ uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
 t_fat_file_entry * findDirInDir(const t_fat_file_list * dir,unsigned char * name){//TODO: Nombres Largos
 	t_fat_file_list * p=dir;
 	while(p!=NULL){
-		if(strncmp(p->dataEntry.name,name,8)==0){
-			return &p->dataEntry;
+		if(strncmp(p->fileEntry.dataEntry.name,name,8)==0){
+			return &p->fileEntry;
 		}
 		p=p->next;
 	}

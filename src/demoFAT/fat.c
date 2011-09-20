@@ -38,7 +38,7 @@ int main(){
 	dir=fat_getFileListFromDirectoryCluster(rootDirectory);
 	p=dir;
 	while (p!=NULL){
-		switch (p->dataEntry.name[0]) {
+		switch (p->fileEntry.dataEntry.name[0]) {
 		case 0x00:
 			//Vacia, no hay mas
 			return 0;
@@ -49,9 +49,9 @@ int main(){
 			puts("Entrada Borrada!");
 			break;
 		default:
-			printf("Nombre: %.*s\n",11,p->dataEntry.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
+			printf("Nombre: %.*s\n",11,p->fileEntry.dataEntry.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
 			//fat_printFileContent(p->content);
-			printf("Cantidad de Clusters: %d\n",fat_getClusterCount(&(p->dataEntry)));
+			printf("Cantidad de Clusters: %d\n",fat_getClusterCount(&(p->fileEntry.dataEntry)));
 			break;
 		}
 		p=p->next;
@@ -90,8 +90,7 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(t_cluster cluster){
 				return directory;
 			}
 			p=(t_fat_file_list * )malloc(sizeof(t_fat_file_list));
-			memcpy(&(p->dataEntry),&tempFileEntry.dataEntry,sizeof(t_fat_file_data_entry));
-			memcpy(&(p->longNameEntry),&tempFileEntry.longNameEntry,sizeof(t_fat_long_name_entry));
+			memcpy(&(p->fileEntry),&tempFileEntry,sizeof(t_fat_file_entry));
 			/*if(p->dataEntry.attributes==0x0F){
 				p->isLongName=1;
 			}else{
