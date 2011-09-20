@@ -10,7 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdint.h>
-#include "fatAddressing.h"
+#include "fatTypes.h"
 #include "disk.h"
 
 /**
@@ -35,12 +35,14 @@ int disk_isInitialized(){
 	return disk_is_initialized;
 }
 
-int disk_readSector(uint32_t sector, sector_t *  buf){
+int disk_readSector(uint32_t sector, t_sector *  buf){
 	FILE *f;
 	int n;
-	if(f=fopen(disk_config_data.file,"r")){
-		if (fseek(f,sector*disk_config_data.sectorSize,SEEK_SET)==0){
-			if (n=fread(buf,disk_config_data.sectorSize,1,f)){
+	int rseek;
+	uint32_t byteStart=sector*disk_config_data.sectorSize;
+	if((f=fopen(disk_config_data.file,"r"))){
+		if ((rseek=fseek(f,byteStart,SEEK_SET))==0){
+			if ((n=fread(buf,disk_config_data.sectorSize,1,f))){
 				fclose(f);
 				return n;
 			}else{

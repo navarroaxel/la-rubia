@@ -12,6 +12,7 @@ uint32_t fat_getEntryFirstCluster(t_fat32_file_entry fileEntry );
 uint32_t fat_getRootDirectoryFirstCluster(t_fat32_bootsector bs);
 uint32_t fat_getFATFirstCluster(t_fat32_bootsector bs);
 uint32_t fat_getNextCluster(uint32_t currentCluster);
+uint32_t fat_getClusterCount(t_fat32_file_entry * file);
 
 
 #endif /* FATHELPERS_H_ */

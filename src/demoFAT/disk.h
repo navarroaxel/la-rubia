@@ -8,7 +8,7 @@
 #ifndef DISK_H_
 #define DISK_H_
 
-int disk_readSector(uint32_t sector, sector_t *buf);
+int disk_readSector(uint32_t sector, t_sector *  buf);
 int disk_writeSector(unsigned int sector,unsigned char * buf);
 int disk_initialize();
 int disk_isInitialized();

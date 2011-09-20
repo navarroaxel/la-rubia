@@ -8,7 +8,7 @@
 #ifndef FATADDRESSING_H_
 #define FATADDRESSING_H_
 
-typedef uint8_t sector_t[512];
-typedef uint8_t cluster_t[4096];
+#define FAT_LASTCLUSTER 0x0FFFFFFF
+int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat32_bootsector bs);
 
 #endif /* FATADDRESSING_H_ */
