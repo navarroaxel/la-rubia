@@ -19,7 +19,7 @@
 #include "sys/stat.h"
 
 typedef struct stat t_stat;
-t_fat32_bootsector bootSector;
+t_fat_bootsector bootSector;
 
 void fat_initialize(){
 	disk_initialize();
@@ -27,7 +27,7 @@ void fat_initialize(){
 }
 
 
-int main2(){
+int main(){
 	t_cluster rootDirectory;
 	t_fat_file_list * dir, *p;
 
@@ -38,46 +38,40 @@ int main2(){
 	dir=fat_getFileListFromDirectoryCluster(rootDirectory);
 	p=dir;
 	while (p!=NULL){
-		if (p->isLongName){
-			t_fat32_long_name_entry * longNameEntry = (t_fat32_long_name_entry *) &(p->content);
-			//printf("Nombre Largo! %.*s%.*s%.*s",10,longNameEntry->nameStart,12,longNameEntry->nameMiddle,4,longNameEntry->nameEnd);
-
-
-		}else{
-			switch (p->content.name[0]) {
-			case 0x00:
-				//Vacia, no hay mas
-				return 0;
-			case 0x2E:
-				puts("Entrada de punto!");
-				break;
-			case 0xE5:
-				puts("Entrada Borrada!");
-				break;
-			default:
-				printf("Nombre: %.*s\n",11,p->content.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
-				//fat_printFileContent(p->content);
-				printf("Cantidad de Clusters: %d\n",fat_getClusterCount(&(p->content)));
-				break;
-			}
+		switch (p->dataEntry.name[0]) {
+		case 0x00:
+			//Vacia, no hay mas
+			return 0;
+		case 0x2E:
+			puts("Entrada de punto!");
+			break;
+		case 0xE5:
+			puts("Entrada Borrada!");
+			break;
+		default:
+			printf("Nombre: %.*s\n",11,p->dataEntry.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
+			//fat_printFileContent(p->content);
+			printf("Cantidad de Clusters: %d\n",fat_getClusterCount(&(p->dataEntry)));
+			break;
 		}
 		p=p->next;
 
 	}
 	fat_destroyFileList(dir);
 	return 0;
+
 }
 
-t_fat32_bootsector fat_readBootSector(){
-	t_fat32_bootsector bs;
+t_fat_bootsector fat_readBootSector(){
+	t_fat_bootsector bs;
 	t_sector cluster;
 	if (disk_readSector(0,&cluster)){
-		memcpy(&bs,&cluster,sizeof(t_fat32_bootsector));
+		memcpy(&bs,&cluster,sizeof(t_fat_bootsector));
 	}
 	return bs;
 }
 
-void fat_printFileContent(t_fat32_file_entry fileEntry){
+void fat_printFileContent(t_fat_file_data_entry fileEntry){
 	t_cluster data;
 	uint32_t firstCluster = fat_getEntryFirstCluster(fileEntry)+fat_getRootDirectoryFirstCluster(bootSector)-2;
 	fat_addressing_readCluster(firstCluster,&data,bootSector);
@@ -85,23 +79,24 @@ void fat_printFileContent(t_fat32_file_entry fileEntry){
 }
 
 t_fat_file_list * fat_getFileListFromDirectoryCluster(t_cluster cluster){
-	t_fat32_file_entry tempFileEntry;
+	t_fat_file_entry tempFileEntry;
 	t_fat_file_list * directory = NULL;
 	t_fat_file_list * p;
 	t_fat_file_list * pAnt=NULL;
 	int i;
-	for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat32_file_entry)){
-			memcpy(&tempFileEntry,cluster+i,sizeof(t_fat32_file_entry));
-			if (tempFileEntry.name[0]==0x00){
+	for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat_file_entry)){
+			memcpy(&tempFileEntry,cluster+i,sizeof(t_fat_file_entry));
+			if (tempFileEntry.longNameEntry.sequenceN==0){
 				return directory;
 			}
 			p=(t_fat_file_list * )malloc(sizeof(t_fat_file_list));
-			memcpy(&(p->content),&tempFileEntry,sizeof(t_fat32_file_entry));
-			if(p->content.attributes==0x0F){
+			memcpy(&(p->dataEntry),&tempFileEntry.dataEntry,sizeof(t_fat_file_data_entry));
+			memcpy(&(p->longNameEntry),&tempFileEntry.longNameEntry,sizeof(t_fat_long_name_entry));
+			/*if(p->dataEntry.attributes==0x0F){
 				p->isLongName=1;
 			}else{
 				p->isLongName=0;
-			}
+			}*/
 			if(pAnt!=NULL){
 				pAnt->next=p;
 			}else{
@@ -126,14 +121,14 @@ t_fat_file_list * fat_getDirectoryListing(char * path){
 	return 0;
 }
 
-t_fat32_file_entry * fat_getNextEntry(const t_fat_file_list * dir){
+t_fat_file_data_entry * fat_getNextEntry(const t_fat_file_list * dir){
 
 	return 0;
 }
 
-t_stat fat_statFile(t_fat32_file_entry * file){
+/*t_stat fat_statFile(t_fat_file_data_entry * file){
 	return 0;
-}
+}*/
 
 /*void loadFAT(){
 	t_cluster cluster;

@@ -9,6 +9,6 @@
 #define FATADDRESSING_H_
 
 #define FAT_LASTCLUSTER 0x0FFFFFFF
-int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat32_bootsector bs);
+int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_bootsector bs);
 
 #endif /* FATADDRESSING_H_ */

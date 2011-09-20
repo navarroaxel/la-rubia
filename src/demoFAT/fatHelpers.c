@@ -5,8 +5,8 @@
 #include "fatTypes.h"
 #include "fatAddressing.h"
 
-extern t_fat32_bootsector bootSector;
-uint32_t fat_getEntryFirstCluster(t_fat32_file_entry * fileEntry ){
+extern t_fat_bootsector bootSector;
+uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	// .firstClusterHigh = 0xAB
 	// .firstClusterLow  = 0xCD
 	// return 0xABCD
@@ -24,7 +24,7 @@ uint32_t fat_getEntryFirstCluster(t_fat32_file_entry * fileEntry ){
 	return firstCluster;
 }
 
-uint32_t fat_getRootDirectoryFirstCluster(t_fat32_bootsector bs){
+uint32_t fat_getRootDirectoryFirstCluster(t_fat_bootsector bs){
 	uint32_t reservedSectors,numberOfFATs,sectorsPerFAT;
 	reservedSectors=bs.reservedSectorCount;
 	numberOfFATs=bs.numberFATs;
@@ -33,7 +33,7 @@ uint32_t fat_getRootDirectoryFirstCluster(t_fat32_bootsector bs){
 	return ((uint32_t) bs.reservedSectorCount + (uint32_t)bs.numberFATs * bs.sectorPerFAT32)/bs.sectorPerCluster ;
 }
 
-uint32_t fat_getFATFirstCluster(t_fat32_bootsector bs){
+uint32_t fat_getFATFirstCluster(t_fat_bootsector bs){
 	return bs.reservedSectorCount/bs.sectorPerCluster;
 }
 
@@ -47,7 +47,7 @@ uint32_t fat_getNextCluster(uint32_t currentCluster){
 
 }
 
-uint32_t fat_getClusterCount(t_fat32_file_entry * file){
+uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
 	uint32_t ret=1;
 	uint32_t currentCluster = fat_getEntryFirstCluster(file);
 	while((currentCluster = fat_getNextCluster(currentCluster)) != FAT_LASTCLUSTER)
@@ -55,6 +55,16 @@ uint32_t fat_getClusterCount(t_fat32_file_entry * file){
 	return ret;
 }
 
+t_fat_file_entry * findDirInDir(const t_fat_file_list * dir,unsigned char * name){//TODO: Nombres Largos
+	t_fat_file_list * p=dir;
+	while(p!=NULL){
+		if(strncmp(p->dataEntry.name,name,8)==0){
+			return &p->dataEntry;
+		}
+		p=p->next;
+	}
+	return NULL;
+}
 
 
 
