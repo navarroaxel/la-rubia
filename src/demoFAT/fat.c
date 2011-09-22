@@ -27,7 +27,7 @@ void fat_initialize(){
 }
 
 
-int main(){
+int main_fat(){
 	t_cluster rootDirectory;
 	t_fat_file_list * dir, *p;
 
