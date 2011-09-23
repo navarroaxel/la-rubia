@@ -37,3 +37,23 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_
 	memcpy(buffer,&cluster,4096);
 	return 1;
 }
+
+int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster,t_fat_bootsector bs){
+	t_sector sector;
+	uint32_t offset;
+	uint32_t sectorN;
+
+	if (!disk_isInitialized())
+		disk_initialize();
+
+	uint32_t clusterFirstSector=clusterNumber*bs.sectorPerCluster;
+	uint32_t sectorSize=bs.bytesPerSector;
+	for (sectorN = 0 ; sectorN < bs.sectorPerCluster ; sectorN++) {
+		offset = sectorN * sectorSize;
+		memcpy(&sector,&((*cluster)[offset]),sectorSize);
+		if (!disk_writeSector(clusterFirstSector + sectorN , &sector)){
+			return 0;
+		}
+	}
+	return 1;
+}

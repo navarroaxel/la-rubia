@@ -58,6 +58,25 @@ int disk_readSector(uint32_t sector, t_sector *  buf){
 	return 0;
 }
 
-int disk_writeSector(unsigned int sector,unsigned char * buf){
+int disk_writeSector(uint32_t sector,t_sector * buf){
+	FILE *f;
+	int n;
+	int rseek;
+	uint32_t byteStart=sector*disk_config_data.sectorSize;
+	if((f=fopen(disk_config_data.file,"r+"))){
+		if ((rseek=fseek(f,byteStart,SEEK_SET))==0){
+			if ((n=fwrite(buf,disk_config_data.sectorSize,1,f))){
+				fclose(f);
+				return n;
+			}else{
+				perror("No pude Leer el archivo");
+			}
+		}else{
+			perror("No pude hacer el seek");
+		}
+	}else{
+		perror("No pude abrir el archivo");
+	}
+	fclose(f);
 	return 0;
 }
