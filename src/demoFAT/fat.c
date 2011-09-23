@@ -30,17 +30,16 @@ void fat_initialize(){
 
 int main2(){
 	t_fat_file_list * dir, *p;
-	t_fat_file_entry fileEntry;
-	char fileName[12];
+	char fileName[12]="";
 	fat_initialize();
 
 	printf("FAT start: %d\n",bootSector.sectorPerFAT32);
-	if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
+	/*if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
 		dir = fat_getDirectoryListing(&fileEntry);
 	}else{
 		dir = NULL;
-	}
-
+	}*/
+	dir = fat_getRootDirectory();
 
 	p=dir;
 	while (p!=NULL){
@@ -55,8 +54,7 @@ int main2(){
 			puts("Entrada Borrada!");
 			break;
 		default:
-			strncpy(fileName,(char *)p->fileEntry.dataEntry.name,8);
-			fileName[8]='\0';
+			fat_getName(&p->fileEntry,fileName);
 			//printf("Nombre: %.*s\n",11,p->fileEntry.dataEntry.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
 			//fat_printFileContent(p->content);
 			printf("Cantidad de Clusters: %s\n",fileName);
@@ -201,4 +199,32 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 	offsetInCluster = offset & (bootSector.sectorPerCluster * bootSector.sectorPerCluster);
 	memcpy(buf,data+offsetInCluster,sizeToRead);
 	return sizeToRead;
+}
+
+void fat_getName (t_fat_file_entry * fileEntry, char * buff){
+	// Primera implementacion, convertir de ABCD____TXT a ABCD.TXT
+	// TODO: Implementar usando nombres largos.
+	int i,j;
+	char name[9], extention[4];
+	strncpy(name,fileEntry->dataEntry.name,8);
+	name[8]='\0';
+	strncpy(extention,fileEntry->dataEntry.extension,3);
+	extention[3]='\0';
+	i=7;
+	while ((i > 0) && (name[i]==' ')) name[i--]='\0';
+	i=2;
+	while ((i> 0) &&  (extention[i]==' ')) extention[i--]='\0';
+
+	i=0;
+	while (name[i]){
+		buff[i]=name[i];
+		i++;
+	}
+	buff[i++]='.';
+	j=0;
+	while(extention[j]){
+		buff[i++]=extention[j++];
+	}
+	buff[i]='\0';
+	return;
 }

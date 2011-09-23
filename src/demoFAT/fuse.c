@@ -64,9 +64,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	//ambos 2 los resuelve solo FUSE
 	p=dir;
 	while(p!=NULL){//recorro la lista y voy cargando los dirs/archivos
-		strncpy(fileName,(char *)p->fileEntry.dataEntry.name,8);
-		fileName[8]='\0';
-
+		fat_getName(&p->fileEntry,fileName);
 		filler(buf,fileName,NULL,0);
 		p=p->next;
 	}

@@ -21,7 +21,8 @@ t_fat_file_list * fat_getDirectoryListing(t_fat_file_entry * fileEntry);
 int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn);
 t_stat fat_statFile(t_fat_file_entry * file);
 int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf);
-
+void fat_getName (t_fat_file_entry * fileEntry, char * buff);
+t_fat_file_list * fat_getRootDirectory();
 
 
 #endif /* FAT_H_ */
