@@ -399,7 +399,7 @@ void sockets_select(t_list* servers, t_list* clients, int usec_timeout,  t_socke
     void closure_acceptFromSocket(t_socket_server *server){
     	if( FD_ISSET(server->socket->desc, &conexions_set) ){
     	   	t_socket_client *auxClient = NULL;
-    	   	if( &onAcceptClosure != NULL){
+    	   	if( onAcceptClosure != NULL){
     	   		auxClient = onAcceptClosure(server);
     	   	}else if( clients != NULL ){
     	   		auxClient = sockets_accept(server);
