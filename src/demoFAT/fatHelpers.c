@@ -24,17 +24,12 @@ uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	return firstCluster;
 }
 
-uint32_t fat_getRootDirectoryFirstCluster(t_fat_bootsector bs){
-	uint32_t reservedSectors,numberOfFATs,sectorsPerFAT;
-	reservedSectors=bs.reservedSectorCount;
-	numberOfFATs=bs.numberFATs;
-	sectorsPerFAT=bs.sectorPerFAT32;
-
-	return ((uint32_t) bs.reservedSectorCount + (uint32_t)bs.numberFATs * bs.sectorPerFAT32)/bs.sectorPerCluster ;
+uint32_t fat_getRootDirectoryFirstCluster(){
+	return ((uint32_t) bootSector.reservedSectorCount + (uint32_t)bootSector.numberFATs * bootSector.sectorPerFAT32)/bootSector.sectorPerCluster ;
 }
 
-uint32_t fat_getFATFirstCluster(t_fat_bootsector bs){
-	return bs.reservedSectorCount/bs.sectorPerCluster;
+uint32_t fat_getFATFirstCluster(){
+	return bootSector.reservedSectorCount/bootSector.sectorPerCluster;
 }
 
 uint32_t fat_getNextCluster(uint32_t currentCluster){
@@ -55,17 +50,16 @@ uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
 	return ret;
 }
 
-t_fat_file_entry * findDirInDir(const t_fat_file_list * dir,unsigned char * name){//TODO: Nombres Largos
+t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name){//TODO: Nombres Largos
 	t_fat_file_list * p=dir;
 	while(p!=NULL){
-		if(strncmp(p->fileEntry.dataEntry.name,name,8)==0){
+		if( strlen(name)!=0 && strncmp(p->fileEntry.dataEntry.name,name,strlen(name))==0){
 			return &p->fileEntry;
 		}
 		p=p->next;
 	}
 	return NULL;
 }
-
 
 
 

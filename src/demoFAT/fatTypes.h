@@ -59,8 +59,8 @@ typedef struct {
 } __attribute__ ((packed)) t_fat_bootsector;
 
 typedef struct {
-	unsigned char name[8]; //Hay que ver el primer byte
-	unsigned char extension[3];
+	uint8_t name[8]; //Hay que ver el primer byte
+	uint8_t extension[3];
 	uint8_t attributes; //Si es 0x0F es una entrada de nombre largo
 	uint8_t NTcase;
 	uint8_t createTimeFineResolution;

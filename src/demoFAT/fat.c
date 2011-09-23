@@ -17,8 +17,9 @@
 #include "disk.h"
 #include "ctype.h"
 #include "sys/stat.h"
+#include <assert.h>
 
-typedef struct stat t_stat;
+
 t_fat_bootsector bootSector;
 
 void fat_initialize(){
@@ -27,15 +28,20 @@ void fat_initialize(){
 }
 
 
-int main_fat(){
-	t_cluster rootDirectory;
+int main2(){
 	t_fat_file_list * dir, *p;
-
+	t_fat_file_entry fileEntry;
+	char fileName[12];
 	fat_initialize();
 
 	printf("FAT start: %d\n",bootSector.sectorPerFAT32);
-	fat_addressing_readCluster(fat_getRootDirectoryFirstCluster(bootSector),&rootDirectory,bootSector);
-	dir=fat_getFileListFromDirectoryCluster(rootDirectory);
+	if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
+		dir = fat_getDirectoryListing(&fileEntry);
+	}else{
+		dir = NULL;
+	}
+
+
 	p=dir;
 	while (p!=NULL){
 		switch (p->fileEntry.dataEntry.name[0]) {
@@ -49,9 +55,11 @@ int main_fat(){
 			puts("Entrada Borrada!");
 			break;
 		default:
-			printf("Nombre: %.*s\n",11,p->fileEntry.dataEntry.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
+			strncpy(fileName,(char *)p->fileEntry.dataEntry.name,8);
+			fileName[8]='\0';
+			//printf("Nombre: %.*s\n",11,p->fileEntry.dataEntry.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
 			//fat_printFileContent(p->content);
-			printf("Cantidad de Clusters: %d\n",fat_getClusterCount(&(p->fileEntry.dataEntry)));
+			printf("Cantidad de Clusters: %s\n",fileName);
 			break;
 		}
 		p=p->next;
@@ -69,13 +77,6 @@ t_fat_bootsector fat_readBootSector(){
 		memcpy(&bs,&cluster,sizeof(t_fat_bootsector));
 	}
 	return bs;
-}
-
-void fat_printFileContent(t_fat_file_data_entry fileEntry){
-	t_cluster data;
-	uint32_t firstCluster = fat_getEntryFirstCluster(fileEntry)+fat_getRootDirectoryFirstCluster(bootSector)-2;
-	fat_addressing_readCluster(firstCluster,&data,bootSector);
-	printf("Contenido: %s",data);
 }
 
 t_fat_file_list * fat_getFileListFromDirectoryCluster(t_cluster cluster){
@@ -116,30 +117,88 @@ void fat_destroyFileList(t_fat_file_list * fileList){
 	}
 }
 
-t_fat_file_list * fat_getDirectoryListing(char * path){
-	return 0;
+t_fat_file_list * fat_getRootDirectory(){
+	t_cluster rootDirectory;
+	fat_addressing_readCluster(fat_getRootDirectoryFirstCluster(),&rootDirectory,bootSector);
+	return fat_getFileListFromDirectoryCluster(rootDirectory);
 }
+
+int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn){
+	t_fat_file_list * dir = fat_getRootDirectory();
+	t_fat_file_entry fileEntry;
+	t_fat_file_entry * temp;
+	uint32_t clusterN;
+	t_cluster cluster;
+	char *running, *start;
+	char *token;
+	start = running = strdup(path);
+
+	token = strsep (&running, "/");
+	while((token = strsep (&running, "/"))){
+		temp = fat_findInDir(dir,token);
+
+		if (temp==NULL){
+			fat_destroyFileList(dir);
+			free(start);
+			return 0;
+		}
+		memcpy(&fileEntry,temp,sizeof(t_fat_file_entry));
+		fat_destroyFileList(dir);
+		clusterN=fat_getEntryFirstCluster(&fileEntry.dataEntry) +fat_getRootDirectoryFirstCluster()-2;
+		//printf("%s:%d",token,clusterN);
+		fat_addressing_readCluster(clusterN,&cluster,bootSector);
+		dir = fat_getFileListFromDirectoryCluster(cluster);
+	}
+	memcpy(rtn,&fileEntry,sizeof(t_fat_file_entry));
+	free(start);
+	fat_destroyFileList(dir);
+	return 1;
+
+
+}
+t_fat_file_list * fat_getDirectoryListing(t_fat_file_entry * fileEntry){
+	uint32_t clusterN;
+	t_cluster cluster;
+	if (fileEntry==NULL)
+		return NULL;
+	clusterN=fat_getEntryFirstCluster(&fileEntry->dataEntry) +fat_getRootDirectoryFirstCluster()-2;
+	fat_addressing_readCluster(clusterN,&cluster,bootSector);
+	return fat_getFileListFromDirectoryCluster(cluster);
+}
+
 
 t_fat_file_data_entry * fat_getNextEntry(const t_fat_file_list * dir){
-
 	return 0;
 }
 
-/*t_stat fat_statFile(t_fat_file_data_entry * file){
-	return 0;
-}*/
-
-/*void loadFAT(){
-	t_cluster cluster;
-	uint8_t localFAT[524288];
-	uint32_t fatStart = fat_getFATFirstCluster(bootSector);
-	for(uint32_t i = 0 ; i < FatClustersSize;i++){
-		fat_addressing_readCluster(i + fatStart,&cluster,bootSector);
-		printf("%d %d\n ",i,FAT+i*128);
-		if (i==127){
-			puts("");
-		}
-		memcpy(localFAT+i*4096,&cluster,4096);//Desplaza por tipo de dato, en un sector
+t_stat fat_statFile(t_fat_file_entry * file){
+	t_stat fileStat;
+	if (file->dataEntry.attributes==0x10){
+		fileStat.st_mode = S_IFDIR | 0755;
+		fileStat.st_nlink = 2;
+		fileStat.st_size = 4096; //TODO: Cambiar a Cluster Size
+	}else if (file->dataEntry.attributes==0x20){
+		fileStat.st_mode = S_IFREG | 0444;
+		fileStat.st_nlink = 1;
+		fileStat.st_size=file->dataEntry.fileSize;
 	}
-	memcpy(FAT,localFAT,524288);
-}*/
+	return fileStat;
+}
+
+int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf){
+	t_cluster data;
+	uint32_t firstCluster, offsetInCluster, sizeToRead;
+	if(offset > fileEntry->dataEntry.fileSize)
+		return 0;
+	if (offset + size > fileEntry->dataEntry.fileSize){
+		sizeToRead = fileEntry->dataEntry.fileSize - offset;
+	}else{
+		sizeToRead = size;
+	}
+
+	firstCluster = fat_getEntryFirstCluster(&fileEntry->dataEntry)+fat_getRootDirectoryFirstCluster(bootSector)-2;
+	fat_addressing_readCluster(firstCluster,&data,bootSector);
+	offsetInCluster = offset & (bootSector.sectorPerCluster * bootSector.sectorPerCluster);
+	memcpy(buf,data+offsetInCluster,sizeToRead);
+	return sizeToRead;
+}
