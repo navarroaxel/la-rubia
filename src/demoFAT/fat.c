@@ -211,19 +211,22 @@ void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 	strncpy(extention,fileEntry->dataEntry.extension,3);
 	extention[3]='\0';
 	i=7;
-	while ((i > 0) && (name[i]==' ')) name[i--]='\0';
+	while ((i >= 0) && (name[i]==' ')) name[i--]='\0';
 	i=2;
-	while ((i> 0) &&  (extention[i]==' ')) extention[i--]='\0';
+	while ((i >= 0) &&  (extention[i]==' ')) extention[i--]='\0';
 
 	i=0;
 	while (name[i]){
 		buff[i]=name[i];
 		i++;
 	}
-	buff[i++]='.';
-	j=0;
-	while(extention[j]){
-		buff[i++]=extention[j++];
+	if (strlen(extention)){
+		buff[i++]='.';
+		j=0;
+		while(extention[j]){
+			buff[i++]=extention[j++];
+		}
+
 	}
 	buff[i]='\0';
 	return;
