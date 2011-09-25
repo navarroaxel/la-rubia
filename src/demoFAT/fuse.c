@@ -103,7 +103,7 @@ static struct fuse_operations fsp_oper = {
 	.read   = hello_read,
 };
 
-int main(int argc, char *argv[])
+int main2(int argc, char *argv[])
 {
 	fat_initialize();
 	return fuse_main(argc, argv, &fsp_oper, NULL);

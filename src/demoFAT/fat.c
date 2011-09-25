@@ -18,6 +18,7 @@
 #include "ctype.h"
 #include "sys/stat.h"
 #include <assert.h>
+#include "utils.h"
 
 
 t_fat_bootsector bootSector;
@@ -28,12 +29,10 @@ void fat_initialize(){
 }
 
 
-int main2(){
+int main(){
 	t_fat_file_list * dir, *p;
 	char fileName[12]="";
 	fat_initialize();
-
-	printf("FAT start: %d\n",bootSector.sectorPerFAT32);
 	/*if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
 		dir = fat_getDirectoryListing(&fileEntry);
 	}else{
@@ -55,9 +54,10 @@ int main2(){
 			break;
 		default:
 			fat_getName(&p->fileEntry,fileName);
-			//printf("Nombre: %.*s\n",11,p->fileEntry.dataEntry.name); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
+			printf("Nombre: %s\n",fileName); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
 			//fat_printFileContent(p->content);
-			printf("Cantidad de Clusters: %s\n",fileName);
+			//printf("Cluster: %d\n",fat_getEntryFirstCluster(&p->fileEntry.dataEntry) +fat_getRootDirectoryFirstCluster()-2);
+			//fat_addressing_writeCluster(fat_getEntryFirstCluster(&p->fileEntry.dataEntry) +fat_getRootDirectoryFirstCluster()-2,&cluster,bootSector);
 			break;
 		}
 		p=p->next;
@@ -204,30 +204,13 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 	// Primera implementacion, convertir de ABCD____TXT a ABCD.TXT
 	// TODO: Implementar usando nombres largos.
-	int i,j;
-	char name[9], extention[4];
-	strncpy(name,fileEntry->dataEntry.name,8);
-	name[8]='\0';
-	strncpy(extention,fileEntry->dataEntry.extension,3);
-	extention[3]='\0';
-	i=7;
-	while ((i >= 0) && (name[i]==' ')) name[i--]='\0';
-	i=2;
-	while ((i >= 0) &&  (extention[i]==' ')) extention[i--]='\0';
-
-	i=0;
-	while (name[i]){
-		buff[i]=name[i];
-		i++;
-	}
-	if (strlen(extention)){
-		buff[i++]='.';
-		j=0;
-		while(extention[j]){
-			buff[i++]=extention[j++];
-		}
-
-	}
-	buff[i]='\0';
+	uint16_t longNameUTF16[14];
+	char longName[14];
+	memcpy(longNameUTF16,&fileEntry->longNameEntry.nameStart,10);
+	memcpy(longNameUTF16+5,&fileEntry->longNameEntry.nameMiddle,12);
+	memcpy(longNameUTF16+11,&fileEntry->longNameEntry.nameEnd,4);
+	longNameUTF16[13]=0x0000;
+	unicode_utf16_to_utf8_inbuffer(longNameUTF16,13,longName,NULL);
+	strncpy(buff,longName,13);
 	return;
 }
