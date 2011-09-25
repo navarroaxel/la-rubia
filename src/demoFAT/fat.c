@@ -77,31 +77,44 @@ t_fat_bootsector fat_readBootSector(){
 	return bs;
 }
 
-t_fat_file_list * fat_getFileListFromDirectoryCluster(t_cluster cluster){
-	t_fat_file_entry tempFileEntry;
+t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
+	t_fat_file_data_entry tempDataEntry;
 	t_fat_file_list * directory = NULL;
 	t_fat_file_list * p;
 	t_fat_file_list * pAnt=NULL;
+	t_cluster cluster;
+	int inEntry=0;
 	int i;
-	for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat_file_entry)){
-			memcpy(&tempFileEntry,cluster+i,sizeof(t_fat_file_entry));
-			if (tempFileEntry.longNameEntry.sequenceN==0){
-				return directory;
-			}
-			p=(t_fat_file_list * )malloc(sizeof(t_fat_file_list));
-			memcpy(&(p->fileEntry),&tempFileEntry,sizeof(t_fat_file_entry));
-			/*if(p->dataEntry.attributes==0x0F){
-				p->isLongName=1;
-			}else{
-				p->isLongName=0;
-			}*/
-			if(pAnt!=NULL){
-				pAnt->next=p;
-			}else{
-				directory=p;
-			}
-			p->next=NULL;
-			pAnt=p;
+	uint32_t clusterOffset=0;
+	while (1){
+		fat_addressing_readCluster(clusterN+clusterOffset,&cluster,bootSector);
+		for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat_file_data_entry)){
+				memcpy(&tempDataEntry,cluster+i,sizeof(t_fat_file_data_entry));
+				if (tempDataEntry.name[0]==0){
+					return directory;
+				}
+				if (!inEntry){
+					p=(t_fat_file_list * )malloc(sizeof(t_fat_file_list));
+					memset(&p->fileEntry,0,sizeof(t_fat_file_entry));
+					inEntry=1;
+				}
+				if (tempDataEntry.attributes==0x0F) {
+					memcpy(&(p->fileEntry.longNameEntry),&tempDataEntry,sizeof(t_fat_long_name_entry));
+					p->fileEntry.hasLongNameEntry=1;
+				}else{
+					memcpy(&(p->fileEntry.dataEntry),&tempDataEntry,sizeof(t_fat_file_data_entry));
+					inEntry=0;
+					if(pAnt!=NULL){
+						pAnt->next=p;
+					}else{
+						directory=p;
+					}
+					p->next=NULL;
+					pAnt=p;
+
+				}
+		}
+		clusterOffset++;
 	}
 	return directory;
 }
@@ -116,9 +129,7 @@ void fat_destroyFileList(t_fat_file_list * fileList){
 }
 
 t_fat_file_list * fat_getRootDirectory(){
-	t_cluster rootDirectory;
-	fat_addressing_readCluster(fat_getRootDirectoryFirstCluster(),&rootDirectory,bootSector);
-	return fat_getFileListFromDirectoryCluster(rootDirectory);
+	return fat_getFileListFromDirectoryCluster(fat_getRootDirectoryFirstCluster());
 }
 
 int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn){
@@ -126,7 +137,6 @@ int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn){
 	t_fat_file_entry fileEntry;
 	t_fat_file_entry * temp;
 	uint32_t clusterN;
-	t_cluster cluster;
 	char *running, *start;
 	char *token;
 	start = running = strdup(path);
@@ -144,24 +154,19 @@ int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn){
 		fat_destroyFileList(dir);
 		clusterN=fat_getEntryFirstCluster(&fileEntry.dataEntry) +fat_getRootDirectoryFirstCluster()-2;
 		//printf("%s:%d",token,clusterN);
-		fat_addressing_readCluster(clusterN,&cluster,bootSector);
-		dir = fat_getFileListFromDirectoryCluster(cluster);
+		dir = fat_getFileListFromDirectoryCluster(clusterN);
 	}
 	memcpy(rtn,&fileEntry,sizeof(t_fat_file_entry));
 	free(start);
 	fat_destroyFileList(dir);
 	return 1;
-
-
 }
 t_fat_file_list * fat_getDirectoryListing(t_fat_file_entry * fileEntry){
 	uint32_t clusterN;
-	t_cluster cluster;
 	if (fileEntry==NULL)
 		return NULL;
 	clusterN=fat_getEntryFirstCluster(&fileEntry->dataEntry) +fat_getRootDirectoryFirstCluster()-2;
-	fat_addressing_readCluster(clusterN,&cluster,bootSector);
-	return fat_getFileListFromDirectoryCluster(cluster);
+	return fat_getFileListFromDirectoryCluster(clusterN);
 }
 
 
@@ -206,11 +211,27 @@ void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 	// TODO: Implementar usando nombres largos.
 	uint16_t longNameUTF16[14];
 	char longName[14];
-	memcpy(longNameUTF16,&fileEntry->longNameEntry.nameStart,10);
-	memcpy(longNameUTF16+5,&fileEntry->longNameEntry.nameMiddle,12);
-	memcpy(longNameUTF16+11,&fileEntry->longNameEntry.nameEnd,4);
-	longNameUTF16[13]=0x0000;
-	unicode_utf16_to_utf8_inbuffer(longNameUTF16,13,longName,NULL);
+	if (fileEntry->hasLongNameEntry==1){
+		memcpy(longNameUTF16,&fileEntry->longNameEntry.nameStart,10);
+		memcpy(longNameUTF16+5,&fileEntry->longNameEntry.nameMiddle,12);
+		memcpy(longNameUTF16+11,&fileEntry->longNameEntry.nameEnd,4);
+		longNameUTF16[13]=0x0000;
+		unicode_utf16_to_utf8_inbuffer(longNameUTF16,13,longName,NULL);
+	}else{
+		char name[8];
+		char ext[3];
+		char * space;
+		strncpy(name,fileEntry->dataEntry.name,8);
+		strncpy(ext,fileEntry->dataEntry.extension,3);
+		space=strchr(name,' ');
+		*space='\0';
+		space=strchr(ext,' ');
+		*space='\0';
+		if (strlen(ext)>0)
+			sprintf(longName,"%s.%s",name,ext);
+		else
+			sprintf(longName,"%s",name);
+	}
 	strncpy(buff,longName,13);
 	return;
 }
