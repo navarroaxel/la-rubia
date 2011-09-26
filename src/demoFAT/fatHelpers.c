@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "fatTypes.h"
 #include "fatAddressing.h"
+#include "fat.h"
 
 extern t_fat_bootsector bootSector;
 uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
@@ -35,7 +36,7 @@ uint32_t fat_getFATFirstCluster(){
 uint32_t fat_getNextCluster(uint32_t currentCluster){
 	t_cluster cluster;
 	uint32_t * fatCluster;
-	uint32_t clusterAddress = fat_getFATFirstCluster(bootSector) + currentCluster / 128; //128 * 32 = 4096
+	uint32_t clusterAddress = fat_getFATFirstCluster() + currentCluster / 128; //128 * 32 = 4096
 	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
 	fatCluster = (uint32_t *) cluster;
 	return fatCluster[currentCluster % 128];
@@ -52,8 +53,10 @@ uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
 
 t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name){//TODO: Nombres Largos
 	t_fat_file_list * p=dir;
+	char entryName [12];
 	while(p!=NULL){
-		if( strlen(name)!=0 && strncmp(p->fileEntry.dataEntry.name,name,strlen(name))==0){
+		fat_getName(&p->fileEntry,entryName);
+		if(strcmp(entryName,name)==0){
 			return &p->fileEntry;
 		}
 		p=p->next;

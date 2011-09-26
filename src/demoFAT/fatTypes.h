@@ -86,7 +86,9 @@ typedef struct {
 	uint16_t nameEnd[2];
 } __attribute__ ((packed)) t_fat_long_name_entry;
 
+
 typedef struct{
+	int hasLongNameEntry;
 	t_fat_long_name_entry longNameEntry;
 	t_fat_file_data_entry dataEntry;
 } __attribute__ ((packed)) t_fat_file_entry;

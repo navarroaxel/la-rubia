@@ -29,10 +29,11 @@ void fat_initialize(){
 }
 
 
-int main(){
+int main2(){
 	t_fat_file_list * dir, *p;
-	char fileName[12]="";
+	char fileName[20];
 	fat_initialize();
+	char  content[40961];
 	/*if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
 		dir = fat_getDirectoryListing(&fileEntry);
 	}else{
@@ -54,10 +55,10 @@ int main(){
 			break;
 		default:
 			fat_getName(&p->fileEntry,fileName);
-			printf("Nombre: %s\n",fileName); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
-			//fat_printFileContent(p->content);
-			//printf("Cluster: %d\n",fat_getEntryFirstCluster(&p->fileEntry.dataEntry) +fat_getRootDirectoryFirstCluster()-2);
-			//fat_addressing_writeCluster(fat_getEntryFirstCluster(&p->fileEntry.dataEntry) +fat_getRootDirectoryFirstCluster()-2,&cluster,bootSector);
+			printf("Nombre: %s, clusters:%d \n",fileName,fat_getClusterCount(&p->fileEntry.dataEntry)); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
+			fat_readFileContents(&p->fileEntry,40960,0,content);
+			content[40960]='\0';
+			printf("%s",content);
 			break;
 		}
 		p=p->next;
@@ -189,7 +190,12 @@ t_stat fat_statFile(t_fat_file_entry * file){
 
 int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf){
 	t_cluster data;
-	uint32_t firstCluster, offsetInCluster, sizeToRead;
+	uint32_t dataCluster,diskCluster, offsetInCluster, sizeToRead;
+	uint32_t clusterSize = bootSector.sectorPerCluster * bootSector.bytesPerSector;
+	int i;
+	uint32_t clustersInRead;
+	uint32_t contentPosition=0;
+	dataCluster = fat_getEntryFirstCluster(&fileEntry->dataEntry);
 	if(offset > fileEntry->dataEntry.fileSize)
 		return 0;
 	if (offset + size > fileEntry->dataEntry.fileSize){
@@ -197,11 +203,21 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 	}else{
 		sizeToRead = size;
 	}
-
-	firstCluster = fat_getEntryFirstCluster(&fileEntry->dataEntry)+fat_getRootDirectoryFirstCluster(bootSector)-2;
-	fat_addressing_readCluster(firstCluster,&data,bootSector);
-	offsetInCluster = offset & (bootSector.sectorPerCluster * bootSector.sectorPerCluster);
-	memcpy(buf,data+offsetInCluster,sizeToRead);
+	clustersInRead = ((offset+sizeToRead)/4096)-(offset/4096)+1;
+// Me ubico en el primer cluster de la lectura
+	for (i=0;i< offset/clusterSize;i++){
+		dataCluster=fat_getNextCluster(dataCluster);
+		if (dataCluster==FAT_LASTCLUSTER) return 0;
+	}
+	for (i=clustersInRead;i>0;i--){
+		diskCluster=dataCluster +fat_getRootDirectoryFirstCluster(bootSector)-2;
+		fat_addressing_readCluster(diskCluster,&data,bootSector);
+		offsetInCluster = offset % clusterSize;
+		strncpy(&(buf[contentPosition]),&(data[offsetInCluster]),4096-offsetInCluster);
+		contentPosition+=4096-offsetInCluster;
+		offset=offset+contentPosition;
+		dataCluster=fat_getNextCluster(dataCluster);
+	}
 	return sizeToRead;
 }
 
@@ -220,8 +236,8 @@ void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 		char name[8];
 		char ext[3];
 		char * space;
-		strncpy(name,fileEntry->dataEntry.name,8);
-		strncpy(ext,fileEntry->dataEntry.extension,3);
+		strncpy(name,(char *)fileEntry->dataEntry.name,8);
+		strncpy(ext,(char *)fileEntry->dataEntry.extension,3);
 		space=strchr(name,' ');
 		*space='\0';
 		space=strchr(ext,' ');

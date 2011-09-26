@@ -13,7 +13,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include "log.h"
 
+t_log * logFile;
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
@@ -90,6 +92,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	//offset es a partir de donde leer
 	//fi no lo uso por ahora
 	//devuelve la cantidad leida
+	log_debug(logFile,"pepe","leyendo archivo %s\nsize:%d\noffset%d\n",path,size,offset);
 	(void) fi;
 	t_fat_file_entry file;
 	fat_getFileFromPath(path,&file);
@@ -103,8 +106,9 @@ static struct fuse_operations fsp_oper = {
 	.read   = hello_read,
 };
 
-int main2(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
+	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
 	fat_initialize();
 	return fuse_main(argc, argv, &fsp_oper, NULL);
 }
