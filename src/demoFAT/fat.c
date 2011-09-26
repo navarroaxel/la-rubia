@@ -85,9 +85,8 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
 	t_cluster cluster;
 	int inEntry=0;
 	int i;
-	uint32_t clusterOffset=0;
 	while (1){
-		fat_addressing_readCluster(clusterN+clusterOffset,&cluster,bootSector);
+		fat_addressing_readCluster(clusterN,&cluster,bootSector);
 		for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat_file_data_entry)){
 				memcpy(&tempDataEntry,cluster+i,sizeof(t_fat_file_data_entry));
 				if (tempDataEntry.name[0]==0){
@@ -114,7 +113,7 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
 
 				}
 		}
-		clusterOffset++;
+		clusterN=fat_getNextCluster(clusterN);
 	}
 	return directory;
 }
