@@ -14,10 +14,10 @@ int xmlFileGetFileSize(t_xmlFile *xmlFile) {
 
 char* xmlFileReadFile(t_xmlFile *xmlFile, int from, int to) {
 	int len = to - from;
-	char* buffer = (char*) malloc(len);
+	char* buffer = (char*) malloc(len + 1);
 	fseek(xmlFile->f, from, SEEK_SET);
 	fread(buffer, sizeof(char), len, xmlFile->f);
-	buffer[len + 1] = '\0';
+	buffer[len] = '\0';
 	return buffer;
 }
 
