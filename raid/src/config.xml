@@ -1,5 +1,4 @@
 <config>
-  <ip>127.0.0.1</ip>
   <portfs>6500</portfs>
   <portppd>6500</portppd>  
   <activateconsola>1</activateconsola>
