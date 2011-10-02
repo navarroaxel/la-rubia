@@ -13,6 +13,7 @@
 #include "fat.h"
 #include "fatAddressing.h"
 #include "disk.h"
+#include "cache.h"
 
 int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_bootsector bs){
 	t_sector sector;
@@ -22,7 +23,11 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_
 
 	if (!disk_isInitialized())
 		disk_initialize();
-
+	if (!cache_isInitialized())
+		cache_initialize();
+	if (cache_read(clusterNumber,buffer)){
+		return 0;
+	}
 	uint32_t clusterFirstSector=clusterNumber*bs.sectorPerCluster;
 	uint32_t sectorSize=bs.bytesPerSector;
 	for (sectorN = 0 ; sectorN < bs.sectorPerCluster ; sectorN++) {
@@ -35,6 +40,7 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_
 		}
 	}
 	memcpy(buffer,&cluster,4096);
+	cache_write(clusterNumber,&cluster);
 	return 1;
 }
 
@@ -57,3 +63,4 @@ int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster,t_fa
 	}
 	return 1;
 }
+

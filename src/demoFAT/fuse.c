@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
-#include "../utils/log.h"
+#include "log.h"
 
 t_log * logFile;
 
@@ -26,7 +26,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	//stbuf es la estructura en la que tengo que devolver los stats
 	t_fat_file_entry file;
 	t_stat temp;
-	//assert(0==1);
+	log_debug(logFile,"pepe","get attr %s\n",path);
     memset(stbuf, 0, sizeof(struct stat));
 	if(strcmp(path, "/") == 0) {
 		stbuf->st_mode = S_IFDIR | 0755;
@@ -55,6 +55,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	t_fat_file_entry file;
 	t_fat_file_list * dir;
 	t_fat_file_list * p;
+	log_debug(logFile,"pepe","ls dir %s\n",path);
 	if (fat_getFileFromPath(path,&file)){
 		dir = fat_getDirectoryListing(&file);
 	}else {
@@ -76,6 +77,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int hello_open(const char *path, struct fuse_file_info *fi)
 {
+	log_debug(logFile,"pepe","open archivo %s\n",path);
     if((fi->flags & 3) != O_RDONLY)
         return -EACCES;
 
@@ -92,11 +94,14 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	//offset es a partir de donde leer
 	//fi no lo uso por ahora
 	//devuelve la cantidad leida
-	log_debug(logFile,"pepe","leyendo archivo %s\nsize:%d\noffset%d\n",path,size,offset);
+	log_debug(logFile,"pepe","START READ archivo %s\nsize:%d\noffset%d\n",path,size,offset);
 	(void) fi;
+	int res;
 	t_fat_file_entry file;
 	fat_getFileFromPath(path,&file);
-	return fat_readFileContents(&file,size,offset,buf);
+	res = fat_readFileContents(&file,size,offset,buf);
+	log_debug(logFile,"pepe","END READ archivo %s\nsize:%d\noffset%d\n",path,size,offset);
+	return res;
 }
 
 static struct fuse_operations fsp_oper = {
@@ -106,7 +111,8 @@ static struct fuse_operations fsp_oper = {
 	.read   = hello_read,
 };
 
-int main_fuse(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
 	fat_initialize();
 	return fuse_main(argc, argv, &fsp_oper, NULL);

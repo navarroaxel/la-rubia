@@ -19,6 +19,8 @@
 #include "sys/stat.h"
 #include <assert.h>
 #include "utils.h"
+#include <math.h>
+
 
 
 t_fat_bootsector bootSector;
@@ -33,7 +35,7 @@ int main2(){
 	t_fat_file_list * dir, *p;
 	char fileName[20];
 	fat_initialize();
-	char  content[40961];
+	char  content[16385];
 	/*if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
 		dir = fat_getDirectoryListing(&fileEntry);
 	}else{
@@ -55,9 +57,9 @@ int main2(){
 			break;
 		default:
 			fat_getName(&p->fileEntry,fileName);
-			printf("Nombre: %s, clusters:%d \n",fileName,fat_getClusterCount(&p->fileEntry.dataEntry)); //http://stackoverflow.com/questions/3767284/using-printf-with-a-non-null-terminated-string
-			fat_readFileContents(&p->fileEntry,40960,0,content);
-			content[40960]='\0';
+			printf("Nombre: %s\n",fileName);
+			fat_readFileContents(&p->fileEntry,16384,0,content);
+			content[16384]='\0';
 			printf("%s",content);
 			break;
 		}
@@ -203,7 +205,7 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 	}else{
 		sizeToRead = size;
 	}
-	clustersInRead = ((offset+sizeToRead)/4096)-(offset/4096)+1;
+	clustersInRead = ceil(((float)offset+sizeToRead)/4096)-((float)offset/4096);
 // Me ubico en el primer cluster de la lectura
 	for (i=0;i< offset/clusterSize;i++){
 		dataCluster=fat_getNextCluster(dataCluster);
@@ -213,7 +215,7 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 		diskCluster=dataCluster +fat_getRootDirectoryFirstCluster(bootSector)-2;
 		fat_addressing_readCluster(diskCluster,&data,bootSector);
 		offsetInCluster = offset % clusterSize;
-		strncpy(&(buf[contentPosition]),&(data[offsetInCluster]),4096-offsetInCluster);
+		memcpy(&(buf[contentPosition]),&(data[offsetInCluster]),4096-offsetInCluster);
 		contentPosition+=4096-offsetInCluster;
 		offset=offset+contentPosition;
 		dataCluster=fat_getNextCluster(dataCluster);

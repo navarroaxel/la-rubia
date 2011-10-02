@@ -5,6 +5,7 @@
 #include "fatTypes.h"
 #include "fatAddressing.h"
 #include "fat.h"
+#include <assert.h>
 
 extern t_fat_bootsector bootSector;
 uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
@@ -36,10 +37,11 @@ uint32_t fat_getFATFirstCluster(){
 uint32_t fat_getNextCluster(uint32_t currentCluster){
 	t_cluster cluster;
 	uint32_t * fatCluster;
-	uint32_t clusterAddress = fat_getFATFirstCluster() + currentCluster / 128; //128 * 32 = 4096
+	uint32_t clusterAddress = fat_getFATFirstCluster() + currentCluster / 1024; //1024 * 4 = 4096
 	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
 	fatCluster = (uint32_t *) cluster;
-	return fatCluster[currentCluster % 128];
+	//assert(fatCluster[currentCluster % 1024]!=0);
+	return fatCluster[currentCluster % 1024];
 
 }
 
