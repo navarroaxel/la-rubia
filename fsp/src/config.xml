@@ -1,0 +1,8 @@
+<config>
+  <ip>127.0.0.1</ip>
+  <port>6500</port>
+  <maxconnections>5</maxconnections>  
+  <sizecache>6500</sizecache>
+</config>
+
+
