@@ -32,7 +32,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "collections/list.h"
+#include "../collections/list.h"
 
 #include "serializer.h"
 

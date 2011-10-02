@@ -37,7 +37,7 @@
 
 	#include <sys/select.h>
 	#include <netinet/in.h>
-	#include "collections/list.h"
+	#include "../collections/list.h"
 
 	#define DEFAULT_BUFFER_SIZE 	2048
 	#define DEFAULT_MAX_CONEXIONS 	100

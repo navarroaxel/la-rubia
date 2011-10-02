@@ -40,7 +40,7 @@
 #include <time.h>
 
 #include "sockets.h"
-#include "collections/list.h"
+#include "../collections/list.h"
 
 /*
  *						Socket Buffer Functions

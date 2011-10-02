@@ -35,7 +35,7 @@
 
 	#include <stdlib.h>
 	#include <stdarg.h>
-	#include "collections/list.h"
+	#include "../collections/list.h"
 
 	#define MAX_SERIALIZER_BUFFER 4096
 	#define SERIALIZER_END_ARGS NULL
