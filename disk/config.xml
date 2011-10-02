@@ -1,0 +1,14 @@
+<config>
+  <ip>127.0.0.1</ip>
+  <portproc>6500</portproc>
+  <mode>LISTEN</mode>
+  <algorithm>CSCAN</algorithm>
+  <portconsole>6500</portconsole>
+  <logenabled>1</logenabled>
+  <diskid>1</diskid>
+  <chs>1200</chs>
+  <jumptime>1</jumptime>
+  <readtime>2</readtime>
+  <writetime>3</writetime>
+  <rpm>6000</rpm>
+</config>
