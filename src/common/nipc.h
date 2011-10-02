@@ -1,7 +1,8 @@
-#ifndef PAYLOAD_C
-#define PAYLOAD_C
+#ifndef NIPC_H
+#define NIPC_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #define NIPC_HANDSHAKE 0
 #define NIPC_READSECTOR_RQ 1
@@ -10,7 +11,7 @@
 #define NIPC_WRITESECTOR_RS 4
 
 #define DISK_RESULT_SUCCESS 0
-#define ISK_RESULT_FAILED 1
+#define DISK_RESULT_FAILED 1
 
 typedef struct t_nipc {
 	uint8_t type;
@@ -38,7 +39,10 @@ typedef struct t_disk_writeSectorRs {
 	uint32_t offset;
 } t_disk_writeSectorRs;
 
-void nipc_create(t_nipc *nipc, uint8_t type);
+t_nipc *nipc_create(uint8_t type);
 void nipc_setdata(t_nipc *nipc, void *data, uint16_t length);
+void *nipc_getdata(t_nipc *nipc);
+void nipc_destroy(t_nipc *nipc);
+void *nipc_getdata_destroy(t_nipc *nipc);
 
 #endif

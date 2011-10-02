@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
-#include "log.h"
+#include "../utils/log.h"
 
 t_log * logFile;
 
@@ -106,8 +106,7 @@ static struct fuse_operations fsp_oper = {
 	.read   = hello_read,
 };
 
-int main(int argc, char *argv[])
-{
+int main_fuse(int argc, char *argv[]) {
 	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
 	fat_initialize();
 	return fuse_main(argc, argv, &fsp_oper, NULL);
