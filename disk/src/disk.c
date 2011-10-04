@@ -1,6 +1,6 @@
 #include "disk.h"
 
-int main_disk(void) {
+int main(void) {
 	t_blist *operations = collection_blist_create(50);
 	t_blist *ready = collection_blist_create(50);
 

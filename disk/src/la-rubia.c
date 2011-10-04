@@ -17,7 +17,7 @@ struct data {
 	t_socket_client *client;
 };
 
-int main(void) {
+int main_rubia(void) {
 	t_queue *queue = queue_create(20);
 	t_socket_server *server = sockets_createServer("127.0.0.1", 5200);
 
