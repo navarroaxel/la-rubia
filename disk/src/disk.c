@@ -1,4 +1,12 @@
 #include "disk.h"
+#include "fcntl.h"
+#include <sys/mman.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+struct t_disk_config disk_data;
 
 int main(void) {
 	t_blist *operations = collection_blist_create(50);
@@ -123,4 +131,25 @@ void *head(void *args) {
 		collection_blist_push(q->readyQueue, e);
 	}
 	return NULL;
+}
+void init_disk() {
+	strcpy(disk_data.path,"/home/nico/fat32.disk");
+	int file;
+	uint32_t filesize;
+	if((file=open(disk_data.path,O_RDWR))>0){
+		filesize = lseek(file, 0, SEEK_END);
+	}
+	else{
+		fprintf(stderr, "Error opening input file"), exit(1);
+	}
+	if((disk_data.diskFile = mmap(0, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, file, 0)) == (void *) -1)
+	  fprintf(stderr, "Error mapping input file"), exit(1);
+}
+
+void disk_read(uint32_t sectorN,t_sector * sector ){
+	memcpy(sector,(disk_data.diskFile)+sectorN,sizeof(t_sector));
+}
+
+void disk_write(uint32_t sectorN,t_sector * sector ){
+	memcpy((disk_data.diskFile)+sectorN,sector,sizeof(t_sector));
 }
