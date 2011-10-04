@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "queue.h"
-#include "sockets.h"
+#include "common/utils/queue.h"
+#include "common/utils/sockets.h"
 #include <string.h>
 
 void *produce(void* queue);

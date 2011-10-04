@@ -4,10 +4,9 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <stdint.h>
-
-#include "../sockets.h"
-#include "../collections/blist.h"
-
+#include <stdio.h>
+#include "common/utils/sockets.h"
+#include "common/collections/blist.h"
 
 typedef struct t_disk_operation {
 	bool read;

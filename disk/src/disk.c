@@ -1,5 +1,4 @@
 #include "disk.h"
-#include "stdio.h"
 
 int main_disk(void) {
 	t_blist *operations = collection_blist_create(50);
