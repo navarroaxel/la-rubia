@@ -14,6 +14,7 @@
 
 #define DISK_RESULT_SUCCESS 0
 #define DISK_RESULT_FAILED 1
+#define DISK_SECTOR_SIZE 512
 
 typedef struct t_stream {
 	int length;

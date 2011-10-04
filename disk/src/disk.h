@@ -7,11 +7,12 @@
 #include <stdio.h>
 #include "common/utils/sockets.h"
 #include "common/collections/blist.h"
+#include "common/nipc.h"
 
 typedef struct t_disk_operation {
 	bool read;
 	uint32_t offset;
-	uint8_t data[512];
+	uint8_t data[DISK_SECTOR_SIZE];
 	t_socket_client *client;
 } t_disk_operation;
 
@@ -21,5 +22,6 @@ void init_head(t_blist *operations, t_blist *ready);
 void init_dispatcher(t_blist *ready);
 void *dispatcher(void *args);
 void *head(void *args);
+t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client);
 
 #endif
