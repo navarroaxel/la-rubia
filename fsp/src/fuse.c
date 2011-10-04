@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
-#include "../utils/log.h"
+#include "common/utils/log.h"
 
 t_log * logFile;
 
