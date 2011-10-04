@@ -27,3 +27,4 @@ void *nipc_getdata_destroy(t_nipc *nipc){
 	nipc_destroy(nipc);
 	return data;
 }
+

@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <errno.h>
 #include "queue.h"
-#include <stdlib.h>
 
 t_queue *queue_create(int size) {
 	t_queue *q = (t_queue *)malloc(sizeof(t_queue));

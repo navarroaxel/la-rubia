@@ -21,23 +21,23 @@ typedef struct t_nipc {
 
 typedef struct t_disk_readSectorRq {
 	uint32_t offset;
-} t_disk_readSectorRq;
+} __attribute__ ((packed)) t_disk_readSectorRq;
 
 typedef struct t_disk_writeSectorRq {
 	uint32_t offset;
 	uint8_t data[512];
-} t_disk_writeSectorRq;
+} __attribute__ ((packed)) t_disk_writeSectorRq;
 
 typedef struct t_disk_readSectorRs {
 	uint8_t result;
 	uint32_t offset;
 	uint8_t data[512];
-} t_disk_readSectorRs;
+} __attribute__ ((packed)) t_disk_readSectorRs;
 
 typedef struct t_disk_writeSectorRs {
 	uint8_t result;
 	uint32_t offset;
-} t_disk_writeSectorRs;
+} __attribute__ ((packed)) t_disk_writeSectorRs;
 
 t_nipc *nipc_create(uint8_t type);
 void nipc_setdata(t_nipc *nipc, void *data, uint16_t length);

@@ -3,6 +3,9 @@
 
 #include <semaphore.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 
 typedef struct  {
     void *data;
