@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "utils/sockets.h"
+#include <string.h>
 
 #define NIPC_HANDSHAKE 0
 #define NIPC_READSECTOR_RQ 1
@@ -12,6 +14,11 @@
 
 #define DISK_RESULT_SUCCESS 0
 #define DISK_RESULT_FAILED 1
+
+typedef struct t_stream {
+	int length;
+	void *data;
+} t_stream;
 
 typedef struct t_nipc {
 	uint8_t type;
@@ -44,6 +51,7 @@ void nipc_setdata(t_nipc *nipc, void *data, uint16_t length);
 void *nipc_getdata(t_nipc *nipc);
 void nipc_destroy(t_nipc *nipc);
 void *nipc_getdata_destroy(t_nipc *nipc);
+t_socket_buffer *nipc_serializer(t_nipc *nipc);
+t_nipc *nipc_deserializer(t_socket_buffer *buffer);
 
 #endif
-
