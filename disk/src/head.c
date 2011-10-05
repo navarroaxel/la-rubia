@@ -14,7 +14,7 @@ void init_head(t_blist *operations, t_blist *ready) {
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&head_id, &attr, &head_fscan, q);
+	pthread_create(&head_id, &attr, &head_cscan, q);
 	pthread_attr_destroy(&attr);
 }
 
