@@ -71,7 +71,7 @@ void init_disk() {
 int disk_read(uint32_t offset, t_sector *sector) {
 	//TODO: head object with position
 	//TODO: delay tracktime & readtime
-	memcpy(sector, disk_data.diskFile + offset, sizeof(t_sector));
+	memcpy(sector, disk_data.diskFile + offset * DISK_SECTOR_SIZE , sizeof(t_sector));
 	return DISK_RESULT_SUCCESS;
 }
 

@@ -1,7 +1,7 @@
 #include "listener.h"
 
 void listener(t_blist *list) {
-	t_socket_server *server = sockets_createServer("127.0.0.1", 5200);
+	t_socket_server *server = sockets_createServer("127.0.0.1", 5678);
 
 	sockets_listen(server);
 
