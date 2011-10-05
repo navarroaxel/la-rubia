@@ -19,6 +19,7 @@ void *nipc_getdata(t_nipc *nipc){
 }
 
 void nipc_destroy(t_nipc *nipc){
+	free(nipc->payload);
 	free(nipc);
 }
 
