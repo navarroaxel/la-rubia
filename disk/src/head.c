@@ -22,11 +22,10 @@ void *head(void *args) {
 	t_disk_operation *e;
 	while (true) {
 		e = (t_disk_operation *) collection_blist_pop(q->operations);
-		e->result = DISK_RESULT_SUCCESS;
 		if (e->read)
-			disk_read(e->offset, &e->data);
+			e->result = disk_read(e->offset, &e->data);
 		else
-			disk_write(e->offset, &e->data);
+			e->result = disk_write(e->offset, &e->data);
 
 		collection_blist_push(q->readyQueue, e);
 	}
@@ -46,13 +45,15 @@ void init_disk() {
 		fprintf(stderr, "Error mapping input file"), exit(1);
 }
 
-void disk_read(uint32_t offset, t_sector *sector) {
+int disk_read(uint32_t offset, t_sector *sector) {
 	//TODO: head object with position
 	//TODO: delay tracktime & readtime
 	memcpy(sector, disk_data.diskFile + offset, sizeof(t_sector));
+	return DISK_RESULT_SUCCESS;
 }
 
-void disk_write(uint32_t offset, t_sector *sector) {
+int disk_write(uint32_t offset, t_sector *sector) {
 	//TODO: delay tracktime & writetime
 	memcpy(disk_data.diskFile + offset, sector, sizeof(t_sector));
+	return DISK_RESULT_SUCCESS;
 }

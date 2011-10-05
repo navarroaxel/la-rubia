@@ -16,7 +16,7 @@
 void init_head(t_blist *operations, t_blist *ready);
 void *head(void *args);
 void init_disk();
-void disk_read(uint32_t offset, t_sector *sector);
-void disk_write(uint32_t offset, t_sector *sector);
+int disk_read(uint32_t offset, t_sector *sector);
+int disk_write(uint32_t offset, t_sector *sector);
 
 #endif
