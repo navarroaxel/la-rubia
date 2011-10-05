@@ -3,6 +3,8 @@
 struct t_disk_config disk_data;
 
 void init_head(t_blist *operations, t_blist *ready) {
+	init_disk();
+
 	pthread_attr_t attr;
 	pthread_t head_id;
 
@@ -12,12 +14,11 @@ void init_head(t_blist *operations, t_blist *ready) {
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&head_id, &attr, &head, q);
+	pthread_create(&head_id, &attr, &head_fscan, q);
 	pthread_attr_destroy(&attr);
 }
 
-void *head(void *args) {
-	init_disk();
+void *head_cscan(void *args) {
 	struct queues *q = (struct queues *) args;
 	t_disk_operation *e;
 	while (true) {
@@ -28,6 +29,28 @@ void *head(void *args) {
 			e->result = disk_write(e->offset, &e->data);
 
 		collection_blist_push(q->readyQueue, e);
+	}
+	return NULL;
+}
+
+void *head_fscan(void *args){
+	struct queues *q = (struct queues *) args;
+	t_list *waiting_list = collection_list_create();
+	t_disk_operation *e;
+	while (true) {
+		collection_blist_move(q->operations, waiting_list);
+
+		while (collection_list_size(waiting_list) > 0) {
+			e = (t_disk_operation *) collection_list_get(waiting_list, 0);
+			collection_list_remove(waiting_list, 0);
+
+			if (e->read)
+				e->result = disk_read(e->offset, &e->data);
+			else
+				e->result = disk_write(e->offset, &e->data);
+
+			collection_blist_push(q->readyQueue, e);
+		}
 	}
 	return NULL;
 }

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include "collections.h"
+#include "list.h"
 
 typedef struct{
 	t_link_element *head;
@@ -18,5 +19,7 @@ void *collection_blist_get(t_blist *list);
 void collection_blist_put(t_blist *list, void *data, int (*closure)(void*));
 void collection_blist_push(t_blist *list, void *data);
 void *collection_blist_pop(t_blist *list);
+int collection_blist_size(t_blist *list);
+void collection_blist_move(t_blist *blist, t_list *list);
 
 #endif /*BLIST_H_*/
