@@ -11,10 +11,10 @@ void init_dispatcher(t_blist *ready) {
 }
 
 void *dispatcher(void *args) {
-	t_blist *ready = (t_blist *) args;
+	t_blist *processed = (t_blist *) args;
 	t_disk_operation *e;
 	while (true) {
-		e = (t_disk_operation *) collection_blist_pop(ready);
+		e = (t_disk_operation *) collection_blist_pop(processed);
 		t_nipc *nipc = nipc_create(
 				e->read ? NIPC_READSECTOR_RS : NIPC_WRITESECTOR_RS);
 

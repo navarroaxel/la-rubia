@@ -376,3 +376,66 @@ void collection_list_destroy( t_list *list, void (*data_destroyer)(void*) ){
 	free(list);
 }
 
+void *collection_list_popfirst(t_list *list, int (*closure)(void *data)){
+	sem_wait(&list->semaforo);
+
+	t_link_element *prev_element;
+	t_link_element *e = list->head;
+	while (e != NULL && !closure(e->data)) {
+		prev_element = e;
+		e = e->next;
+	}
+
+	if (e == NULL) {
+		sem_post(&list->semaforo);
+		return NULL;
+	}
+
+	if (e == list->head)
+		list->head = e->next;
+	else
+		prev_element->next = e->next;
+
+	list->elements_count--;
+
+	sem_post(&list->semaforo);
+
+	void *data = e->data;
+	free(e);
+	return data;
+}
+
+void *collection_list_poplast(t_list *list, int (*closure)(void *data)){
+	sem_wait(&list->semaforo);
+
+	t_link_element *prev_selected = NULL;
+	t_link_element *selected = NULL;
+	t_link_element *prev_e;
+	t_link_element *e = list->head;
+	while (e != NULL) {
+		prev_e = e;
+		e = e->next;
+		if (closure(e->data)) {
+			prev_selected = prev_e;
+			selected = e;
+		}
+	}
+
+	if (selected == NULL) {
+		sem_post(&list->semaforo);
+		return NULL;
+	}
+
+	if (selected == list->head)
+		list->head = selected->next;
+	else
+		prev_selected->next = selected->next;
+
+	list->elements_count--;
+
+	sem_post(&list->semaforo);
+
+	void *data = e->data;
+	free(e);
+	return data;
+}

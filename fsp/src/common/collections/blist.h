@@ -21,5 +21,6 @@ void collection_blist_push(t_blist *list, void *data);
 void *collection_blist_pop(t_blist *list);
 int collection_blist_size(t_blist *list);
 void collection_blist_move(t_blist *blist, t_list *list);
+void *collection_blist_popfirst(t_blist *blist, int (*closure)(void *data));
 
 #endif /*BLIST_H_*/

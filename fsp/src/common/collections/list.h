@@ -63,6 +63,8 @@
 	int     	collection_list_isEmpty( t_list *list );
 	void 		collection_list_clean( t_list *list, void (*data_destroyer)(void*) );
 	void 		collection_list_destroy( t_list *list, void (*data_destroyer)(void*) );
+	void	   *collection_list_popfirst(t_list *list, int (*closure)(void *data));
+	void	   *collection_list_poplast(t_list *list, int (*closure)(void *data));
 
 #endif /*OLD_LIST_H_*/
 

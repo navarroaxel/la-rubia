@@ -93,6 +93,39 @@ int collection_blist_size(t_blist *list) {
 	return list->elements_count;
 }
 
+void *collection_blist_popfirst(t_blist *list, int(*closure)(void*)) {
+	sem_wait(&list->empty);
+	sem_wait(&list->semaphore);
+
+	t_link_element *prev_element;
+	t_link_element *e = list->head;
+	while (e != NULL && closure(e->data)) {
+		prev_element = e;
+		e = e->next;
+	}
+
+	if (e == NULL){
+		return NULL;
+		sem_post(&list->semaphore);
+		sem_post(&list->empty);
+	}
+
+	if (e == list->head) {
+		list->head = e->next;
+	} else {
+		prev_element->next = e->next;
+	}
+
+	list->elements_count--;
+
+	sem_post(&list->semaphore);
+	sem_post(&list->full);
+
+	void *data = e->data;
+	free(e);
+	return data;
+}
+
 void collection_blist_move(t_blist *blist, t_list *list) {
 	sem_wait(&list->semaforo);
 	sem_wait(&blist->semaphore);
@@ -103,14 +136,13 @@ void collection_blist_move(t_blist *blist, t_list *list) {
 			e = e->next;
 
 		e->next = list->head;
-	}
-	else
+	} else
 		blist->head = list->head;
 
 	blist->elements_count += list->elements_count;
 
 	list->head = NULL;
-	list->elements_count= 0;
+	list->elements_count = 0;
 
 	sem_post(&blist->semaphore);
 	sem_post(&list->semaforo);

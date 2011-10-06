@@ -1,7 +1,7 @@
 #include "listener.h"
 
-void listener(t_blist *list) {
-	t_socket_server *server = sockets_createServer("127.0.0.1", 5678);
+void listener(t_blist *waiting) {
+	t_socket_server *server = sockets_createServer("192.168.0.146", 5678);
 
 	sockets_listen(server);
 
@@ -19,7 +19,7 @@ void listener(t_blist *list) {
 			return 0;
 
 		nipc_destroy(nipc);
-		enqueueOperation(list, op);
+		enqueueOperation(waiting, op);
 
 		sockets_bufferDestroy(buffer);
 		return client->socket->desc;
@@ -52,11 +52,11 @@ t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client) {
 	return operation;
 }
 
-void enqueueOperation(t_blist *list, t_disk_operation *op) {
+void enqueueOperation(t_blist *waiting, t_disk_operation *op) {
 	//encola la operacion en base al algoritmo de R&W utilizado.
 
 	int enqueueDiskOperation(void *data) {
 		return op->offset >= ((t_disk_operation *) data)->offset;
 	}
-	collection_blist_put(list, op, &enqueueDiskOperation);
+	collection_blist_put(waiting, op, &enqueueDiskOperation);
 }

@@ -20,8 +20,8 @@ typedef struct t_disk_operation {
 } t_disk_operation;
 
 struct queues {
-	t_blist *operations;
-	t_blist *readyQueue;
+	t_blist *waiting;
+	t_blist *processed;
 };
 
 struct t_disk_config {

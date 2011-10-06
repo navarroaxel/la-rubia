@@ -14,7 +14,7 @@
 #include "common/collections/list.h"
 #include "disk.h"
 
-void init_head(t_blist *operations, t_blist *ready);
+void init_head(t_blist *waiting, t_blist *processed);
 void *head_cscan(void *args);
 void *head_fscan(void *args);
 void init_disk();

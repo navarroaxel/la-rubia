@@ -2,15 +2,15 @@
 
 struct t_disk_config disk_data;
 
-void init_head(t_blist *operations, t_blist *ready) {
+void init_head(t_blist *waiting, t_blist *processed) {
 	init_disk();
 
 	pthread_attr_t attr;
 	pthread_t head_id;
 
 	struct queues *q = (struct queues *) malloc(sizeof(struct queues));
-	q->operations = operations;
-	q->readyQueue = ready;
+	q->waiting = waiting;
+	q->processed = processed;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -21,35 +21,50 @@ void init_head(t_blist *operations, t_blist *ready) {
 void *head_cscan(void *args) {
 	struct queues *q = (struct queues *) args;
 	t_disk_operation *e;
+
+	int getnearestsector(void *data){
+		//TODO: Cambiar 0 por la posicion del cabezal.
+		return ((t_disk_operation *)data)->offset >= 0;
+	}
+
 	while (true) {
-		e = (t_disk_operation *) collection_blist_pop(q->operations);
+		e = (t_disk_operation *) collection_blist_popfirst(q->waiting,getnearestsector);
 		if (e->read)
 			e->result = disk_read(e->offset, &e->data);
 		else
 			e->result = disk_write(e->offset, &e->data);
 
-		collection_blist_push(q->readyQueue, e);
+		collection_blist_push(q->processed, e);
 	}
 	return NULL;
 }
 
 void *head_fscan(void *args){
 	struct queues *q = (struct queues *) args;
-	t_list *waiting_list = collection_list_create();
+	t_list *inprogress = collection_list_create();
 	t_disk_operation *e;
-	while (true) {
-		collection_blist_move(q->operations, waiting_list);
 
-		while (collection_list_size(waiting_list) > 0) {
-			e = (t_disk_operation *) collection_list_get(waiting_list, 0);
-			collection_list_remove(waiting_list, 0);
+	int getnearestsectorasc(void *data){
+		//TODO: Cambiar 0 por la posicion del cabezal.
+		return ((t_disk_operation *)data)->offset >= 0;
+	}
+	int getnearestsectordesc(void *data){
+		//TODO: Cambiar 0 por la posicion del cabezal.
+		return ((t_disk_operation *)data)->offset <= 0;
+	}
+
+	while (true) {
+		collection_blist_move(q->waiting, inprogress);
+
+		while (collection_list_size(inprogress) > 0) {
+			e = (t_disk_operation *) collection_list_popfirst(inprogress, getnearestsectorasc);
 
 			if (e->read)
 				e->result = disk_read(e->offset, &e->data);
 			else
 				e->result = disk_write(e->offset, &e->data);
 
-			collection_blist_push(q->readyQueue, e);
+			collection_blist_push(q->processed, e);
 		}
 	}
 	return NULL;

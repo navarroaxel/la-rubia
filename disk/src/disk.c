@@ -5,14 +5,14 @@
 #include "dispatcher.h"
 
 int main(void) {
-	t_blist *operations = collection_blist_create(50);
-	t_blist *ready = collection_blist_create(50);
+	t_blist *waiting = collection_blist_create(50);
+	t_blist *processed = collection_blist_create(50);
 
-	init_head(operations, ready);
+	init_head(waiting, processed);
 
-	init_dispatcher(ready);
+	init_dispatcher(processed);
 
-	listener(operations);
+	listener(waiting);
 
 	return EXIT_SUCCESS;
 }
