@@ -39,13 +39,13 @@ void listener(t_blist *waiting) {
 	}
 }
 
-int handshake(t_sockets_client *client) {
+int handshake(t_socket_client *client) {
 	//TODO: Revisar si estoy en modo CONNECT.
-	t_nipc *nipc = nipc_create(HANDSHAKE);
+	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_setdata(nipc, NULL, 0);
 	//TODO: la serializacion y el envio del buffer se repite, pasar a una funcion.
 	t_socket_buffer *buffer = nipc_serializer(nipc);
-	sockets_send(e->client, buffer->data, buffer->size);
+	sockets_sendBuffer(client, buffer);
 	sockets_bufferDestroy(buffer);
 	nipc_destroy(nipc);
 	return 0;
