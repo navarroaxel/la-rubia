@@ -1,6 +1,7 @@
 #include "listener.h"
 
 void listener(t_blist *waiting) {
+	//TODO: Get IP & port from config.
 	t_socket_server *server = sockets_createServer("192.168.0.146", 5678);
 
 	sockets_listen(server);
@@ -14,6 +15,12 @@ void listener(t_blist *waiting) {
 			return 0;
 
 		t_nipc *nipc = nipc_deserializer(buffer);
+		if (nipc->type == 0)
+		{
+			if (handshake(client) == 0)
+			return 0;
+		}
+
 		t_disk_operation *op = getdiskoperation(nipc, client);
 		if (op == NULL)
 			return 0;
@@ -30,6 +37,18 @@ void listener(t_blist *waiting) {
 	while (true) {
 		sockets_select(servers, clients, 0, NULL, &recvClient);
 	}
+}
+
+int handshake(t_sockets_client *client) {
+	//TODO: Revisar si estoy en modo CONNECT.
+	t_nipc *nipc = nipc_create(HANDSHAKE);
+	nipc_setdata(nipc, NULL, 0);
+	//TODO: la serializacion y el envio del buffer se repite, pasar a una funcion.
+	t_socket_buffer *buffer = nipc_serializer(nipc);
+	sockets_send(e->client, buffer->data, buffer->size);
+	sockets_bufferDestroy(buffer);
+	nipc_destroy(nipc);
+	return 0;
 }
 
 t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client) {
