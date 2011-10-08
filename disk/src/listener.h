@@ -12,5 +12,6 @@
 void enqueueOperation(t_blist *waiting, t_disk_operation *op);
 void listener(t_blist *list);
 t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client);
+int handshake(t_socket_client *client, t_nipc *nipc2);
 
 #endif

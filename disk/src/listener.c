@@ -17,8 +17,8 @@ void listener(t_blist *waiting) {
 		t_nipc *nipc = nipc_deserializer(buffer);
 		if (nipc->type == 0)
 		{
-			if (handshake(client) == 0)
-			return 0;
+			if (handshake(client, nipc) == 0)
+				return 0;
 		}
 
 		t_disk_operation *op = getdiskoperation(nipc, client);
@@ -39,7 +39,7 @@ void listener(t_blist *waiting) {
 	}
 }
 
-int handshake(t_socket_client *client) {
+int handshake(t_socket_client *client, t_nipc *nipc2) {
 	//TODO: Revisar si estoy en modo CONNECT.
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_setdata(nipc, NULL, 0);

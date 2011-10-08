@@ -1,7 +1,7 @@
 #include "nipc.h"
 #include <assert.h>
-t_nipc *nipc_create(uint8_t type){
-	t_nipc *nipc = (t_nipc *)malloc(sizeof(t_nipc));
+t_nipc *nipc_create(uint8_t type) {
+	t_nipc *nipc = (t_nipc *) malloc(sizeof(t_nipc));
 	nipc->type = type;
 	nipc->length = 0;
 	nipc->payload = NULL;
@@ -9,21 +9,21 @@ t_nipc *nipc_create(uint8_t type){
 	return nipc;
 }
 
-void nipc_setdata(t_nipc *nipc, void *data, uint16_t length){
+void nipc_setdata(t_nipc *nipc, void *data, uint16_t length) {
 	nipc->length = length;
 	nipc->payload = data;
 }
 
-void *nipc_getdata(t_nipc *nipc){
+void *nipc_getdata(t_nipc *nipc) {
 	return nipc->payload;
 }
 
-void nipc_destroy(t_nipc *nipc){
+void nipc_destroy(t_nipc *nipc) {
 	free(nipc->payload);
 	free(nipc);
 }
 
-void *nipc_getdata_destroy(t_nipc *nipc){
+void *nipc_getdata_destroy(t_nipc *nipc) {
 	void *data = nipc_getdata(nipc);
 	nipc_destroy(nipc);
 	return data;
@@ -31,7 +31,8 @@ void *nipc_getdata_destroy(t_nipc *nipc){
 
 t_socket_buffer *nipc_serializer(t_nipc *nipc) {
 	int tmpsize, offset = 0;
-	t_socket_buffer *stream = (t_socket_buffer *)malloc(sizeof(t_socket_buffer));
+	t_socket_buffer *stream = (t_socket_buffer *) malloc(
+			sizeof(t_socket_buffer));
 
 	memcpy(stream->data, &nipc->type, tmpsize = sizeof(uint8_t));
 	offset += tmpsize;
@@ -45,7 +46,7 @@ t_socket_buffer *nipc_serializer(t_nipc *nipc) {
 	return stream;
 }
 
-t_nipc *nipc_deserializer(t_socket_buffer *buffer){
+t_nipc *nipc_deserializer(t_socket_buffer *buffer) {
 	int tmpsize, offset = 0;
 	t_nipc *nipc = malloc(sizeof(t_nipc));
 	assert(buffer->size!=0);
@@ -60,3 +61,15 @@ t_nipc *nipc_deserializer(t_socket_buffer *buffer){
 
 	return nipc;
 }
+
+t_nipc *nipc_clone(t_nipc *nipc) {
+	t_nipc *new = malloc(sizeof(t_nipc));
+	new->type = nipc->type;
+	new->length = nipc->length;
+
+	new->payload = malloc(sizeof(nipc->length));
+	memcpy(new->payload, nipc->payload, nipc->length);
+
+	return new;
+}
+
