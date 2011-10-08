@@ -67,24 +67,27 @@ int disk_readSector(uint32_t sector, t_sector * buf) {
 }
 
 int disk_writeSector(uint32_t sector, t_sector * buf) {
-	FILE *f;
-	int n;
-	int rseek;
-	uint32_t byteStart = sector * disk_config_data.sectorSize;
-	if ((f = fopen(disk_config_data.file, "rb+"))) {
-		if ((rseek = fseek(f, byteStart, SEEK_SET)) == 0) {
-			if ((n = fwrite(buf, disk_config_data.sectorSize, 1, f))) {
-				fclose(f);
-				return n;
-			} else {
-				perror("No pude Leer el archivo");
-			}
-		} else {
-			perror("No pude hacer el seek");
-		}
-	} else {
-		perror("No pude abrir el archivo");
+	t_disk_writeSectorRq *rq = malloc(sizeof(t_disk_writeSectorRq));
+	rq->offset = sector;
+	memcpy(rq->data,buf,512);
+
+	t_nipc *nipc = nipc_create(NIPC_WRITESECTOR_RQ);
+	t_disk_writeSectorRs *rs;
+	nipc_setdata(nipc, rq, sizeof(t_disk_writeSectorRq));
+
+	t_socket_buffer *buffer = (t_socket_buffer *) nipc_serializer(nipc);
+	sockets_send(client, buffer->data, buffer->size);
+	sockets_bufferDestroy(buffer);
+	nipc_destroy(nipc);
+
+	buffer = sockets_recv(client);
+	if(buffer==NULL){
+		printf("%d",sector);
+		exit(0);
 	}
-	fclose(f);
-	return 0;
+	nipc = nipc_deserializer(buffer);
+	sockets_bufferDestroy(buffer);
+	rs = (t_disk_writeSectorRs *)nipc->payload;
+	nipc_destroy(nipc);
+	return 1;
 }

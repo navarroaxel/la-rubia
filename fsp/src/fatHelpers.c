@@ -43,6 +43,17 @@ uint32_t fat_getNextCluster(uint32_t currentCluster){
 	return fatCluster[currentCluster % 1024];
 }
 
+int fat_fat_setValue(uint32_t clusterN,uint32_t next){
+	t_cluster cluster;
+	uint32_t * fatCluster;
+	uint32_t clusterAddress = fat_getFATFirstCluster() + clusterN / 1024;
+	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
+	fatCluster = (uint32_t *) cluster;
+	fatCluster[clusterN%1024]=next;
+	fat_addressing_writeCluster(clusterAddress,&cluster,bootSector);
+	return 0;
+}
+
 uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
 	uint32_t ret=1;
 	uint32_t currentCluster = fat_getEntryFirstCluster(file);
@@ -82,4 +93,12 @@ uint32_t fat_getNextFreeCluster(uint32_t start){
 	return fat_getNextFreeCluster((start / 1024+1)*1024);
 }
 
+uint32_t fat_getFileLastCluster(t_fat_file_entry * file){
+	uint32_t clusterN,temp;
+	clusterN=temp=fat_getEntryFirstCluster(&file->dataEntry);
+	while((temp=fat_getNextCluster(temp))!=FAT_LASTCLUSTER){
+		clusterN=temp;
+	}
+	return clusterN;
+}
 

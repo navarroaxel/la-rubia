@@ -25,9 +25,9 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_
 		disk_initialize();
 	if (!cache_isInitialized())
 		cache_initialize();
-	if (cache_read(clusterNumber,buffer)){
+	/*if (cache_read(clusterNumber,buffer)){
 		return 0;
-	}
+	}*/
 	uint32_t clusterFirstSector=clusterNumber*bs.sectorPerCluster;
 	uint32_t sectorSize=bs.bytesPerSector;
 	for (sectorN = 0 ; sectorN < bs.sectorPerCluster ; sectorN++) {

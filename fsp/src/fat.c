@@ -32,19 +32,16 @@ void fat_initialize(){
 
 
 int main(){
-	uint32_t clusterN;
 	fat_initialize();
-	clusterN=0;
-	while ((clusterN=fat_getNextFreeCluster(clusterN))){
-		printf("%d\n",clusterN);
-	}
+	t_fat_file_list * dir, *p;
+	char fileName[15];
 	//char  content[16385];
 	/*if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
 		dir = fat_getDirectoryListing(&fileEntry);
 	}else{
 		dir = NULL;
 	}*/
-	/*dir = fat_getRootDirectory();
+	dir = fat_getRootDirectory();
 
 	p=dir;
 	while (p!=NULL){
@@ -60,16 +57,15 @@ int main(){
 			break;
 		default:
 			fat_getName(&p->fileEntry,fileName);
-			printf("Nombre: %s\n",fileName);
-			fat_readFileContents(&p->fileEntry,16384,0,content);
-			content[16384]='\0';
-			printf("%s",content);
+			printf("Nombre: %s\n,clusterCount:%d\n",fileName,fat_getClusterCount(&p->fileEntry.dataEntry));
+			fat_addClusterToFile(&p->fileEntry);
+			printf("Nombre: %s\n,clusterCount:%d\n",fileName,fat_getClusterCount(&p->fileEntry.dataEntry));
 			break;
 		}
 		p=p->next;
 
 	}
-	fat_destroyFileList(dir);*/
+	fat_destroyFileList(dir);
 
 	return 0;
 
@@ -255,4 +251,18 @@ void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 	}
 	strncpy(buff,longName,13);
 	return;
+}
+
+int fat_addFreeClusterToChain(uint32_t lastClusterOfChain){
+	uint32_t freeCluster=fat_getNextFreeCluster(0);
+	assert(fat_getNextCluster(lastClusterOfChain)==FAT_LASTCLUSTER);
+	fat_fat_setValue(lastClusterOfChain,freeCluster);
+	fat_fat_setValue(freeCluster,FAT_LASTCLUSTER);
+	return 0;
+}
+
+int fat_addClusterToFile(t_fat_file_entry * file){
+	uint32_t lastCluster = fat_getFileLastCluster(file);
+	fat_addFreeClusterToChain(lastCluster);
+	return 0;
 }
