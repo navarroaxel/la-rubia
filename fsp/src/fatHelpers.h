@@ -17,5 +17,6 @@ t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name);
 uint32_t fat_getNextFreeCluster(uint32_t start);
 uint32_t fat_getFileLastCluster(t_fat_file_entry * file);
 int fat_fat_setValue(uint32_t clusterN,uint32_t next);
+uint32_t fat_getClusterPointingTo(uint32_t clusterToFind, uint32_t clusterofChain);
 
 #endif /* FATHELPERS_H_ */

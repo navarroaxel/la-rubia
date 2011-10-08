@@ -58,7 +58,7 @@ int main(){
 		default:
 			fat_getName(&p->fileEntry,fileName);
 			printf("Nombre: %s\n,clusterCount:%d\n",fileName,fat_getClusterCount(&p->fileEntry.dataEntry));
-			fat_addClusterToFile(&p->fileEntry);
+			fat_removeLastClusterFromFile(&p->fileEntry);
 			printf("Nombre: %s\n,clusterCount:%d\n",fileName,fat_getClusterCount(&p->fileEntry.dataEntry));
 			break;
 		}
@@ -258,6 +258,14 @@ int fat_addFreeClusterToChain(uint32_t lastClusterOfChain){
 	assert(fat_getNextCluster(lastClusterOfChain)==FAT_LASTCLUSTER);
 	fat_fat_setValue(lastClusterOfChain,freeCluster);
 	fat_fat_setValue(freeCluster,FAT_LASTCLUSTER);
+	return 0;
+}
+int fat_removeLastClusterFromFile(t_fat_file_entry * file){
+	uint32_t lastCluster,theOneBefore;
+	lastCluster = fat_getFileLastCluster(file);
+	theOneBefore = fat_getClusterPointingTo(lastCluster,fat_getEntryFirstCluster(&file->dataEntry));
+	fat_fat_setValue(lastCluster,FAT_FREECLUSTER);
+	fat_fat_setValue(theOneBefore,FAT_LASTCLUSTER);
 	return 0;
 }
 

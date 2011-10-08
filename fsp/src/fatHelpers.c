@@ -102,3 +102,10 @@ uint32_t fat_getFileLastCluster(t_fat_file_entry * file){
 	return clusterN;
 }
 
+uint32_t fat_getClusterPointingTo(uint32_t clusterToFind, uint32_t clusterofChain){
+	uint32_t ret=clusterofChain;
+	while((clusterofChain=fat_getNextCluster(clusterofChain))!=clusterToFind){
+		ret=clusterofChain;
+	}
+	return ret;
+}
