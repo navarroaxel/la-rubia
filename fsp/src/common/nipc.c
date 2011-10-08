@@ -73,3 +73,8 @@ t_nipc *nipc_clone(t_nipc *nipc) {
 	return new;
 }
 
+void nipc_send(t_nipc *nipc, t_socket_client *client){
+	t_socket_buffer *buffer = nipc_serializer(nipc);
+	sockets_sendBuffer(client, buffer);
+	sockets_bufferDestroy(buffer);
+}
