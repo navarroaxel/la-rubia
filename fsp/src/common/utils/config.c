@@ -73,3 +73,12 @@ char *xmlStreamGetParam(char *xmlStream, const char *param) {
 	paramValue = substring(xmlStream, beginSection, endSection);
 	return paramValue;
 }
+
+config_disk *xmlGetConfigStruct(t_xmlFile *xmlFile) {
+	config_disk *xmlParam = (config_disk*)malloc(sizeof(config_disk));
+	strcpy(xmlParam->ip,xmlFileGetParam(xmlFile, "ip"));
+	xmlParam->port = xmlFileGetParam(xmlFile, "port");
+	xmlParam->maxConnections = xmlFileGetParam(xmlFile, "maxConnections");
+	xmlParam->sizeCache = xmlFileGetParam(xmlFile, "sizeCache");
+	return xmlParam;
+}
