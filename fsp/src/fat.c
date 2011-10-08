@@ -31,17 +31,20 @@ void fat_initialize(){
 }
 
 
-int main2(){
-	t_fat_file_list * dir, *p;
-	char fileName[20];
+int main(){
+	uint32_t clusterN;
 	fat_initialize();
-	char  content[16385];
+	clusterN=0;
+	while ((clusterN=fat_getNextFreeCluster(clusterN))){
+		printf("%d\n",clusterN);
+	}
+	//char  content[16385];
 	/*if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
 		dir = fat_getDirectoryListing(&fileEntry);
 	}else{
 		dir = NULL;
 	}*/
-	dir = fat_getRootDirectory();
+	/*dir = fat_getRootDirectory();
 
 	p=dir;
 	while (p!=NULL){
@@ -66,7 +69,8 @@ int main2(){
 		p=p->next;
 
 	}
-	fat_destroyFileList(dir);
+	fat_destroyFileList(dir);*/
+
 	return 0;
 
 }

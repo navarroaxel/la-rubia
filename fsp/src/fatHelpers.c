@@ -40,9 +40,7 @@ uint32_t fat_getNextCluster(uint32_t currentCluster){
 	uint32_t clusterAddress = fat_getFATFirstCluster() + currentCluster / 1024; //1024 * 4 = 4096
 	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
 	fatCluster = (uint32_t *) cluster;
-	//assert(fatCluster[currentCluster % 1024]!=0);
 	return fatCluster[currentCluster % 1024];
-
 }
 
 uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
@@ -66,6 +64,22 @@ t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name){//TODO
 	return NULL;
 }
 
-
+uint32_t fat_getNextFreeCluster(uint32_t start){
+	t_cluster cluster;
+	uint32_t * fatCluster;
+	int i;
+	start++;
+	if (start >= bootSector.totalSectos32/bootSector.sectorPerCluster)
+		return 0;
+	uint32_t clusterAddress = fat_getFATFirstCluster() + start / 1024;
+	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
+	fatCluster = (uint32_t *) cluster;
+	for (i=start%1024;i<1024;i++){
+		if (fatCluster[i]==0x0000){
+			return start - (start%1024) + i;
+		}
+	}
+	return fat_getNextFreeCluster((start / 1024+1)*1024);
+}
 
 

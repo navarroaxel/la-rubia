@@ -30,9 +30,9 @@ static int disk_is_initialized = 0;
 int disk_initialize() {
 	strcpy(disk_config_data.file, "/home/nico/fat32.disk");
 	disk_config_data.sectorSize = 512;
-	disk_is_initialized = 1;
 	client = sockets_createClient("127.0.0.1", 5679);
 	sockets_connect(client, "127.0.0.1", 5678);
+	disk_is_initialized = 1;
 	return 0;
 }
 
