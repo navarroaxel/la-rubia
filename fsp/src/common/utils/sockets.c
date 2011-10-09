@@ -36,11 +36,14 @@
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <time.h>
 
 #include "sockets.h"
 #include "../collections/list.h"
+
+#include "errno.h"
 
 /*
  *						Socket Buffer Functions
@@ -61,6 +64,7 @@ void sockets_sbufferDestroy(t_socket_sbuffer *tbuffer){
  */
 
 void 		*sockets_makeaddr (char* ip, int port);
+void *sockets_makeaddrUnix(char *path);
 t_socket 	*sockets_create(char* ip, int port);
 int 		 sockets_bind(t_socket* sckt, char* ip, int port);
 void 		 sockets_destroy(t_socket* sckt);
@@ -77,6 +81,15 @@ void *sockets_makeaddr (char* ip, int port){
     return addr;
 }
 
+void *sockets_makeaddrUnix(char *path){
+	struct sockaddr_un *addr = malloc(sizeof(struct sockaddr_un));
+
+	addr->sun_family = AF_UNIX;
+	strcpy(addr->sun_path, path);
+
+	return addr;
+}
+
 t_socket *sockets_create(char* ip, int port){
 	t_socket* sckt = malloc( sizeof(t_socket) );
 	sckt->desc = socket(AF_INET, SOCK_STREAM, 0);
@@ -84,6 +97,15 @@ t_socket *sockets_create(char* ip, int port){
 		free(sckt);
 		return NULL;
 	}
+	sockets_setMode(sckt, SOCKETMODE_BLOCK);
+	return sckt;
+}
+
+t_socket *sockets_createUnix(char *path){
+	t_socket *sckt = malloc( sizeof(t_socket) );
+	sckt->desc = socket(PF_UNIX, SOCK_STREAM, 0);
+	sckt->my_addr = sockets_makeaddrUnix(path);
+
 	sockets_setMode(sckt, SOCKETMODE_BLOCK);
 	return sckt;
 }
@@ -106,6 +128,21 @@ int sockets_bind(t_socket* sckt, char* ip, int port){
 	return 1;
 }
 
+int sockets_bindUnix(t_socket *sckt, char *path){
+	struct sockaddr_un *addr = sockets_makeaddrUnix(path);
+	sckt->my_addr = (struct sockaddr *)addr;
+	unlink(path);
+	if (bind(sckt->desc, sckt->my_addr, SUN_LEN(addr)) == -1){
+		printf("%s\n",strerror(errno));
+		printf("%i\n",errno);
+
+		free(addr);
+		sckt->my_addr = NULL;
+		return 0;
+	}
+	return 1;
+}
+
 void sockets_destroy(t_socket* sckt){
 	if( sckt->desc > 0 ){
 		close(sckt->desc);
@@ -120,11 +157,11 @@ void sockets_destroy(t_socket* sckt){
  */
 
 char* sockets_getIp(t_socket* sckt){
-	return inet_ntoa(sckt->my_addr->sin_addr);
+	return inet_ntoa(((struct sockaddr_in *)sckt->my_addr)->sin_addr);
 }
 
 void sockets_getIpAsBytes(t_socket* sckt, unsigned char ip[]){
-	sockets_getStringIpAsBytes(inet_ntoa(sckt->my_addr->sin_addr),ip);
+	sockets_getStringIpAsBytes(inet_ntoa(((struct sockaddr_in *)sckt->my_addr)->sin_addr),ip);
 }
 
 void sockets_getStringIpAsBytes(char* str_ip, unsigned char ip[]){
@@ -143,7 +180,7 @@ void sockets_getStringIpAsBytes(char* str_ip, unsigned char ip[]){
 }
 
 int sockets_getPort(t_socket* sckt){
-	return  htons( sckt->my_addr->sin_port );
+	return  htons( ((struct sockaddr_in *)sckt->my_addr)->sin_port );
 }
 
 
@@ -171,6 +208,16 @@ t_socket_client *sockets_createClient(char *ip, int port){
 		return NULL;
 	}
 	if (client->socket == NULL){
+		return NULL;
+	}
+	sockets_setState(client, SOCKETSTATE_DISCONNECTED);
+	return client;
+}
+
+t_socket_client *sockets_createClientUnix(char *path){
+	t_socket_client* client = malloc( sizeof(t_socket_client) );
+	if( (client->socket = sockets_createUnix(path)) == NULL ){
+		free(client);
 		return NULL;
 	}
 	sockets_setState(client, SOCKETSTATE_DISCONNECTED);
@@ -212,12 +259,31 @@ int sockets_connect(t_socket_client *client, char *server_ip, int server_port){
 	return 1;
 }
 
+int sockets_connectUnix(t_socket_client *client, char *path){
+	t_socket *serv_socket = malloc( sizeof(t_socket) );
+	serv_socket->my_addr = sockets_makeaddrUnix(path);
+	if ( connect(client->socket->desc, serv_socket->my_addr , SUN_LEN((struct sockaddr_un *)serv_socket->my_addr)) == -1) {
+		printf("%s\n", strerror(errno));
+		free(serv_socket->my_addr);
+		free(serv_socket);
+		client->serv_socket = NULL;
+		return 0;
+	}
+	client->serv_socket = serv_socket;
+	sockets_setState(client, SOCKETSTATE_CONNECTED);
+	return 1;
+}
+
 int sockets_send(t_socket_client *client, void *data, int datalen){
 	int aux = send(client->socket->desc, data, datalen, 0);
 	if( aux == -1 )
 		sockets_setState(client, SOCKETSTATE_DISCONNECTED);
 
 	return aux;
+}
+
+int sockets_write(t_socket_client *client, void *data, int datalen){
+	return write(client->socket->desc, data, datalen);
 }
 
 int sockets_sendBuffer(t_socket_client *client, t_socket_buffer *buffer){
@@ -309,6 +375,19 @@ t_socket_server *sockets_createServer(char *ip, int port){
 	return sckt;
 }
 
+t_socket_server *sockets_createServerUnix(char *path){
+	t_socket_server *sckt = malloc( sizeof(t_socket_server) );
+	if( (sckt->socket = sockets_createUnix(path)) == NULL ){
+		free(sckt);
+		return NULL;
+	}
+
+	sockets_bindUnix(sckt->socket, path);
+
+	sckt->maxconexions = DEFAULT_MAX_CONEXIONS;
+	return sckt;
+}
+
 t_socket *sockets_getServerSocket(t_socket_server* server){
 	return server->socket;
 }
@@ -322,7 +401,6 @@ int sockets_getMaxConexions(t_socket_server* server){
 }
 
 int sockets_listen(t_socket_server* server){
-
 	if (listen(server->socket->desc, server->maxconexions) == -1) {
 		return 0;
 	}
@@ -340,6 +418,33 @@ t_socket_client *sockets_accept(t_socket_server* server){
 	}
 
 	if ((client->socket->desc = accept(server->socket->desc, (struct sockaddr *)client->socket->my_addr, (void *)&addrlen)) == -1) {
+		free(client->socket->my_addr);
+		free(client->socket);
+		free(client);
+		return NULL;
+	}
+
+	if( !sockets_isBlocked(server->socket) ){
+		fcntl(server->socket->desc, F_SETFL, O_NONBLOCK);
+	}
+
+	sockets_setState(client, SOCKETSTATE_CONNECTED);
+	sockets_setMode(client->socket, SOCKETMODE_BLOCK);
+	return client;
+}
+
+t_socket_client *sockets_acceptUnix(t_socket_server* server){
+	t_socket_client* client = malloc( sizeof(t_socket_client) );
+	socklen_t len;
+	client->socket = malloc( sizeof(t_socket) );
+	client->socket->my_addr = malloc(sizeof(struct sockaddr_un));
+
+	if( !sockets_isBlocked(server->socket) ){
+		fcntl(server->socket->desc, F_SETFL, O_NONBLOCK);
+	}
+
+	if ((client->socket->desc = accept(server->socket->desc, client->socket->my_addr, &len)) == -1) {
+		printf("%s", strerror(errno));
 		free(client->socket->my_addr);
 		free(client->socket);
 		free(client);

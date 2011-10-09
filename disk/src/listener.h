@@ -9,6 +9,8 @@
 #include "common/nipc.h"
 #include "disk.h"
 
+#define SOCKET_UNIX_PATH "/tmp/lol"
+
 void enqueueOperation(t_blist *waiting, t_disk_operation *op);
 void listener(t_blist *list);
 t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client);

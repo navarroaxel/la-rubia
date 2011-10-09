@@ -56,7 +56,7 @@
 
 	typedef struct {
 		int desc;
-		struct sockaddr_in* my_addr;
+		struct sockaddr *my_addr;
 		e_socket_mode mode;
 	} t_socket ;
 
@@ -98,13 +98,17 @@
 	int              sockets_isBlocked(t_socket *sckt);
 
 	t_socket_client *sockets_createClient(char *ip, int port);
+	t_socket_client *sockets_createClientUnix(char *path);
 	int				 sockets_isConnected(t_socket_client *client);
 	int              sockets_equalsClients(t_socket_client *client1, t_socket_client *client2);
 	e_socket_state	 sockets_getState(t_socket_client *client);
 	void			 sockets_setState(t_socket_client *client, e_socket_state state);
 	int              sockets_connect(t_socket_client *client, char *server_ip, int server_port);
+	int 			 sockets_connectUnix(t_socket_client *client, char *path);
 	int              sockets_send(t_socket_client *client, void *data, int datalen);
+	int 			 sockets_write(t_socket_client *client, void *data, int datalen);
 	int              sockets_sendBuffer(t_socket_client *client, t_socket_buffer *buffer);
+	int 			 sockets_bindUnix(t_socket *sckt, char *path);
 	int              sockets_sendSBuffer(t_socket_client *client, t_socket_sbuffer *buffer);
 	int              sockets_sendString(t_socket_client *client, char *str);
 	int              sockets_sendSerialized(t_socket_client *client, void *data, t_socket_sbuffer *(*serializer)(void*));
@@ -115,10 +119,13 @@
 	void             sockets_destroyClient(t_socket_client *client);
 
 	t_socket_server *sockets_createServer(char *ip, int port);
+	t_socket_server *sockets_createServerUnix(char *path);
+	t_socket		*sockets_createUnix(char *path);
 	void 			 sockets_setMaxConexions(t_socket_server* server, int conexions);
 	int              sockets_getMaxConexions(t_socket_server* server);
 	int 			 sockets_listen(t_socket_server* server);
 	t_socket_client *sockets_accept(t_socket_server* server);
+	t_socket_client *sockets_acceptUnix(t_socket_server* server);
 	void 			 sockets_select(t_list* servers,
 									t_list *clients,
 									int usec_timeout,

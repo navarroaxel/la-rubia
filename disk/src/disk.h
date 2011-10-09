@@ -29,4 +29,6 @@ struct t_disk_config {
 	void *diskFile;
 };
 
+void console(void);
+
 #endif

@@ -1,8 +1,17 @@
 #include "listener.h"
 
 void listener(t_blist *waiting) {
+	/*t_socket_server *sckt = sockets_createServerUnix(SOCKET_UNIX_PATH);
+
+	sockets_listen(sckt);
+	printf("escuchando");
+	t_socket_client *a = sockets_acceptUnix(sckt);
+	t_socket_buffer *b = sockets_recv(a);
+	printf("%s\n", b->data);
+	printf("se acabo el socket unix");*/
+
 	//TODO: Get IP & port from config.
-	t_socket_server *server = sockets_createServer("192.168.0.146", 5678);
+	t_socket_server *server = sockets_createServer("127.0.0.1", 5800);
 
 	sockets_listen(server);
 

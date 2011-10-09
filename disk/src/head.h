@@ -14,9 +14,30 @@
 #include "common/collections/list.h"
 #include "disk.h"
 
+typedef struct location {
+	uint16_t cylinder;
+	uint16_t sector;
+} location;
+
+struct trace {
+	location current;
+	location requested;
+	t_list *path;
+	uint32_t time;
+	location next;
+};
+
+location *current;
+
 void init_head(t_blist *waiting, t_blist *processed);
 void *head_cscan(void *args);
 void *head_fscan(void *args);
+
+location *location_clone(location *l);
+int islimitcylinder(int cylinder);
+int islimitsector(int sector);
+int getcylinder(uint32_t offset);
+
 void init_disk();
 int disk_read(uint32_t offset, t_sector *sector);
 int disk_write(uint32_t offset, t_sector *sector);
