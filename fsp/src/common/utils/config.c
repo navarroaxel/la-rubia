@@ -77,8 +77,17 @@ char *xmlStreamGetParam(char *xmlStream, const char *param) {
 config_disk *xmlGetConfigStruct(t_xmlFile *xmlFile) {
 	config_disk *xmlParam = (config_disk*)malloc(sizeof(config_disk));
 	strcpy(xmlParam->ip,xmlFileGetParam(xmlFile, "ip"));
-	xmlParam->port = xmlFileGetParam(xmlFile, "port");
-	xmlParam->maxConnections = xmlFileGetParam(xmlFile, "maxConnections");
-	xmlParam->sizeCache = xmlFileGetParam(xmlFile, "sizeCache");
+	xmlParam->portProc = xmlFileGetParam(xmlFile, "portproc");
+	strcpy(xmlParam->mode,xmlFileGetParam(xmlFile, "mode"));
+	strcpy(xmlParam->algorithm,xmlFileGetParam(xmlFile, "algorithm"));
+	xmlParam->portConsole = xmlFileGetParam(xmlFile, "portconsole");
+	xmlParam->logEnabled = xmlFileGetParam(xmlFile, "logenabled");
+	xmlParam->diskId = xmlFileGetParam(xmlFile, "diskid");
+	xmlParam->chs = xmlFileGetParam(xmlFile, "chs");
+	xmlParam->diskId = xmlFileGetParam(xmlFile, "diskid");
+	xmlParam->jumpTime = xmlFileGetParam(xmlFile, "jumptime");
+	xmlParam->readTime = xmlFileGetParam(xmlFile, "readtime");
+	xmlParam->writeTime = xmlFileGetParam(xmlFile, "writetime");
+	xmlParam->rpm = xmlFileGetParam(xmlFile, "rpm");
 	return xmlParam;
 }

@@ -10,9 +10,17 @@ typedef struct t_xmlFile {
 
 typedef struct config_disk {
 	char ip[15];
-	int port;
-	int maxConnections;
-	int sizeCache;
+	int portProc;
+	char mode[10];
+	char algorithm[4];
+	int portConsole;
+	int logEnabled;
+	int diskId;
+	int chs;
+	int jumpTime;
+	int writeTime;
+	int readTime;
+	int rpm;
 } config_disk;
 
 
