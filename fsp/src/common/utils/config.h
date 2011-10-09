@@ -8,20 +8,12 @@ typedef struct t_xmlFile {
 } t_xmlFile;
 
 
-typedef struct config_disk {
+typedef struct config_fsp {
 	char ip[15];
-	int portProc;
-	char mode[10];
-	char algorithm[4];
-	int portConsole;
-	int logEnabled;
-	int diskId;
-	int chs;
-	int jumpTime;
-	int writeTime;
-	int readTime;
-	int rpm;
-} config_disk;
+	int port;
+	int maxConnections;
+	int sizeCache;
+} config_fsp;
 
 
 int xmlFileGetFileSize(t_xmlFile *xmlFile);
@@ -32,5 +24,5 @@ t_xmlFile *newXmlFile(char *path);
 void freeXmlFile(t_xmlFile *xmlFile);
 t_xmlFile *loadConfig(char* path);
 char *xmlStreamGetParam(char *xmlStream, const char *param);
-config_disk *xmlGetConfigStruct(t_xmlFile *xmlFile);
+config_fsp *xmlGetConfigStruct(t_xmlFile *xmlFile);
 #endif
