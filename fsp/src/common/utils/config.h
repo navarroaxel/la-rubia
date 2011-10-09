@@ -8,12 +8,11 @@ typedef struct t_xmlFile {
 } t_xmlFile;
 
 
-typedef struct config_fsp {
-	char ip[15];
-	int port;
-	int maxConnections;
-	int sizeCache;
-} config_fsp;
+typedef struct config_raid {
+	int portFs;
+	int portPpd;
+	int activateConsola;
+} config_raid;
 
 
 int xmlFileGetFileSize(t_xmlFile *xmlFile);
@@ -24,5 +23,5 @@ t_xmlFile *newXmlFile(char *path);
 void freeXmlFile(t_xmlFile *xmlFile);
 t_xmlFile *loadConfig(char* path);
 char *xmlStreamGetParam(char *xmlStream, const char *param);
-config_fsp *xmlGetConfigStruct(t_xmlFile *xmlFile);
+config_raid *xmlGetConfigStruct(t_xmlFile *xmlFile);
 #endif

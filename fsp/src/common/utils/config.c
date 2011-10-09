@@ -74,12 +74,11 @@ char *xmlStreamGetParam(char *xmlStream, const char *param) {
 	return paramValue;
 }
 
-config_fsp *xmlGetConfigStruct(t_xmlFile *xmlFile) {
-	config_fsp *xmlParam = (config_fsp*)malloc(sizeof(config_fsp));
-	strcpy(xmlParam->ip,xmlFileGetParam(xmlFile, "ip"));
-	xmlParam->port = xmlFileGetParam(xmlFile, "port");
-	xmlParam->maxConnections = xmlFileGetParam(xmlFile, "maxConnections");
-	xmlParam->sizeCache = xmlFileGetParam(xmlFile, "sizeCache");
+config_raid *xmlGetConfigStruct(t_xmlFile *xmlFile) {
+	config_raid *xmlParam = (config_raid*)malloc(sizeof(config_raid));
+	xmlParam->portFs = xmlFileGetParam(xmlFile, "portfs");
+	xmlParam->portPpd = xmlFileGetParam(xmlFile, "portppd");
+	xmlParam->activateConsola = xmlFileGetParam(xmlFile, "activateconsola");
 	return xmlParam;
 }
 
