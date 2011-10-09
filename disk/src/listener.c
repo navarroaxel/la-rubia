@@ -3,12 +3,12 @@
 void listener(t_blist *waiting) {
 	/*t_socket_server *sckt = sockets_createServerUnix(SOCKET_UNIX_PATH);
 
-	sockets_listen(sckt);
-	printf("escuchando");
-	t_socket_client *a = sockets_acceptUnix(sckt);
-	t_socket_buffer *b = sockets_recv(a);
-	printf("%s\n", b->data);
-	printf("se acabo el socket unix");*/
+	 sockets_listen(sckt);
+	 printf("escuchando");
+	 t_socket_client *a = sockets_acceptUnix(sckt);
+	 t_socket_buffer *b = sockets_recv(a);
+	 printf("%s\n", b->data);
+	 printf("se acabo el socket unix");*/
 
 	//TODO: Get IP & port from config.
 	t_socket_server *server = sockets_createServer("127.0.0.1", 5800);
@@ -24,9 +24,8 @@ void listener(t_blist *waiting) {
 			return 0;
 
 		t_nipc *nipc = nipc_deserializer(buffer);
-		if (nipc->type == 0)
-		{
-			if (handshake(client, nipc) == 0)
+		if (nipc->type == 0) {
+			if (handshakeNewClient(client, nipc) == 0)
 				return 0;
 		}
 
@@ -48,7 +47,47 @@ void listener(t_blist *waiting) {
 	}
 }
 
-int handshake(t_socket_client *client, t_nipc *nipc2) {
+void connectraid(t_blist *waiting) {
+	t_socket_client *client = sockets_createClient(NULL, 5555);
+	//TODO: Get IP & port from config.
+	sockets_connect(client, "127.0.0.1", 5200);
+	handshake(client);
+
+	t_socket_buffer *buffer;
+	t_nipc *nipc;
+	t_disk_operation *op;
+	while(true) {
+		buffer = sockets_recv(client);
+		nipc = nipc_deserializer(buffer);
+		op = getdiskoperation(nipc, client);
+		if (op == NULL)
+			continue;
+
+		enqueueOperation(waiting, op);
+
+		nipc_destroy(nipc);
+		sockets_bufferDestroy(buffer);
+	}
+
+	sockets_destroyClient(client);
+}
+
+int handshake(t_socket_client *client) {
+	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
+
+	nipc_setdata(nipc, "myid", strlen("myid") + 1);
+
+	nipc_send(nipc, client);
+	nipc_destroy(nipc);
+
+	t_socket_buffer *buffet = sockets_recv(client);
+
+	nipc = nipc_deserializer(buffet);
+	return nipc->type == NIPC_HANDSHAKE && nipc->length == 0;
+}
+
+
+int handshakeNewClient(t_socket_client *client, t_nipc *nipc2) {
 	//TODO: Revisar si estoy en modo CONNECT.
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_setdata(nipc, NULL, 0);

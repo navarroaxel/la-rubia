@@ -1,5 +1,5 @@
-#ifndef NIPC_H
-#define NIPC_H
+#ifndef NIPC_H_
+#define NIPC_H_
 
 #include <stdint.h>
 #include <stdlib.h>
