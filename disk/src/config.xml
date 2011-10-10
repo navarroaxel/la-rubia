@@ -6,7 +6,9 @@
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>
   <diskid>1</diskid>
-  <chs>1200</chs>
+  <cylinder>1</cylinder>
+  <head>1</head>
+  <sector>20</sector>
   <jumptime>1</jumptime>
   <readtime>2</readtime>
   <writetime>3</writetime>
