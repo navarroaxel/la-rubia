@@ -10,8 +10,6 @@
 t_log *logFile;
 
 int main(void) {
-	console();
-
 	/*
 	 if (fork() == 0) {
 	 console();
