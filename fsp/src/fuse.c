@@ -31,6 +31,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	if(strcmp(path, "/") == 0) {
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
+		stbuf->st_size = FAT_CLUSTER_SIZE;
 		return 0;
 	}
 	if (!fat_getFileFromPath(path,&file)){
@@ -52,14 +53,19 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	(void) offset;
 	(void) fi;
 	char fileName[12];
+	int res;
 	t_fat_file_entry file;
 	t_fat_file_list * dir;
 	t_fat_file_list * p;
 	log_debug(logFile,"FSP","ls dir %s\n",path);
-	if (fat_getFileFromPath(path,&file)){
+	res=fat_getFileFromPath(path,&file);
+
+	if (res==1){
 		dir = fat_getDirectoryListing(&file);
-	}else {
+	}else if(res==-1){
 		dir = fat_getRootDirectory();
+	}else{
+		return -ENOENT;
 	}
 	filler(buf, ".", NULL, 0);//cargo en el buffer la entrada del dir actual
 	filler(buf, "..", NULL, 0);//cargo en el buffer la entrada del dir padre
@@ -111,7 +117,7 @@ static struct fuse_operations fsp_oper = {
 	.read   = hello_read,
 };
 
-int main2(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
 	fat_initialize();

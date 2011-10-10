@@ -6,8 +6,11 @@
 #include "fatAddressing.h"
 #include "fat.h"
 #include <assert.h>
+#include "fatHelpers.h"
 
 extern t_fat_bootsector bootSector;
+extern uint32_t * fatTable;
+
 uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	// .firstClusterHigh = 0xAB
 	// .firstClusterLow  = 0xCD
@@ -35,36 +38,26 @@ uint32_t fat_getFATFirstCluster(){
 }
 
 uint32_t fat_getNextCluster(uint32_t currentCluster){
-	t_cluster cluster;
-	uint32_t * fatCluster;
-	uint32_t clusterAddress = fat_getFATFirstCluster() + currentCluster / 1024; //1024 * 4 = 4096
-	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
-	fatCluster = (uint32_t *) cluster;
-	return fatCluster[currentCluster % 1024];
+	return fatTable[currentCluster];
 }
 
 int fat_fat_setValue(uint32_t clusterN,uint32_t next){
-	t_cluster cluster;
-	uint32_t * fatCluster;
-	uint32_t clusterAddress = fat_getFATFirstCluster() + clusterN / 1024;
-	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
-	fatCluster = (uint32_t *) cluster;
-	fatCluster[clusterN%1024]=next;
-	fat_addressing_writeCluster(clusterAddress,&cluster,bootSector);
+	fatTable[clusterN]=next;
+	perror("Persistencia FAT no implementada");//TODO:Implementar persistencia FAT
 	return 0;
 }
 
 uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
 	uint32_t ret=1;
 	uint32_t currentCluster = fat_getEntryFirstCluster(file);
-	while((currentCluster = fat_getNextCluster(currentCluster)) != FAT_LASTCLUSTER)
+	while((currentCluster = fat_getNextCluster(currentCluster)) != FAT_LAST_CLUSTER)
 		ret++;
 	return ret;
 }
 
-t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name){//TODO: Nombres Largos
-	t_fat_file_list * p=dir;
-	char entryName [12];
+t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name){
+	t_fat_file_list * p= (t_fat_file_list *)dir;
+	char entryName [14];
 	while(p!=NULL){
 		fat_getName(&p->fileEntry,entryName);
 		if(strcmp(entryName,name)==0){
@@ -76,27 +69,23 @@ t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name){//TODO
 }
 
 uint32_t fat_getNextFreeCluster(uint32_t start){
-	t_cluster cluster;
-	uint32_t * fatCluster;
-	int i;
-	start++;
-	if (start >= bootSector.totalSectos32/bootSector.sectorPerCluster)
-		return 0;
-	uint32_t clusterAddress = fat_getFATFirstCluster() + start / 1024;
-	fat_addressing_readCluster(clusterAddress,&cluster,bootSector);
-	fatCluster = (uint32_t *) cluster;
-	for (i=start%1024;i<1024;i++){
-		if (fatCluster[i]==0x0000){
-			return start - (start%1024) + i;
-		}
+	uint32_t i;
+	for (i = start; i<bootSector.totalSectors32/bootSector.sectorPerCluster;i++){
+		if (fatTable[i]==FAT_FREE_CLUSTER)
+			return i;
 	}
-	return fat_getNextFreeCluster((start / 1024+1)*1024);
+	return 0;
+}
+
+uint32_t getFATAddressOfEntry(uint32_t clusterN){
+	uint32_t entriesPerFATCluster= FAT_CLUSTER_SIZE/FAT_FAT_ENTRY_SIZE;
+	return fat_getFATFirstCluster() + clusterN / entriesPerFATCluster;
 }
 
 uint32_t fat_getFileLastCluster(t_fat_file_entry * file){
 	uint32_t clusterN,temp;
 	clusterN=temp=fat_getEntryFirstCluster(&file->dataEntry);
-	while((temp=fat_getNextCluster(temp))!=FAT_LASTCLUSTER){
+	while((temp=fat_getNextCluster(temp))!=FAT_LAST_CLUSTER){
 		clusterN=temp;
 	}
 	return clusterN;
@@ -108,4 +97,10 @@ uint32_t fat_getClusterPointingTo(uint32_t clusterToFind, uint32_t clusterofChai
 		ret=clusterofChain;
 	}
 	return ret;
+}
+/**
+ * pasar de cluster de zona datos ( lo que leo de la entrada de archivo) a cluster en el disk (offset FAT)
+ */
+uint32_t fat_dataClusterToDiskCluster(uint32_t dataCluster){
+	return fat_getRootDirectoryFirstCluster()+ dataCluster -2;
 }

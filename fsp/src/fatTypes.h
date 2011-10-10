@@ -8,8 +8,14 @@
 #ifndef FATTYPES_H_
 #define FATTYPES_H_
 
-typedef uint8_t t_sector[512];
-typedef uint8_t t_cluster[4096];
+#define FAT_SECTOR_SIZE 512
+#define FAT_CLUSTER_SIZE 4096
+#define FAT_LAST_CLUSTER 0x0FFFFFFF
+#define FAT_FREE_CLUSTER 0x00000000
+#define FAT_FAT_ENTRY_SIZE 4
+
+typedef uint8_t t_sector[FAT_SECTOR_SIZE];
+typedef uint8_t t_cluster[FAT_CLUSTER_SIZE];
 
 typedef struct {
 	uint8_t  jmpBoot[3];                    /* 0  Jump to boot code.                                */
@@ -29,7 +35,7 @@ typedef struct {
 	uint16_t numberOfHeads;                 /* 26 Heads.                                                            */
 
 	uint32_t countOfHiddenSectors;  /* 28 number of hidden sectors.                 */
-	uint32_t totalSectos32;                 /* 32 big total sectors.                        */
+	uint32_t totalSectors32;                 /* 32 big total sectors.                        */
 
 	/* Here start the FAT32 specific fields (offset 36) */
 

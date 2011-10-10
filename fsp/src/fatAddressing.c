@@ -15,7 +15,9 @@
 #include "disk.h"
 #include "cache.h"
 
-int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_bootsector bs){
+extern t_fat_bootsector bootSector;
+
+int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer){
 	t_sector sector;
 	uint32_t offset;
 	t_cluster cluster;
@@ -28,9 +30,9 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_
 	/*if (cache_read(clusterNumber,buffer)){
 		return 0;
 	}*/
-	uint32_t clusterFirstSector=clusterNumber*bs.sectorPerCluster;
-	uint32_t sectorSize=bs.bytesPerSector;
-	for (sectorN = 0 ; sectorN < bs.sectorPerCluster ; sectorN++) {
+	uint32_t clusterFirstSector=clusterNumber*bootSector.sectorPerCluster;
+	uint32_t sectorSize=bootSector.bytesPerSector;
+	for (sectorN = 0 ; sectorN < bootSector.sectorPerCluster ; sectorN++) {
 		if (!disk_readSector(clusterFirstSector + sectorN , &sector)){
 			return 0;
 		}else{
@@ -39,12 +41,12 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer,t_fat_
 			memcpy(&(cluster[offset]), &sector,sectorSize); //WARNING: Aritmetica de Punteros
 		}
 	}
-	memcpy(buffer,&cluster,4096);
-	cache_write(clusterNumber,&cluster);
+	memcpy(buffer,&cluster,FAT_CLUSTER_SIZE);
+	//cache_write(clusterNumber,&cluster);
 	return 1;
 }
-
-int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster,t_fat_bootsector bs){
+//TODO: Implementar cache teniendo en cuenta la escritura
+int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster){
 	t_sector sector;
 	uint32_t offset;
 	uint32_t sectorN;
@@ -52,9 +54,9 @@ int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster,t_fa
 	if (!disk_isInitialized())
 		disk_initialize();
 
-	uint32_t clusterFirstSector=clusterNumber*bs.sectorPerCluster;
-	uint32_t sectorSize=bs.bytesPerSector;
-	for (sectorN = 0 ; sectorN < bs.sectorPerCluster ; sectorN++) {
+	uint32_t clusterFirstSector=clusterNumber*bootSector.sectorPerCluster;
+	uint32_t sectorSize=bootSector.bytesPerSector;
+	for (sectorN = 0 ; sectorN < bootSector.sectorPerCluster ; sectorN++) {
 		offset = sectorN * sectorSize;
 		memcpy(&sector,&((*cluster)[offset]),sectorSize);
 		if (!disk_writeSector(clusterFirstSector + sectorN , &sector)){
