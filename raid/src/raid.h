@@ -17,7 +17,14 @@ struct t_disk {
 	t_socket_client *client;
 };
 
+struct t_fsrq{
+	t_nipc *nipc;
+	t_socket_client *client;
+};
+
 t_list *disks;
+void listener(t_blist *waiting);
+int handshake(t_socket_client *client, t_nipc *rq);
 void registerdisk(char *id, t_socket_client *client);
 void enqueueoperation(t_nipc *nipc, t_socket_client *client);
 

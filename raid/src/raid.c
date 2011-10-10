@@ -1,6 +1,27 @@
 #include "raid.h"
 
 int main(void) {
+	t_socket_client *client = sockets_createClient("127.0.0.1", 5500);
+
+	sockets_connect(client, "127.0.0.1", 5800);
+	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
+	rq->offset = 0;
+
+	t_nipc *nipc = nipc_create(NIPC_READSECTOR_RQ);
+	t_disk_readSectorRs *rs;
+	t_nipc *nipc2;
+	nipc_setdata(nipc,rq, sizeof(t_disk_readSectorRq));
+
+	t_socket_buffer *buffer = (t_socket_buffer *)nipc_serializer(nipc);
+	sockets_send(client, buffer->data, buffer->size);
+
+	buffer = sockets_recv(client);
+	nipc2 = nipc_deserializer(buffer);
+	rs = nipc2->payload;
+
+	/*t_blist *waiting = collection_blist_create(50);
+
+	listener(waiting);*/
 
 	return EXIT_SUCCESS;
 }
@@ -16,20 +37,19 @@ void listener(t_blist *waiting) {
 
 	int recvClient(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
-		if (buffer == NULL
-			)
+		if (buffer == NULL)
 			return 0;
 
 		t_nipc *nipc = nipc_deserializer(buffer);
-		if (nipc->type == 0)
-			return handshake(client);
+		if (nipc->type == NIPC_HANDSHAKE)
+			return handshake(client, nipc);
 
 		enqueueoperation(nipc, client);
 
 		nipc_destroy(nipc);
 		sockets_bufferDestroy(buffer);
 
-		return client->socket->desc;
+		return 0;
 	}
 
 	t_list *clients = collection_list_create();
@@ -70,9 +90,9 @@ void registerdisk(char *id, t_socket_client *client) {
 	dsk->client = client;
 
 	pthread_t *thread;
-	pthread_create(thread, NULL, &disk, dsk->waiting);
+	pthread_create(thread, NULL, &disk, dsk);
 
-	dsk->thread = thread;
+	dsk->thread = *thread;
 	collection_list_add(disks, dsk);
 }
 
@@ -93,8 +113,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client) {
 		t_socket_buffer *buffer = nipc_serializer(nipc);
 		sockets_sendBuffer(disk->client, buffer);
 		collection_blist_push(disk->waiting, nipc_clone(nipc));
-	} else if (nipc->type == NIPC_WRITESECTOR_RQ)
-	{
+	} else if (nipc->type == NIPC_WRITESECTOR_RQ) 	{
 		t_socket_buffer *buffer = nipc_serializer(nipc);
 		void sendrequest(void *data) {
 			struct t_disk *disk = (struct t_disk *) data;
