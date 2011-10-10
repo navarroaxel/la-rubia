@@ -32,7 +32,7 @@ int disk_initialize() {
 	strcpy(disk_config_data.file, "/home/nico/fat32.disk");
 	disk_config_data.sectorSize = 512;
 	client = sockets_createClient("127.0.0.1", 5679);
-	sockets_connect(client, "127.0.0.1", 5678);
+	sockets_connect(client, "127.0.0.1", 5800);
 	disk_is_initialized = 1;
 
 	return 0;
