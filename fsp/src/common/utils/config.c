@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "config.h"
 #include "utils.h"
 
@@ -76,9 +77,9 @@ char *xmlStreamGetParam(char *xmlStream, const char *param) {
 
 config_raid *xmlGetConfigStruct(t_xmlFile *xmlFile) {
 	config_raid *xmlParam = (config_raid*)malloc(sizeof(config_raid));
-	xmlParam->portFs = xmlFileGetParam(xmlFile, "portfs");
-	xmlParam->portPpd = xmlFileGetParam(xmlFile, "portppd");
-	xmlParam->activateConsola = xmlFileGetParam(xmlFile, "activateconsola");
+	xmlParam->portFs = atoi(xmlFileGetParam(xmlFile, "portfs"));
+	xmlParam->portPpd = atoi(xmlFileGetParam(xmlFile, "portppd"));
+	xmlParam->activateConsola = atoi(xmlFileGetParam(xmlFile, "activateconsola"));
 	return xmlParam;
 }
 

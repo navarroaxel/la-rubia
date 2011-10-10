@@ -9,9 +9,9 @@ typedef struct t_xmlFile {
 
 
 typedef struct config_raid {
-	int portFs;
-	int portPpd;
-	int activateConsola;
+   uint16_t portFs;
+   uint16_t portPpd;
+   uint8_t activateConsola;
 } config_raid;
 
 
