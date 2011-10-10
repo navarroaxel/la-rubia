@@ -25,30 +25,7 @@
 t_fat_bootsector bootSector;
 t_fat_config fatConfig;
 uint32_t * fatTable;
-void fat_loadFAT();
 
-void fat_initialize(){
-	disk_initialize();
-	bootSector = fat_readBootSector();
-	//TODO: Setearlo desde config
-	strcpy(fatConfig.diskIp,"127.0.0.1");
-	fatConfig.diskPort=5678;
-	fatConfig.bindPort=5679;
-	fatConfig.cacheSizeInClusters=8;
-	fat_loadFAT();
-}
-
-void fat_loadFAT(){
-	uint32_t i,totalClusters=bootSector.totalSectors32/bootSector.sectorPerCluster;
-	t_cluster cluster;
-	uint32_t entriesPerCluster =FAT_CLUSTER_SIZE/FAT_FAT_ENTRY_SIZE;
-	fatTable = (uint32_t *) malloc(totalClusters * FAT_FAT_ENTRY_SIZE);
-	for (i=0;i<totalClusters/ (entriesPerCluster);i++){
-		fat_addressing_readCluster(fat_getFATFirstCluster()+i,&cluster);
-		memcpy(fatTable+i*entriesPerCluster,&cluster,FAT_CLUSTER_SIZE);
-	}
-	return;
-}
 int main2(){
 
 	char ** subpaths=string_split2("/aqwe/bxcv/cjhdb/d123.jpg",'/');
@@ -100,6 +77,29 @@ int main2(){
 
 }
 
+void fat_initialize(){
+	disk_initialize();
+	bootSector = fat_readBootSector();
+	//TODO: Setearlo desde config
+	strcpy(fatConfig.diskIp,"127.0.0.1");
+	fatConfig.diskPort=5678;
+	fatConfig.bindPort=5679;
+	fatConfig.cacheSizeInClusters=8;
+	fat_loadFAT();
+}
+
+void fat_loadFAT(){
+	uint32_t i,totalClusters=bootSector.totalSectors32/bootSector.sectorPerCluster;
+	t_cluster cluster;
+	uint32_t entriesPerCluster =FAT_CLUSTER_SIZE/FAT_FAT_ENTRY_SIZE;
+	fatTable = (uint32_t *) malloc(totalClusters * FAT_FAT_ENTRY_SIZE);
+	for (i=0;i<totalClusters/ (entriesPerCluster);i++){
+		fat_addressing_readCluster(fat_getFATFirstCluster()+i,&cluster);
+		memcpy(fatTable+i*entriesPerCluster,&cluster,FAT_CLUSTER_SIZE);
+	}
+	return;
+}
+
 t_fat_bootsector fat_readBootSector(){
 	t_fat_bootsector bs;
 	t_sector cluster;
@@ -128,12 +128,14 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
 				if (tempDataEntry.name[0]==0){ //La primera entrada despues de de la ultima entrada con datos empiesa con 0, me avisa que se termino el listado.
 					return directory;
 				}
+				if(tempDataEntry.name[0]==0xE5){
+					continue;
+				}
 				if (!inEntry){
 					p=(t_fat_file_list * )malloc(sizeof(t_fat_file_list));
 					memset(&p->fileEntry,0,sizeof(t_fat_file_entry));
 					inEntry=1;
 				}
-				//TODO: Borrada?
 				if (tempDataEntry.attributes==0x0F) {// Es entrada de nombre largo
 					memcpy(&(p->fileEntry.longNameEntry),&tempDataEntry,sizeof(t_fat_long_name_entry));
 					p->fileEntry.hasLongNameEntry=1;

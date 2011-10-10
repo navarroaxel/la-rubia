@@ -26,6 +26,8 @@ int fat_addFreeClusterToChain(uint32_t lastClusterOfChain);
 int fat_addClusterToFile(t_fat_file_entry * file);
 int fat_removeLastClusterFromFile(t_fat_file_entry * file);
 void freeArrayofPointersToStrings(char ** caca,size_t arraySize);
+void fat_loadFAT();
+void fat_initialize();
 
 typedef struct {
 	char diskIp[16];
