@@ -75,11 +75,41 @@ char *xmlStreamGetParam(char *xmlStream, const char *param) {
 	return paramValue;
 }
 
-config_raid *xmlGetConfigStruct(t_xmlFile *xmlFile) {
+config_raid *xmlGetConfigStructRaid(t_xmlFile *xmlFile) {
 	config_raid *xmlParam = (config_raid*)malloc(sizeof(config_raid));
-	xmlParam->portFs = atoi(xmlFileGetParam(xmlFile, "portfs"));
-	xmlParam->portPpd = atoi(xmlFileGetParam(xmlFile, "portppd"));
-	xmlParam->activateConsola = atoi(xmlFileGetParam(xmlFile, "activateconsola"));
+	xmlParam->portFs = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portfs"));
+	xmlParam->portPpd = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portppd"));
+	xmlParam->activateConsola = (uint16_t)atoi(xmlFileGetParam(xmlFile, "activateconsola"));
+	return xmlParam;
+}
+
+config_fsp *xmlGetConfigStructFsp(t_xmlFile *xmlFile) {
+	config_fsp *xmlParam = (config_fsp*)malloc(sizeof(config_fsp));
+	strcpy(xmlParam->ip,xmlFileGetParam(xmlFile, "ip"));
+	xmlParam->port = (uint16_t)atoi(xmlFileGetParam(xmlFile, "port"));
+	xmlParam->maxConnections = (uint16_t)atoi(xmlFileGetParam(xmlFile, "maxConnections"));
+	xmlParam->sizeCache = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sizeCache"));
+	return xmlParam;
+}
+
+config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
+	config_disk *xmlParam = (config_disk*)malloc(sizeof(config_disk));
+	strcpy(xmlParam->ip,xmlFileGetParam(xmlFile, "ip"));
+	xmlParam->portProc = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portproc"));
+	strcpy(xmlParam->mode,xmlFileGetParam(xmlFile, "mode"));
+	strcpy(xmlParam->algorithm,xmlFileGetParam(xmlFile, "algorithm"));
+	xmlParam->portConsole = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portconsole"));
+	xmlParam->logEnabled = (uint8_t)atoi(xmlFileGetParam(xmlFile, "logenabled"));
+	xmlParam->diskId = (uint8_t)atoi(xmlFileGetParam(xmlFile, "diskid"));
+	xmlParam->cylinder = (uint8_t)atoi(xmlFileGetParam(xmlFile, "cylinder"));
+	xmlParam->head = (uint8_t)atoi(xmlFileGetParam(xmlFile, "head"));
+	xmlParam->sector = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sector"));
+	xmlParam->diskId = (uint8_t)atoi(xmlFileGetParam(xmlFile, "diskid"));
+	xmlParam->jumpTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "jumptime"));
+	xmlParam->readTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "readtime"));
+	xmlParam->writeTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "writetime"));
+	xmlParam->rpm = (uint16_t)atoi (xmlFileGetParam(xmlFile, "rpm"));
+
 	return xmlParam;
 }
 
