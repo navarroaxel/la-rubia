@@ -5,6 +5,10 @@
 #include "dispatcher.h"
 #include <errno.h>
 #include <stdbool.h>
+#include <regex.h>
+#include "common/utils/log.h"
+
+t_log *logFile;
 
 int main(void) {
 	/*
@@ -16,11 +20,13 @@ int main(void) {
 	t_blist *waiting = collection_blist_create(50);
 	t_blist *processed = collection_blist_create(50);
 
-	init_head(waiting, processed);
+	logFile = log_create("PPD", "/home/utn_so/ppd.log", WARNING | DEBUG | ERROR | INFO, M_CONSOLE_DISABLE);
+
+	init_head(waiting, processed, logFile);
 
 	init_dispatcher(processed);
 
-	listener(waiting);
+	listener(waiting, logFile);
 
 	return EXIT_SUCCESS;
 }
@@ -33,7 +39,7 @@ void console(void) {
 		fgets(input, sizeof(input), stdin);
 		printf("%s\n", input);
 		if (!strncmp("info", input, strlen("info"))) {
-			info();
+			info(input);
 		} else if (!strncmp("clean", input, strlen("clean"))) {
 			clean(input + strlen("clean"));
 		} else if (!strncmp("trace", input, strlen("trace"))) {
@@ -53,8 +59,13 @@ void console(void) {
 	 }*/
 }
 
-void info(void) {
-
+void info(char *input) {
+	regex_t rgT;
+	regmatch_t match;
+	regcomp(&rgT, "info", REG_EXTENDED);
+	if (regexec(&rgT, input, 1, &match, 0) == 0) {
+		printf("ok!");
+	}
 }
 
 void clean(char *input) {
@@ -62,6 +73,7 @@ void clean(char *input) {
 }
 
 void trace(char *input) {
+	uint32_t sectors[6];
 	int i;
 	char *subs[10];
 	for (i = 0; i < 10; i++) {
@@ -72,7 +84,14 @@ void trace(char *input) {
 
 	i = 0;
 	while (subs[i] != NULL) {
-		printf("%s\n", subs[i++]);
+		printf("%s\n", subs[i]);
+		sectors[i] = atoi(subs[i]);
+		printf("%i", sectors[i]);
+		i++;
+	}
+
+	for (i = 0; i < 10; i++) {
+		free(subs[i]);
 	}
 }
 

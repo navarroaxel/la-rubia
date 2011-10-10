@@ -4,7 +4,7 @@ struct t_disk_config disk_data;
 location *current;
 int movement = 1;
 
-void init_head(t_blist *waiting, t_blist *processed) {
+void init_head(t_blist *waiting, t_blist *processed, t_log *logFile) {
 	current = malloc(sizeof(location));
 	current->cylinder = current->sector = 0;
 	init_disk();
@@ -15,6 +15,7 @@ void init_head(t_blist *waiting, t_blist *processed) {
 	struct queues *q = (struct queues *) malloc(sizeof(struct queues));
 	q->waiting = waiting;
 	q->processed = processed;
+	q->logFile = logFile;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);

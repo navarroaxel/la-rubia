@@ -19,18 +19,13 @@ typedef struct t_disk_operation {
 	t_socket_client *client;
 } t_disk_operation;
 
-struct queues {
-	t_blist *waiting;
-	t_blist *processed;
-};
-
 struct t_disk_config {
 	char path[255];
 	void *diskFile;
 };
 
 void console(void);
-void info(void);
+void info(char *input);
 void clean(char *input);
 void trace(char *input);
 

@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include "common/collections/blist.h"
 #include "common/collections/list.h"
+#include "common/utils/log.h"
 #include "disk.h"
 
 typedef struct location {
@@ -27,7 +28,13 @@ struct trace {
 	location next;
 };
 
-void init_head(t_blist *waiting, t_blist *processed);
+struct queues {
+	t_blist *waiting;
+	t_blist *processed;
+	t_log *logFile;
+};
+
+void init_head(t_blist *waiting, t_blist *processed, t_log *logFile);
 void *head_cscan(void *args);
 void *head_fscan(void *args);
 

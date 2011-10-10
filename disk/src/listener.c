@@ -1,6 +1,6 @@
 #include "listener.h"
 
-void listener(t_blist *waiting) {
+void listener(t_blist *waiting, t_log *logFile) {
 	/*t_socket_server *sckt = sockets_createServerUnix(SOCKET_UNIX_PATH);
 
 	 sockets_listen(sckt);
@@ -34,6 +34,11 @@ void listener(t_blist *waiting) {
 		t_disk_operation *op = getdiskoperation(nipc, client);
 		if (op == NULL)
 			return 0;
+
+		log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
+				op->read ? "lectura" : "escritura",
+				op->offset
+			);
 
 		nipc_destroy(nipc);
 		enqueueOperation(waiting, op);
