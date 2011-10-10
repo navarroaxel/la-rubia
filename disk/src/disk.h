@@ -30,5 +30,8 @@ struct t_disk_config {
 };
 
 void console(void);
+void info(void);
+void clean(char *input);
+void trace(char *input);
 
 #endif

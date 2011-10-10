@@ -7,10 +7,11 @@
 #include <stdbool.h>
 
 int main(void) {
-	if (fork() == 0) {
-		console();
-		return EXIT_SUCCESS;
-	}
+	/*
+	 if (fork() == 0) {
+	 console();
+	 return EXIT_SUCCESS;
+	 }*/
 
 	t_blist *waiting = collection_blist_create(50);
 	t_blist *processed = collection_blist_create(50);
@@ -25,18 +26,23 @@ int main(void) {
 }
 
 void console(void) {
-	sleep(5);
-	char input[255];
+	char input[100];
 	while (true) {
 		printf("> ");
-		fgets(input, 255, stdin);
+		fflush(stdin);
+		fgets(input, sizeof(input), stdin);
 		printf("%s\n", input);
-		if (strcmp("info", input)) {
-			printf("info command\n");
+		if (!strncmp("info", input, strlen("info"))) {
+			info();
+		} else if (!strncmp("clean", input, strlen("clean"))) {
+			clean(input + strlen("clean"));
+		} else if (!strncmp("trace", input, strlen("trace"))) {
+			trace(input + strlen("trace"));
 		}
 	}
 
-	/*t_socket_client *sckt_un = sockets_createClientUnix(SOCKET_UNIX_PATH);
+	/*sleep(5);
+	 t_socket_client *sckt_un = sockets_createClientUnix(SOCKET_UNIX_PATH);
 	 if (sockets_connectUnix(sckt_un, SOCKET_UNIX_PATH)) {
 	 sockets_write(sckt_un, "ASD", 4);
 	 printf("success\n");
@@ -51,10 +57,22 @@ void info(void) {
 
 }
 
-void clean(void) {
+void clean(char *input) {
 
 }
 
-void trace(void) {
+void trace(char *input) {
+	int i;
+	char *subs[10];
+	for (i = 0; i < 10; i++) {
+		subs[i] = malloc(10);
+	}
 
+	string_split3(input, ' ', subs);
+
+	i = 0;
+	while (subs[i] != NULL) {
+		printf("%s\n", subs[i++]);
+	}
 }
+

@@ -1,9 +1,12 @@
 #include "head.h"
 
 struct t_disk_config disk_data;
+location *current;
 int movement = 1;
 
 void init_head(t_blist *waiting, t_blist *processed) {
+	current = malloc(sizeof(location));
+	current->cylinder = current->sector = 0;
 	init_disk();
 
 	pthread_attr_t attr;

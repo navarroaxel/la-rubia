@@ -99,15 +99,15 @@ void *collection_blist_popfirst(t_blist *list, int(*closure)(void*)) {
 
 	t_link_element *prev_element;
 	t_link_element *e = list->head;
-	while (e != NULL && closure(e->data)) {
+	while (e != NULL && !closure(e->data)) {
 		prev_element = e;
 		e = e->next;
 	}
 
-	if (e == NULL){
-		return NULL;
+	if (e == NULL) {
 		sem_post(&list->semaphore);
 		sem_post(&list->empty);
+		return NULL;
 	}
 
 	if (e == list->head) {
