@@ -1,12 +1,11 @@
 #include "head.h"
 
 struct t_disk_config disk_data;
-location *current;
+t_location *current;
 int movement = 1;
 
 void init_head(t_blist *waiting, t_blist *processed, t_log *logFile) {
-	current = malloc(sizeof(location));
-	current->cylinder = current->sector = 0;
+	current = location_create(0);
 	init_disk();
 
 	pthread_attr_t attr;
@@ -25,53 +24,84 @@ void init_head(t_blist *waiting, t_blist *processed, t_log *logFile) {
 
 void *head_cscan(void *args) {
 	struct queues *q = (struct queues *) args;
+	uint16_t refcylinder;
 	t_disk_operation *e;
+	t_planning *p;
 
 	int getnextoperation(void *data) {
-		return getcylinder(((t_disk_operation *)data)->offset) >= current->cylinder;
+		return getcylinder(((t_disk_operation *)data)->offset) >= refcylinder;
 	}
 
 	while (true) {
-		findnextoperation: e = (t_disk_operation *)collection_blist_popfirst(q->waiting, getnextoperation);
-		if (e == NULL){
-			current->cylinder = 0;
-			goto findnextoperation;
+		refcylinder = current->cylinder;
+		e = (t_disk_operation *)collection_blist_popfirst(q->waiting, getnextoperation);
+		if (e == NULL) {
+			refcylinder = 0;
+			e = (t_disk_operation *)collection_blist_popfirst(q->waiting, getnextoperation);
 		}
 
-		if (e->read)
-			e->result = disk_read(e->offset, &e->data);
-		else
-			e->result = disk_write(e->offset, &e->data);
+		p = head_cscanmove(e->offset);
+
+		e->result = e->read ? disk_read(e->offset, &e->data) : disk_write(e->offset, &e->data);
 
 		collection_blist_push(q->processed, e);
 	}
 	return NULL;
 }
 
-t_list *head_cscanmove(struct location *current, struct location *next) {
-	t_list *path = collection_list_create();
-
-	while (current->cylinder != next->cylinder) {
+t_planning *head_cscanmove(uint32_t requested) {
+	t_planning *p = planning_create();
+	location_copy(current, &p->current);
+	location_set(&p->requested, requested);
+	while (current->cylinder != p->requested.cylinder) {
 		if (islimitcylinder(current->cylinder))
 			current->cylinder = 0;
-		else
+		else {
 			current->cylinder += movement;
-		collection_list_add(path, location_clone(current));
+			p->time += 2; //track time
+		}
+		collection_list_add(p->path, location_clone(current));
 	}
 
-	while (current->sector != next->sector) {
+	while (current->sector != p->requested.sector) {
 		if (islimitsector(current->sector))
 			current->sector = 0;
 		else
 			current->sector += 1;
-		collection_list_add(path, location_clone(current));
+		p->time += 1;//sector time
+		collection_list_add(p->path, location_clone(current));
 	}
 
-	return path;
+	return p;
 }
 
-location *location_clone(location *l) {
-	location *x = malloc(sizeof(location));
+t_planning *planning_create(){
+	t_planning *p = malloc(sizeof(t_planning));
+	p->time = 0;
+	p->path = collection_list_create();
+	return p;
+}
+
+void planning_destroy(t_planning *p) {
+	void destroy(void *data){
+		location_destroy((t_location *)data);
+	}
+
+	collection_list_destroy(p->path, destroy);
+	free(p);
+}
+
+void location_destroy(t_location *l){
+	free(l);
+}
+
+void location_copy(t_location *l1, t_location *l2){
+	l2->cylinder = l1->cylinder;
+	l2->sector = l1->sector;
+}
+
+t_location *location_clone(t_location *l) {
+	t_location *x = malloc(sizeof(t_location));
 	x->cylinder = l->cylinder;
 	x->sector = l->sector;
 	return x;
@@ -87,9 +117,26 @@ int islimitsector(int sector) {
 	return sector == 10;
 }
 
-int getcylinder(uint32_t offset) {
+uint16_t getcylinder(uint32_t offset) {
 	//TODO: Tomar consts de config file.
 	return offset / (1 * 10); //head * sector
+}
+
+uint16_t getsector(uint32_t offset){
+	uint16_t sector = offset % (1 * 10);
+	sector = sector % 1;
+	return sector;
+}
+
+t_location *location_create(uint32_t offset){
+	t_location *l = malloc(sizeof(t_location));
+	location_set(l, offset);
+	return l;
+}
+
+void location_set(t_location *l, uint32_t offset){
+	l->cylinder = getcylinder(offset);
+	l->sector = getsector(offset);
 }
 
 // ***

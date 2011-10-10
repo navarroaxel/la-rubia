@@ -8,6 +8,7 @@
 #include "common/utils/sockets.h"
 #include "common/collections/blist.h"
 #include "common/nipc.h"
+#include "common/utils/commands.h"
 
 typedef uint8_t t_sector[DISK_SECTOR_SIZE];
 
@@ -25,8 +26,8 @@ struct t_disk_config {
 };
 
 void console(void);
-void info(char *input);
-void clean(char *input);
-void trace(char *input);
+void info(void *context, t_array *args);
+void clean(void *context, t_array *args);
+void trace(void *context, t_array *args);
 
 #endif
