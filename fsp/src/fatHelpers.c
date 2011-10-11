@@ -42,8 +42,12 @@ uint32_t fat_getNextCluster(uint32_t currentCluster){
 }
 
 int fat_fat_setValue(uint32_t clusterN,uint32_t next){
+	uint32_t entriesPerCluster = FAT_CLUSTER_SIZE / FAT_FAT_ENTRY_SIZE;
+	uint32_t diskCluster = fat_getFATAddressOfEntry(clusterN);
+	t_cluster cluster;
 	fatTable[clusterN]=next;
-	perror("Persistencia FAT no implementada");//TODO:Implementar persistencia FAT
+	memcpy(&cluster,&fatTable[clusterN - clusterN % entriesPerCluster],FAT_CLUSTER_SIZE);
+	fat_addressing_writeCluster(diskCluster,&cluster);
 	return 0;
 }
 
@@ -77,7 +81,7 @@ uint32_t fat_getNextFreeCluster(uint32_t start){
 	return 0;
 }
 
-uint32_t getFATAddressOfEntry(uint32_t clusterN){
+uint32_t fat_getFATAddressOfEntry(uint32_t clusterN){
 	uint32_t entriesPerFATCluster= FAT_CLUSTER_SIZE/FAT_FAT_ENTRY_SIZE;
 	return fat_getFATFirstCluster() + clusterN / entriesPerFATCluster;
 }

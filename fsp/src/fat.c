@@ -26,25 +26,13 @@ t_fat_bootsector bootSector;
 t_fat_config fatConfig;
 uint32_t * fatTable;
 
-int main2(){
+int main(){
 
-	char ** subpaths=string_split2("/aqwe/bxcv/cjhdb/d123.jpg",'/');
-	uint32_t i=0;
-	while(subpaths[i]!=NULL){
-		printf("%s\n",subpaths[i]);
-		i++;
-	}
-	return 0;
 	fat_initialize();
+	fat_truncate("/chatGaby.txt",100);
+	int i;
 	t_fat_file_list * dir, *p;
-	//t_fat_file_entry file;;
 	char fileName[15];
-	//fat_getNextCluster(44884);
-	/*if (fat_getFileFromPath("/UNDIR/DOSDIR",&fileEntry)){
-		dir = fat_getDirectoryListing(&fileEntry);
-	}else{
-		dir = NULL;
-	}*/
 	for(i=0; i<=100;i++){
 		dir = fat_getRootDirectory();
 		p=dir;
@@ -176,7 +164,8 @@ int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn){
 	t_fat_file_entry * found;
 	if(strcmp(path,"/")==0){
 		fat_destroyFileList(dir);
-		return -1;
+		fat_getRootDirectoryEntry(rtn);
+		return 1;
 	}
 	char ** subpaths;
 	subpaths= string_split2((char *)path,'/');
@@ -238,7 +227,7 @@ t_stat fat_statFile(t_fat_file_entry * file){
 		fileStat.st_nlink = 2;
 		fileStat.st_size = FAT_CLUSTER_SIZE;
 	}else if (file->dataEntry.attributes==0x20){
-		fileStat.st_mode = S_IFREG | 0444;
+		fileStat.st_mode = S_IFREG | 0666;
 		fileStat.st_nlink = 1;
 		fileStat.st_size=file->dataEntry.fileSize;
 	}
@@ -339,4 +328,94 @@ int fat_addClusterToFile(t_fat_file_entry * file){
 	uint32_t lastCluster = fat_getFileLastCluster(file);
 	fat_addFreeClusterToChain(lastCluster);
 	return 0;
+}
+
+int fat_truncate(char * path,off_t newSize){
+	t_fat_file_entry file;
+	int32_t clustersDelta;
+	uint32_t i,clustersNeeded,clustersInFile;
+	fat_getFileFromPath(path,&file);
+	clustersNeeded =ceil((float)newSize / FAT_CLUSTER_SIZE);
+	clustersInFile = fat_getClusterCount(&file.dataEntry);
+	clustersDelta= clustersNeeded - clustersInFile;
+	if (clustersDelta<0){//lo tengo que achivar
+		for (i=0;i<abs(clustersDelta);i++){
+			fat_removeLastClusterFromFile(&file);
+		}
+	}else{
+		for (i=0;i<abs(clustersDelta);i++){
+			fat_addClusterToFile(&file);
+		}
+	}
+	file.dataEntry.fileSize = newSize;
+	fat_setFileEntry(path,&file);
+	return 1;
+}
+
+int fat_setFileEntry(const char *path, t_fat_file_entry * fileEntry){
+	uint32_t i;
+	t_fat_file_entry directory, tempEntry;
+	t_fat_file_data_entry tempDataEntry;
+	t_cluster cluster;
+	uint32_t clusterN;
+	int inEntry=0;
+	uint32_t entryStart;
+	assert(strcmp(path,"/")!=0);
+	char * lastSlash;
+	char directoryPath[255];
+	char fileName[15],anotherName[15];
+
+	i=0;
+	lastSlash = strrchr(path,'/');
+	while(path+i!=lastSlash){
+		directoryPath[i]=path[i];
+		i++;
+	}
+	directoryPath[i]='/';
+	directoryPath[i+1]='\0';
+	strcpy(fileName,lastSlash+1);
+	fat_getFileFromPath(directoryPath,&directory);
+	clusterN =fat_dataClusterToDiskCluster(fat_getEntryFirstCluster(&directory.dataEntry));
+	fat_addressing_readCluster(clusterN,&cluster);
+
+	for(i=0;i<FAT_CLUSTER_SIZE;i+=sizeof(t_fat_file_data_entry)){
+		memcpy(&tempDataEntry,cluster+i,sizeof(t_fat_file_data_entry));
+
+		if (tempDataEntry.name[0]==0){ //La primera entrada despues de de la ultima entrada con datos empiesa con 0, me avisa que se termino el listado.
+			return 0;
+		}
+		if(tempDataEntry.name[0]==0xE5){
+			continue;
+		}
+		if (!inEntry){
+			memset(&tempEntry,0,sizeof(t_fat_file_entry));
+			entryStart = i;
+			inEntry=1;
+		}
+		if (tempDataEntry.attributes==0x0F) {// Es entrada de nombre largo
+			assert(tempEntry.hasLongNameEntry==0);
+			memcpy(&(tempEntry.longNameEntry),&tempDataEntry,sizeof(t_fat_long_name_entry));
+			tempEntry.hasLongNameEntry=1;
+		}else{// Entrada de data
+			memcpy(&(tempEntry.dataEntry),&tempDataEntry,sizeof(t_fat_file_data_entry));
+			fat_getName(&tempEntry,anotherName);
+			if(strcmp(anotherName,fileName)==0){
+				memcpy(&cluster[entryStart],&fileEntry->longNameEntry,sizeof(t_fat_long_name_entry));
+				memcpy(&cluster[entryStart+sizeof(t_fat_long_name_entry)],&fileEntry->dataEntry,sizeof(t_fat_file_data_entry));
+				break;
+			}
+			inEntry=0;
+		}
+	}
+	fat_addressing_writeCluster(clusterN,&cluster);
+	return 1;
+}
+
+void fat_getRootDirectoryEntry(t_fat_file_entry * rootDirectoryEntry){
+	memset(rootDirectoryEntry,0,sizeof(t_fat_file_entry));
+	rootDirectoryEntry->hasLongNameEntry=0;
+	rootDirectoryEntry->dataEntry.attributes=0x10;
+	rootDirectoryEntry->dataEntry.fileSize=FAT_CLUSTER_SIZE;
+	rootDirectoryEntry->dataEntry.firstClusterHigh=0;
+	rootDirectoryEntry->dataEntry.firstClusterLow=2;
 }

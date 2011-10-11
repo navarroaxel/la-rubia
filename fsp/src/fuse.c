@@ -17,7 +17,7 @@
 
 t_log * logFile;
 
-static int hello_getattr(const char *path, struct stat *stbuf)
+static int fuselage_getattr(const char *path, struct stat *stbuf)
 {
 	//funcion que se ejecuta cuando me piden los atributos de
 	//un directorio/archivo
@@ -28,12 +28,6 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	t_stat temp;
 	log_debug(logFile,"FSP","get attr %s\n",path);
     memset(stbuf, 0, sizeof(struct stat));
-	if(strcmp(path, "/") == 0) {
-		stbuf->st_mode = S_IFDIR | 0755;
-		stbuf->st_nlink = 2;
-		stbuf->st_size = FAT_CLUSTER_SIZE;
-		return 0;
-	}
 	if (!fat_getFileFromPath(path,&file)){
 		return -ENOENT;
 	}
@@ -42,7 +36,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 	return 0;
 }
 
-static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+static int fuselage_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 					   off_t offset, struct fuse_file_info *fi)
 {
 	//funcion que se ejecuta cuando necesitas listar un directorio
@@ -62,8 +56,6 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	if (res==1){
 		dir = fat_getDirectoryListing(&file);
-	}else if(res==-1){
-		dir = fat_getRootDirectory();
 	}else{
 		return -ENOENT;
 	}
@@ -81,16 +73,16 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;//salgo
 }
 
-static int hello_open(const char *path, struct fuse_file_info *fi)
+static int fuselage_open(const char *path, struct fuse_file_info *fi)
 {
 	log_debug(logFile,"FSP","open archivo %s\n",path);
-    if((fi->flags & 3) != O_RDONLY)
-        return -EACCES;
+    /*if((fi->flags & 3) != O_RDONLY)
+        return -EACCES;*/
 
     return 0;
 }
 
-static int hello_read(const char *path, char *buf, size_t size, off_t offset,
+static int fuselage_read(const char *path, char *buf, size_t size, off_t offset,
 					struct fuse_file_info *fi)
 {
 	//funcion que se llama cuando se quiere leer un archivo
@@ -110,14 +102,18 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 	return res;
 }
 
+static int fuselage_truncate (const char * path, off_t size){
+	return fat_truncate(path,size);
+}
 static struct fuse_operations fsp_oper = {
-	.getattr   = hello_getattr,
-	.readdir = hello_readdir,
-	.open   = hello_open,
-	.read   = hello_read,
+	.getattr   = fuselage_getattr,
+	.readdir = fuselage_readdir,
+	.open   = fuselage_open,
+	.read   = fuselage_read,
+	.truncate = fuselage_truncate
 };
 
-int main(int argc, char *argv[])
+int main2(int argc, char *argv[])
 {
 	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
 	fat_initialize();
