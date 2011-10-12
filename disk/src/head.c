@@ -29,18 +29,22 @@ void *head_cscan(void *args) {
 	t_planning *p;
 
 	int getnextoperation(void *data) {
-		return getcylinder(((t_disk_operation *)data)->offset) >= refcylinder;
+		return getcylinder(((t_disk_operation *) data)->offset) >= refcylinder;
 	}
 
 	while (true) {
 		refcylinder = current->cylinder;
-		e = (t_disk_operation *)collection_blist_popfirst(q->waiting, getnextoperation);
+		e = (t_disk_operation *) collection_blist_popfirst(q->waiting,
+				getnextoperation);
 		if (e == NULL) {
 			refcylinder = 0;
-			e = (t_disk_operation *)collection_blist_popfirst(q->waiting, getnextoperation);
+			e = (t_disk_operation *) collection_blist_popfirst(q->waiting,
+					getnextoperation);
 		}
 
 		p = head_cscanmove(e->offset);
+		//planning_log(p, q->logFile);
+		planning_destroy(p);
 
 		e->result = e->read ? disk_read(e->offset, &e->data) : disk_write(e->offset, &e->data);
 
@@ -48,6 +52,7 @@ void *head_cscan(void *args) {
 	}
 	return NULL;
 }
+
 
 t_planning *head_cscanmove(uint32_t requested) {
 	t_planning *p = planning_create();
@@ -68,75 +73,11 @@ t_planning *head_cscanmove(uint32_t requested) {
 			current->sector = 0;
 		else
 			current->sector += 1;
-		p->time += 1;//sector time
+		p->time += 1; //sector time
 		collection_list_add(p->path, location_clone(current));
 	}
 
 	return p;
-}
-
-t_planning *planning_create(){
-	t_planning *p = malloc(sizeof(t_planning));
-	p->time = 0;
-	p->path = collection_list_create();
-	return p;
-}
-
-void planning_destroy(t_planning *p) {
-	void destroy(void *data){
-		location_destroy((t_location *)data);
-	}
-
-	collection_list_destroy(p->path, destroy);
-	free(p);
-}
-
-void location_destroy(t_location *l){
-	free(l);
-}
-
-void location_copy(t_location *l1, t_location *l2){
-	l2->cylinder = l1->cylinder;
-	l2->sector = l1->sector;
-}
-
-t_location *location_clone(t_location *l) {
-	t_location *x = malloc(sizeof(t_location));
-	x->cylinder = l->cylinder;
-	x->sector = l->sector;
-	return x;
-}
-
-int islimitcylinder(int cylinder) {
-	//TODO: cambiar por archivo de config.
-	return cylinder == 10;
-}
-
-int islimitsector(int sector) {
-	//TODO: cambiar por archivo de config.
-	return sector == 10;
-}
-
-uint16_t getcylinder(uint32_t offset) {
-	//TODO: Tomar consts de config file.
-	return offset / (1 * 10); //head * sector
-}
-
-uint16_t getsector(uint32_t offset){
-	uint16_t sector = offset % (1 * 10);
-	sector = sector % 1;
-	return sector;
-}
-
-t_location *location_create(uint32_t offset){
-	t_location *l = malloc(sizeof(t_location));
-	location_set(l, offset);
-	return l;
-}
-
-void location_set(t_location *l, uint32_t offset){
-	l->cylinder = getcylinder(offset);
-	l->sector = getsector(offset);
 }
 
 // ***

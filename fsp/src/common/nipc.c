@@ -31,19 +31,18 @@ void *nipc_getdata_destroy(t_nipc *nipc) {
 
 t_socket_buffer *nipc_serializer(t_nipc *nipc) {
 	int tmpsize, offset = 0;
-	t_socket_buffer *stream = (t_socket_buffer *) malloc(
-			sizeof(t_socket_buffer));
+	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 
-	memcpy(stream->data, &nipc->type, tmpsize = sizeof(uint8_t));
+	memcpy(buffer->data, &nipc->type, tmpsize = sizeof(uint8_t));
 	offset += tmpsize;
 
-	memcpy(stream->data + offset, &nipc->length, tmpsize = sizeof(uint16_t));
+	memcpy(buffer->data + offset, &nipc->length, tmpsize = sizeof(uint16_t));
 	offset += tmpsize;
 
-	memcpy(stream->data + offset, nipc->payload, nipc->length);
-	stream->size = offset + nipc->length;
+	memcpy(buffer->data + offset, nipc->payload, nipc->length);
+	buffer->size = offset + nipc->length;
 
-	return stream;
+	return buffer;
 }
 
 t_nipc *nipc_deserializer(t_socket_buffer *buffer) {

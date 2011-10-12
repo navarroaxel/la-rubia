@@ -39,7 +39,7 @@
 	#include <pthread.h>
 	#include <stdarg.h>
 
-	#define LOG_MAX_MESSAGE_LENGTH 2048
+	#define LOG_MAX_MESSAGE_LENGTH 4096
 
 	typedef enum {
 		M_CONSOLE_DISABLE	= 1,
