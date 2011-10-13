@@ -20,6 +20,7 @@
 #include <assert.h>
 #include "common/utils/utils.h"
 #include <math.h>
+#include "common/utils/config.h"
 
 
 t_fat_bootsector bootSector;
@@ -60,12 +61,15 @@ int main2(){
 
 void fat_initialize(){
 	disk_initialize();
+	t_xmlFile * configFile = loadConfig("src/config.xml");
+	config_fsp * config = xmlGetConfigStructFsp(configFile);
 	bootSector = fat_readBootSector();
-	//TODO: Setearlo desde config
-	strcpy(fatConfig.diskIp,"127.0.0.1");
-	fatConfig.diskPort=5678;
+	strcpy(fatConfig.diskIp,config->ip);
+	fatConfig.diskPort=config->port;
 	fatConfig.bindPort=5679;
-	fatConfig.cacheSizeInClusters=8;
+	fatConfig.cacheSizeInClusters=config->sizeCache/4096;
+	free(config);
+	freeXmlFile(configFile);
 	fat_loadFAT();
 }
 
