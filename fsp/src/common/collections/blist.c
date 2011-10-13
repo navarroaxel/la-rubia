@@ -89,6 +89,17 @@ void collection_blist_push(t_blist *list, void *data) {
 	sem_post(&list->empty);
 }
 
+void collection_blist_iterator(t_blist *list, void(*closure)(void*)) {
+	sem_wait(&list->semaphore);
+
+	t_link_element *e = list->head;
+	while (e != NULL) {
+		closure(e->data);
+	}
+
+	sem_post(&list->semaphore);
+}
+
 int collection_blist_size(t_blist *list) {
 	return list->elements_count;
 }

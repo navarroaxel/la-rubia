@@ -35,7 +35,7 @@ typedef struct t_disk_readSectorRq {
 
 typedef struct t_disk_writeSectorRq {
 	uint32_t offset;
-	uint8_t data[512];
+	uint8_t data[DISK_SECTOR_SIZE];
 } __attribute__ ((packed)) t_disk_writeSectorRq;
 
 typedef struct t_disk_readSectorRs {

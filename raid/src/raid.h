@@ -2,30 +2,21 @@
 #define RAID_H_
 
 #include <stdlib.h>
+
 #include <stdbool.h>
 #include <pthread.h>
 #include <limits.h>
-#include "disk.h"
+#include <stdint.h>
 #include "common/nipc.h"
 #include "common/utils/sockets.h"
-#include "common/collections/blist.h"
-
-struct t_disk {
-	char id[255];
-	pthread_t thread;
-	t_blist *waiting;
-	t_socket_client *client;
-};
-
-struct t_fsrq{
-	t_nipc *nipc;
-	t_socket_client *client;
-};
+#include "common/collections/list.h"
+#include "raidHelper.h"
+#include "disk.h"
 
 t_list *disks;
-void listener(t_blist *waiting);
+void listener(t_list *waiting);
 int handshake(t_socket_client *client, t_nipc *rq);
-void registerdisk(char *id, t_socket_client *client);
+void registerdisk(char *name, t_socket_client *client);
 void enqueueoperation(t_nipc *nipc, t_socket_client *client);
 
 #endif

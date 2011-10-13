@@ -1,26 +1,65 @@
 #include "disk.h"
 
 void *disk(void *args) {
-	struct t_disk *d = (struct t_disk *) args;
+	t_disk *d = (t_disk *) args;
 
 	t_socket_buffer *buffer;
 	t_nipc *nipc;
-	uint32_t offset;
-
-	int findrequest(void *data) {
-		return offset == getoffset((t_nipc *)((struct t_fsrq *)data)->nipc);
-	}
-
 	while (true) {
 		buffer = sockets_recv(d->client);
 		nipc = nipc_deserializer(buffer);
+		sockets_bufferDestroy(buffer);
 
-		offset = getoffset(nipc);
+		switch (nipc->type) {
+		case NIPC_READSECTOR_RS:
+			processReadRs(d, nipc);
+			break;
+		case NIPC_WRITESECTOR_RS:
+			processWriteRs(d, nipc);
+			break;
+		}
 
-		struct fsrq * rq = collection_blist_popfirst(d->waiting, findrequest);
+		nipc_destroy(nipc);
 	}
 
 	return NULL;
+}
+
+void processReadRs(t_disk *d, t_nipc *nipc) {
+	d->pendingreads--;
+	t_disk_readSectorRs *rs = (t_disk_readSectorRs *)nipc->payload;
+
+	int findoperation(void *data) {
+		t_operation *op = (t_operation *) data;
+		return op->read && op->offset == rs->offset && op->disk == d->id;
+	}
+
+	t_operation *op = collection_list_popfirst(d->waiting, findoperation);
+
+	nipc_send(nipc, op->client);
+}
+
+void processWriteRs(t_disk *d, t_nipc *nipc) {
+	t_disk_writeSectorRs *rs = (t_disk_writeSectorRs *)nipc->payload;
+	bool operationReady = false;
+	void findrequest(void *data) {
+		t_operation *op = (t_operation *) data;
+		if (!op->read && op->offset == rs->offset && (op->disk & d->id) != 0) {
+			op->disk ^= d->id;
+			operationReady = op->disk == 0;
+		}
+	}
+
+	int findoperation(void *data) {
+		t_operation *op = (t_operation *) data;
+		return !op->read && op->offset == rs->offset && op->disk == 0;
+	}
+
+	if (operationReady) {
+		t_operation *op = collection_list_popfirst(d->waiting, findoperation);
+		nipc_send(nipc, op->client);
+		operation_destroy(op);
+	}
 }
 
 int getoffset(t_nipc *nipc) {

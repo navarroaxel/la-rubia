@@ -6,7 +6,7 @@
 #include "collections.h"
 #include "list.h"
 
-typedef struct{
+typedef struct {
 	t_link_element *head;
 	int elements_count;
 	sem_t semaphore;
@@ -16,11 +16,12 @@ typedef struct{
 
 t_blist *collection_blist_create(int maxLength);
 void *collection_blist_get(t_blist *list);
-void collection_blist_put(t_blist *list, void *data, int (*closure)(void*));
+void collection_blist_put(t_blist *list, void *data, int(*closure)(void*));
 void collection_blist_push(t_blist *list, void *data);
 void *collection_blist_pop(t_blist *list);
+void collection_blist_iterator(t_blist *list, void(*closure)(void*));
 int collection_blist_size(t_blist *list);
 void collection_blist_move(t_blist *blist, t_list *list);
-void *collection_blist_popfirst(t_blist *blist, int (*closure)(void *data));
+void *collection_blist_popfirst(t_blist *blist, int(*closure)(void *data));
 
 #endif /*BLIST_H_*/
