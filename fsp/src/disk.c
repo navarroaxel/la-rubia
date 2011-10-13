@@ -26,6 +26,19 @@ int disk_initialize() {
 	sem_init(&semaforo, 0, 1);
 	client = sockets_createClient("127.0.0.1", fatConfig.bindPort);
 	sockets_connect(client, fatConfig.diskIp,fatConfig.diskPort);
+	t_nipc * nipc = nipc_create(NIPC_HANDSHAKE);
+	nipc_send(nipc,client);
+	nipc_destroy(nipc);
+	t_socket_buffer *buffer = sockets_recv(client);
+	if(buffer==NULL){
+		printf("Error de Handshake");
+		exit(0);
+	}
+	nipc = nipc_deserializer(buffer);
+	if (nipc->length!=0){
+		printf("Error de Handshake");
+		exit(0);
+	}
 	disk_is_initialized = 1;
 
 	return 0;
