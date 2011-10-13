@@ -1,6 +1,6 @@
 <config>
   <ip>127.0.0.1</ip>
-  <port>5678</port>
+  <port>5800</port>
   <maxConnections>5</maxConnections>  
   <sizeCache>6500</sizeCache>
 </config>
