@@ -139,6 +139,6 @@ int disk_read(uint32_t offset, t_sector *sector) {
 
 int disk_write(uint32_t offset, t_sector *sector) {
 	//TODO: delay tracktime & writetime
-	memcpy(disk_data.diskFile + offset, sector, sizeof(t_sector));
+	memcpy(disk_data.diskFile + offset * DISK_SECTOR_SIZE, sector, sizeof(t_sector));
 	return DISK_RESULT_SUCCESS;
 }
