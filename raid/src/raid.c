@@ -1,11 +1,12 @@
 #include "raid.h"
 
-int disk_id = 1;
+void diskconnect(void);
 
 int main(void) {
-	t_list *waiting = collection_list_create();
+	diskconnect();
+	/*t_list *waiting = collection_list_create();
 
-	listener(waiting);
+	listener(waiting);*/
 
 	return EXIT_SUCCESS;
 }
@@ -41,13 +42,11 @@ void listener(t_list *waiting) {
 
 	int recvClient(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
-		if (buffer == NULL
-		)
+		if (buffer == NULL)
 			return 0;
 
 		t_nipc *nipc = nipc_deserializer(buffer);
-		if (nipc->type == NIPC_HANDSHAKE
-		)
+		if (nipc->type == NIPC_HANDSHAKE)
 			return handshake(client, nipc);
 
 		enqueueoperation(nipc, client);
@@ -87,48 +86,20 @@ int handshake(t_socket_client *client, t_nipc *rq) {
 	return client->socket->desc;
 }
 
-void registerdisk(char *name, t_socket_client *client) {
-	struct t_disk *dsk = malloc(sizeof(struct t_disk));
-
-	//TODO: validate duplicated id.
-
-	memcpy(&dsk->name, name, strlen(name) + 1);
-	dsk->id = disk_id;
-	dsk->waiting = NULL;
-	dsk->client = client;
-
-	disk_id <<= 1;
-
-	pthread_t thread;
-	pthread_create(&thread, NULL, &disk, dsk);
-
-	dsk->thread = thread;
-	collection_list_add(disks, dsk);
-}
-
 void enqueueoperation(t_nipc *nipc, t_socket_client *client) {
 	t_operation *op = operation_create(nipc);
 	if (op->read) {
-		int count = INT_MAX;
-		struct t_disk *disk;
-		void find_idledisk(void *data) {
-			t_disk *d = data;
-			if (d->pendingreads < count) {
-				disk = data;
-				count = d->pendingreads;
-			}
-		}
-
-		collection_list_iterator(disks, find_idledisk);
-		disk->pendingreads++;
-		op->disk = disk->id;
-		nipc_send(nipc, disk->client);
+		t_disk *dsk = disks_getidledisk();
+		dsk->pendings++;
+		op->disk = dsk->id;
+		nipc_send(nipc, dsk->client);
 	} else {
 		t_socket_buffer *buffer = nipc_serializer(nipc);
 		void sendrequest(void *data) {
 			struct t_disk *disk = (struct t_disk *) data;
 			sockets_sendBuffer(disk->client, buffer);
 			op->disk |= disk->id;
+			disk->pendings++;
 		}
 		collection_list_iterator(disks, sendrequest);
 	}

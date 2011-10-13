@@ -7,6 +7,12 @@ void *disk(void *args) {
 	t_nipc *nipc;
 	while (true) {
 		buffer = sockets_recv(d->client);
+		if (buffer == NULL) {
+			//fallo el disk.
+			return NULL;
+		}
+
+		d->pendings--;
 		nipc = nipc_deserializer(buffer);
 		sockets_bufferDestroy(buffer);
 
@@ -26,21 +32,20 @@ void *disk(void *args) {
 }
 
 void processReadRs(t_disk *d, t_nipc *nipc) {
-	d->pendingreads--;
-	t_disk_readSectorRs *rs = (t_disk_readSectorRs *)nipc->payload;
+	t_disk_readSectorRs *rs = (t_disk_readSectorRs *) nipc->payload;
 
 	int findoperation(void *data) {
 		t_operation *op = (t_operation *) data;
 		return op->read && op->offset == rs->offset && op->disk == d->id;
 	}
 
-	t_operation *op = collection_list_popfirst(d->waiting, findoperation);
+	t_operation *op = collection_list_popfirst(d->operations, findoperation);
 
 	nipc_send(nipc, op->client);
 }
 
 void processWriteRs(t_disk *d, t_nipc *nipc) {
-	t_disk_writeSectorRs *rs = (t_disk_writeSectorRs *)nipc->payload;
+	t_disk_writeSectorRs *rs = (t_disk_writeSectorRs *) nipc->payload;
 	bool operationReady = false;
 	void findrequest(void *data) {
 		t_operation *op = (t_operation *) data;
@@ -56,10 +61,33 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 	}
 
 	if (operationReady) {
-		t_operation *op = collection_list_popfirst(d->waiting, findoperation);
+		t_operation *op = collection_list_popfirst(d->operations,
+				findoperation);
 		nipc_send(nipc, op->client);
 		operation_destroy(op);
 	}
+}
+
+void reallocateoperations(t_disk *dsk) {
+	disks_remove(dsk);
+
+	void itin(void *data) {
+		t_operation *op = (t_operation *) data;
+		if (!op->read)
+			op->disk &= ~dsk->id;
+		else if (op->disk == dsk->id) {
+			t_disk *d = disks_getidledisk();
+			d->pendings++;
+			t_nipc *nipc = operation_getnipc(op);
+			nipc_send(nipc, d->client);
+			nipc_destroy(nipc);
+			op->disk = d->id;
+		}
+	}
+
+	collection_list_iterator(dsk->operations, itin);
+
+	disks_destroy(dsk);
 }
 
 int getoffset(t_nipc *nipc) {
