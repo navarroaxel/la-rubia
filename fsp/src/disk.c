@@ -17,22 +17,15 @@
 /**
  * Read Sector into buffer;
  */
-struct disk_config {
-	char file[255];
-	uint32_t sectorSize;
-//y el resto
-} disk_config_data;
-
 t_socket_client *client;
 sem_t semaforo;
+extern t_fat_config fatConfig;
 static int disk_is_initialized = 0;
 
 int disk_initialize() {
 	sem_init(&semaforo, 0, 1);
-	strcpy(disk_config_data.file, "/home/nico/fat32.disk");
-	disk_config_data.sectorSize = 512;
-	client = sockets_createClient("127.0.0.1", 5679);
-	sockets_connect(client, "127.0.0.1", 5800);
+	client = sockets_createClient("127.0.0.1", fatConfig.bindPort);
+	sockets_connect(client, fatConfig.diskIp,fatConfig.diskPort);
 	disk_is_initialized = 1;
 
 	return 0;

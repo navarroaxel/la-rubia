@@ -107,5 +107,11 @@ struct fat_directory_contents {
 
 typedef struct fat_directory_contents t_fat_file_list;
 
+typedef struct {
+	char diskIp[16];
+	uint16_t diskPort;
+	uint16_t bindPort;
+	uint32_t cacheSizeInClusters;
+} t_fat_config;
 
 #endif /* FATTYPES_H_ */
