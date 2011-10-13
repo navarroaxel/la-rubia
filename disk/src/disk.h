@@ -25,7 +25,6 @@ struct t_disk_config {
 	void *diskFile;
 };
 
-void console(void);
 void info(void *context, t_array *args);
 void clean(void *context, t_array *args);
 void trace(void *context, t_array *args);

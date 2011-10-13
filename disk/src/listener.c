@@ -1,15 +1,6 @@
 #include "listener.h"
 
 void listener(t_blist *waiting, t_log *logFile) {
-	/*t_socket_server *sckt = sockets_createServerUnix(SOCKET_UNIX_PATH);
-
-	 sockets_listen(sckt);
-	 printf("escuchando");
-	 t_socket_client *a = sockets_acceptUnix(sckt);
-	 t_socket_buffer *b = sockets_recv(a);
-	 printf("%s\n", b->data);
-	 printf("se acabo el socket unix");*/
-
 	//TODO: Get IP & port from config.
 	t_socket_server *server = sockets_createServer("127.0.0.1", 5800);
 
@@ -31,19 +22,20 @@ void listener(t_blist *waiting, t_log *logFile) {
 			return 0;
 		}
 
+		sockets_bufferDestroy(buffer);
+
 		t_disk_operation *op = getdiskoperation(nipc, client);
+		nipc_destroy(nipc);
 		if (op == NULL)
 			return 0;
 
 		log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
-				op->read ? "lectura" : "escritura",
-				op->offset
-			);
+			op->read ? "lectura" : "escritura",
+			op->offset
+		);
 
-		nipc_destroy(nipc);
 		enqueueOperation(waiting, op);
 
-		sockets_bufferDestroy(buffer);
 		return client->socket->desc;
 	}
 
@@ -54,10 +46,10 @@ void listener(t_blist *waiting, t_log *logFile) {
 	}
 }
 
-void connectraid(t_blist *waiting) {
+void connectraid(t_blist *waiting, t_log *logFile) {
 	t_socket_client *client = sockets_createClient(NULL, 5800);
 	//TODO: Get IP & port from config.
-	sockets_connect(client, "127.0.0.1", 5200);
+	sockets_connect(client, "127.0.0.1", 5100);
 	handshake(client);
 
 	t_socket_buffer *buffer;
@@ -66,14 +58,19 @@ void connectraid(t_blist *waiting) {
 	while(true) {
 		buffer = sockets_recv(client);
 		nipc = nipc_deserializer(buffer);
+		sockets_bufferDestroy(buffer);
+
 		op = getdiskoperation(nipc, client);
+		nipc_destroy(nipc);
 		if (op == NULL)
 			continue;
 
 		enqueueOperation(waiting, op);
 
-		nipc_destroy(nipc);
-		sockets_bufferDestroy(buffer);
+		log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
+			op->read ? "lectura" : "escritura",
+			op->offset
+		);
 	}
 
 	sockets_destroyClient(client);
@@ -82,7 +79,7 @@ void connectraid(t_blist *waiting) {
 int handshake(t_socket_client *client) {
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 
-	nipc_setdata(nipc, "myid", strlen("myid") + 1);
+	nipc_setdata(nipc, strdup("myid"), strlen("myid") + 1);
 
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);

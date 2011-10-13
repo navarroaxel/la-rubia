@@ -12,7 +12,7 @@
 
 void enqueueOperation(t_blist *waiting, t_disk_operation *op);
 void listener(t_blist *waiting, t_log *logFile);
-void connectraid(t_blist *waiting);
+void connectraid(t_blist *waiting, t_log *logFile);
 t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client);
 int handshake(t_socket_client *client);
 int handshakeNewClient(t_socket_client *client, t_nipc *nipc2);
