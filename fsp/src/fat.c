@@ -26,41 +26,34 @@ t_fat_bootsector bootSector;
 t_fat_config fatConfig;
 uint32_t * fatTable;
 
-int main(){
-
+int main2(){
 	fat_initialize();
-	fat_truncate("/chatGaby.txt",100);
-	int i;
 	t_fat_file_list * dir, *p;
 	char fileName[15];
-	for(i=0; i<=100;i++){
-		dir = fat_getRootDirectory();
-		p=dir;
-		while (p!=NULL){
-			switch (p->fileEntry.dataEntry.name[0]) {
-			case 0x00:
-				//Vacia, no hay mas
-				return 0;
-			case 0x2E:
-				puts("Entrada de punto!");
-				break;
-			case 0xE5:
-				puts("Entrada Borrada!");
-				break;
-			default:
-				fat_getName(&p->fileEntry,fileName);
-				printf("nombre:%s\n\n",fileName);
-				fat_statFile(&p->fileEntry);
-				char * content = (char *) malloc(p->fileEntry.dataEntry.fileSize);
-				fat_readFileContents(&p->fileEntry,p->fileEntry.dataEntry.fileSize,0,content);
-				free(content);
-				break;
-			}
-			p=p->next;
-
+	dir = fat_getRootDirectory();
+	p=dir;
+	while (p!=NULL){
+		switch (p->fileEntry.dataEntry.name[0]) {
+		case 0x00:
+			//Vacia, no hay mas
+			return 0;
+		case 0x2E:
+			puts("Entrada de punto!");
+			break;
+		case 0xE5:
+			puts("Entrada Borrada!");
+			break;
+		default:
+			fat_getName(&p->fileEntry,fileName);
+			printf("nombre:%s\n",fileName);
+			printf("LFN Checksum: %u\n",p->fileEntry.longNameEntry.checksum);
+			break;
 		}
-		fat_destroyFileList(dir);
+		p=p->next;
+
 	}
+	fat_destroyFileList(dir);
+
 	return 0;
 
 }
@@ -330,7 +323,7 @@ int fat_addClusterToFile(t_fat_file_entry * file){
 	return 0;
 }
 
-int fat_truncate(char * path,off_t newSize){
+int fat_truncate(const char * path,off_t newSize){
 	t_fat_file_entry file;
 	int32_t clustersDelta;
 	uint32_t i,clustersNeeded,clustersInFile;
@@ -361,19 +354,9 @@ int fat_setFileEntry(const char *path, t_fat_file_entry * fileEntry){
 	int inEntry=0;
 	uint32_t entryStart;
 	assert(strcmp(path,"/")!=0);
-	char * lastSlash;
 	char directoryPath[255];
 	char fileName[15],anotherName[15];
-
-	i=0;
-	lastSlash = strrchr(path,'/');
-	while(path+i!=lastSlash){
-		directoryPath[i]=path[i];
-		i++;
-	}
-	directoryPath[i]='/';
-	directoryPath[i+1]='\0';
-	strcpy(fileName,lastSlash+1);
+	splitPathName(path,directoryPath,fileName);
 	fat_getFileFromPath(directoryPath,&directory);
 	clusterN =fat_dataClusterToDiskCluster(fat_getEntryFirstCluster(&directory.dataEntry));
 	fat_addressing_readCluster(clusterN,&cluster);
@@ -418,4 +401,60 @@ void fat_getRootDirectoryEntry(t_fat_file_entry * rootDirectoryEntry){
 	rootDirectoryEntry->dataEntry.fileSize=FAT_CLUSTER_SIZE;
 	rootDirectoryEntry->dataEntry.firstClusterHigh=0;
 	rootDirectoryEntry->dataEntry.firstClusterLow=2;
+}
+
+int fat_move(const char * from,const char * to){
+	char newDirectory[255], newName[15];
+	t_fat_file_entry fileEntry,fileEntryDeleted,destinationDir;
+	fat_getFileFromPath(from,&fileEntry);
+	memcpy(&fileEntryDeleted,&fileEntry,sizeof(t_fat_file_entry));
+	fileEntryDeleted.dataEntry.name[0]=0xE5;
+	fileEntryDeleted.longNameEntry.sequenceN=0xE5;
+	fat_setFileEntry(from,&fileEntryDeleted);
+	splitPathName(to,newDirectory,newName);
+	fat_getFileFromPath(newDirectory,&destinationDir);
+	fat_renameFile(newName,&destinationDir,&fileEntry);
+	fat_addEntry(newDirectory,fileEntry);
+	return 0;
+}
+
+uint32_t fat_findFreeEntries(t_cluster * cluster,size_t numberOfEntries){
+	t_fat_file_data_entry tempDataEntry;
+	uint32_t i, free_start=0,free_size=0, inFreeSpace=0;
+	for(i=0;i<FAT_CLUSTER_SIZE;i+=sizeof(t_fat_file_data_entry)){
+		memcpy(&tempDataEntry,*cluster+i,sizeof(t_fat_file_data_entry));
+
+		if ( (tempDataEntry.name[0]==0) || (tempDataEntry.name[0]==0xE5)){ //La primera entrada despues de de la ultima entrada con datos empiesa con 0, me avisa que se termino el listado.
+			if(!inFreeSpace){
+				inFreeSpace=1;
+				free_start=i;
+			}
+			free_size+=1;
+		}else{
+			inFreeSpace=0;
+		}
+		if(free_size==numberOfEntries){
+			return free_start;
+		}
+	}
+	return -1;
+}
+
+int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry){
+	t_fat_file_entry dirEntry;
+	t_cluster cluster;
+	uint32_t dataCluster,diskCluster, freeSpaceStart;
+	fat_getFileFromPath(directoryPath,&dirEntry);
+	dataCluster = fat_getEntryFirstCluster(&dirEntry.dataEntry);
+	diskCluster = fat_dataClusterToDiskCluster(dataCluster);
+	fat_addressing_readCluster(diskCluster,&cluster);
+	while((freeSpaceStart = fat_findFreeEntries(&cluster,2))==-1){
+		dataCluster=fat_getNextCluster(dataCluster);
+		diskCluster = fat_dataClusterToDiskCluster(dataCluster);
+		fat_addressing_readCluster(diskCluster,&cluster);
+	}
+	memcpy(&cluster[freeSpaceStart],&fileEntry.longNameEntry,sizeof(t_fat_long_name_entry));
+	memcpy(&cluster[freeSpaceStart + sizeof(t_fat_long_name_entry)],&fileEntry.dataEntry,sizeof(t_fat_file_data_entry));
+	fat_addressing_writeCluster(diskCluster,&cluster);
+	return 0;
 }

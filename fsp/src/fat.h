@@ -28,9 +28,11 @@ int fat_removeLastClusterFromFile(t_fat_file_entry * file);
 void freeArrayofPointersToStrings(char ** caca,size_t arraySize);
 void fat_loadFAT();
 void fat_initialize();
-int fat_truncate(char * path,off_t size);
+int fat_truncate(const char * path,off_t size);
 void fat_getRootDirectoryEntry(t_fat_file_entry * rootDirectoryEntry);
 int fat_setFileEntry(const char *path, t_fat_file_entry * fileEntry);
+int fat_move(const char * from,const char * to);
+int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry);
 
 typedef struct {
 	char diskIp[16];

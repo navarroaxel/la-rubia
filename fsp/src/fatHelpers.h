@@ -20,5 +20,13 @@ int fat_fat_setValue(uint32_t clusterN,uint32_t next);
 uint32_t fat_getClusterPointingTo(uint32_t clusterToFind, uint32_t clusterofChain);
 uint32_t fat_getFATAddressOfEntry(uint32_t clusterN);
 uint32_t fat_dataClusterToDiskCluster(uint32_t dataCluster);
+void splitPathName(const char * path,char * dir, char * file);
+void splitNameExtension(const char * fullName,char * name, char * extension);
+int fat_renameFile(const char * newName, t_fat_file_entry * destinationDir, t_fat_file_entry * fileEntry);
+int fat_shortNameExists(char * nameWithoutExtension,t_fat_file_entry * dir);
+int fat_generateShortName(const char * newName, t_fat_file_entry * dir, char * shortName);
+int needsLongName(const char * name);
+void stringToUpper(char * string);
+uint8_t lfn_checksum(const unsigned char *pFcbName);
 
 #endif /* FATHELPERS_H_ */

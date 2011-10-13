@@ -105,15 +105,19 @@ static int fuselage_read(const char *path, char *buf, size_t size, off_t offset,
 static int fuselage_truncate (const char * path, off_t size){
 	return fat_truncate(path,size);
 }
+static int fuselage_rename(const char * from,const char * to){
+	return fat_move(from,to);
+}
 static struct fuse_operations fsp_oper = {
 	.getattr   = fuselage_getattr,
 	.readdir = fuselage_readdir,
 	.open   = fuselage_open,
 	.read   = fuselage_read,
-	.truncate = fuselage_truncate
+	.truncate = fuselage_truncate,
+	.rename = fuselage_rename
 };
 
-int main2(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
 	fat_initialize();
