@@ -79,7 +79,7 @@ config_raid *xmlGetConfigStructRaid(t_xmlFile *xmlFile) {
 	config_raid *xmlParam = (config_raid*)malloc(sizeof(config_raid));
 	xmlParam->portFs = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portfs"));
 	xmlParam->portPpd = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portppd"));
-	xmlParam->activateConsola = (uint16_t)atoi(xmlFileGetParam(xmlFile, "activateconsola"));
+	xmlParam->consoleEnabled = (uint16_t)atoi(xmlFileGetParam(xmlFile, "consoleenabled"));
 	return xmlParam;
 }
 

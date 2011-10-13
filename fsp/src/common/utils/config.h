@@ -11,7 +11,7 @@ typedef struct t_xmlFile {
 typedef struct config_raid {
    uint16_t portFs;
    uint16_t portPpd;
-   uint8_t activateConsola;
+   uint8_t consoleEnabled;
 } config_raid;
 
 typedef struct config_disk {
