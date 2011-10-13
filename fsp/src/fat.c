@@ -101,9 +101,8 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
 	while (1){
 		fat_addressing_readCluster(clusterN,&cluster);
 		for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat_file_data_entry)){
-				//TODO:Semantica mas linda
 				//Asumo que antes de la entrada posta tengo n de nombre largo, me quedo con la ultima nomas
-				//TODO: Implementar LNF como corresponde (extra TP, copado para hacer testing)
+				//TODO: Opcional: Implementar LFN como corresponde (extra TP, copado para hacer testing)
 				memcpy(&tempDataEntry,cluster+i,sizeof(t_fat_file_data_entry));
 
 				if (tempDataEntry.name[0]==0){ //La primera entrada despues de de la ultima entrada con datos empiesa con 0, me avisa que se termino el listado.
@@ -297,7 +296,7 @@ void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 		else
 			sprintf(longName,"%s",name);
 	}
-	strncpy(buff,longName,13);
+	strncpy(buff,longName,14);
 	return;
 }
 

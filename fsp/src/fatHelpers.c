@@ -27,7 +27,6 @@ uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	//----------------------------
 	// 0xABCD  1010 1101 1100 1101
 
-	//TODO: Ver si con la suma funciona tambien
 	return firstCluster;
 }
 
@@ -176,8 +175,21 @@ int fat_generateShortName(const char * newName, t_fat_file_entry * dir, char * s
 		memcpy(shortName,newName,strlen(newName));
 		shortName[8]='\0';
 		return 0;
+	}else{
+		memcpy(shortName,newName,6);
+		shortName[6]='˜';
+		int i,valid=0;
+		for (i=1;i<10;i++){
+			shortName[7]='0'+i;
+			if(!fat_shortNameExists(shortName,dir)){
+				valid=1;
+				break;
+			}
+		}
+		assert(valid==1);
+		shortName[8]='\0';
 	}
-	//TODO: implementar name shortening
+
 	stringToUpper(shortName);
 	return 0;
 }

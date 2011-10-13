@@ -27,9 +27,9 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer){
 		disk_initialize();
 	if (!cache_isInitialized())
 		cache_initialize();
-	/*if (cache_read(clusterNumber,buffer)){
+	if (cache_read(clusterNumber,buffer)){
 		return 0;
-	}*/
+	}
 	uint32_t clusterFirstSector=clusterNumber*bootSector.sectorPerCluster;
 	uint32_t sectorSize=bootSector.bytesPerSector;
 	for (sectorN = 0 ; sectorN < bootSector.sectorPerCluster ; sectorN++) {
@@ -42,10 +42,9 @@ int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer){
 		}
 	}
 	memcpy(buffer,&cluster,FAT_CLUSTER_SIZE);
-	//cache_write(clusterNumber,&cluster);
+	cache_write(clusterNumber,&cluster);
 	return 1;
 }
-//TODO: Implementar cache teniendo en cuenta la escritura
 int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster){
 	t_sector sector;
 	uint32_t offset;
@@ -63,6 +62,7 @@ int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster){
 			return 0;
 		}
 	}
+	cache_write(clusterNumber,cluster);
 	return 1;
 }
 
