@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include "common/utils/log.h"
+#include "console.h"
 
 t_log * logFile;
 
@@ -121,5 +122,11 @@ int main(int argc, char *argv[])
 {
 	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
 	fat_initialize();
-	return fuse_main(argc, argv, &fsp_oper, NULL);
+	pthread_t consoleThread;
+	pthread_attr_t consoleAttr;
+	pthread_attr_init(&consoleAttr);
+	pthread_attr_setdetachstate(&consoleAttr, PTHREAD_CREATE_JOINABLE);
+	pthread_create(&consoleThread, &consoleAttr, &console, NULL);
+	fuse_main(argc, argv, &fsp_oper, NULL);
+	return 0;
 }

@@ -7,6 +7,7 @@
 
 #ifndef FATTYPES_H_
 #define FATTYPES_H_
+#include <stdint.h>
 
 #define FAT_SECTOR_SIZE 512
 #define FAT_CLUSTER_SIZE 4096

@@ -200,3 +200,18 @@ uint8_t lfn_checksum(const unsigned char *pFcbName){
                 sum = ((sum & 1) << 7) + (sum >> 1) + *pFcbName++;
         return sum;
 }
+
+uint32_t fat_getFreeClusterCount(){
+	uint32_t i,count=0,totalClusters=bootSector.totalSectors32/bootSector.sectorPerCluster;
+	for(i=0;i<totalClusters;i++){
+		if(fatTable[i]==FAT_FREE_CLUSTER) count++;
+	}
+	return count;
+}
+uint32_t fat_getUsedClusterCount(){
+	uint32_t i,count=0,totalClusters=bootSector.totalSectors32/bootSector.sectorPerCluster;
+	for(i=0;i<totalClusters;i++){
+		if(fatTable[i]!=FAT_FREE_CLUSTER) count++;
+	}
+	return count;
+}

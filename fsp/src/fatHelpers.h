@@ -28,5 +28,7 @@ int fat_generateShortName(const char * newName, t_fat_file_entry * dir, char * s
 int needsLongName(const char * name);
 void stringToUpper(char * string);
 uint8_t lfn_checksum(const unsigned char *pFcbName);
+uint32_t fat_getFreeClusterCount();
+uint32_t fat_getUsedClusterCount();
 
 #endif /* FATHELPERS_H_ */
