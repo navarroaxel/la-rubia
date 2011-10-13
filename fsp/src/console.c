@@ -39,9 +39,9 @@ void finfo(void *context, t_array *args) {
 		if(!fat_getFileFromPath(path,&fileEntry)) return;
 		clusterN = fat_getEntryFirstCluster(&fileEntry.dataEntry);
 		for (i=0;i<20;i++){
+			if((clusterN & FAT_LAST_CLUSTER)==FAT_LAST_CLUSTER) return;
 			printf("cluster %u: %u\n",i,clusterN);
 			clusterN=fat_getNextCluster(clusterN);
-			if(clusterN==FAT_LAST_CLUSTER) return;
 		}
 
 	}

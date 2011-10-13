@@ -60,7 +60,7 @@ int main2(){
 }
 
 void fat_initialize(){
-	t_xmlFile * configFile = loadConfig("src/config.xml");
+	t_xmlFile * configFile = loadConfig("config.xml");
 	config_fsp * config = xmlGetConfigStructFsp(configFile);
 	strcpy(fatConfig.diskIp,config->ip);
 	fatConfig.diskPort=config->port;
