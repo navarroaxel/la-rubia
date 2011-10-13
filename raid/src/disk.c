@@ -1,27 +1,27 @@
 #include "disk.h"
 
 void *disk(void *args) {
-	t_disk *d = (t_disk *) args;
+	t_disk *dsk = (t_disk *) args;
 
 	t_socket_buffer *buffer;
 	t_nipc *nipc;
 	while (true) {
-		buffer = sockets_recv(d->client);
+		buffer = sockets_recv(dsk->client);
 		if (buffer == NULL) {
-			//fallo el disk.
+			reallocateoperations(dsk);
 			return NULL;
 		}
 
-		d->pendings--;
+		dsk->pendings--;
 		nipc = nipc_deserializer(buffer);
 		sockets_bufferDestroy(buffer);
 
 		switch (nipc->type) {
 		case NIPC_READSECTOR_RS:
-			processReadRs(d, nipc);
+			processReadRs(dsk, nipc);
 			break;
 		case NIPC_WRITESECTOR_RS:
-			processWriteRs(d, nipc);
+			processWriteRs(dsk, nipc);
 			break;
 		}
 
@@ -70,6 +70,7 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 
 void reallocateoperations(t_disk *dsk) {
 	disks_remove(dsk);
+	//TODO: si no hay otros discos parar todo el proceso.
 
 	void itin(void *data) {
 		t_operation *op = (t_operation *) data;

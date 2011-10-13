@@ -69,7 +69,7 @@ int handshake(t_socket_client *client, t_nipc *rq) {
 		char diskid[rq->length];
 		memcpy(diskid, rq->payload, rq->length);
 		registerdisk(diskid, client);
-	} else if (collection_list_size(disks) == 0) {
+	} else if (disks_size() == 0) {
 		t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 		nipc_setdata(nipc, "There are no disks ready.",
 				strlen("There are no disks ready.") + 1);

@@ -38,6 +38,10 @@ t_disk *disks_getidledisk() {
 	return disk;
 }
 
+int disks_size(void) {
+	return collection_list_size(disks);
+}
+
 void disks_foreach(void(*closure)(void*)) {
 	collection_list_iterator(disks, closure);
 }
@@ -51,6 +55,6 @@ void disks_remove(t_disk *disk) {
 }
 
 void disks_destroy(t_disk *disk) {
-	sockets_destroy(disk->client);
+	sockets_destroyClient(disk->client);
 	free(disk);
 }
