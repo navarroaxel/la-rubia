@@ -3,10 +3,11 @@
 void diskconnect(void);
 
 int main(void) {
-	diskconnect();
-	/*t_list *waiting = collection_list_create();
+	//diskconnect();
+	disks_init();
+	t_list *waiting = collection_list_create();
 
-	listener(waiting);*/
+	listener(waiting);
 
 	return EXIT_SUCCESS;
 }
@@ -47,14 +48,14 @@ void listener(t_list *waiting) {
 
 		t_nipc *nipc = nipc_deserializer(buffer);
 		if (nipc->type == NIPC_HANDSHAKE)
-			return handshake(client, nipc);
+			return handshake(client, nipc, waiting);
 
-		enqueueoperation(nipc, client);
+		enqueueoperation(nipc, client, waiting);
 
 		nipc_destroy(nipc);
 		sockets_bufferDestroy(buffer);
 
-		return 0;
+		return client->socket->desc;
 	}
 
 	t_list *clients = collection_list_create();
@@ -64,11 +65,11 @@ void listener(t_list *waiting) {
 	}
 }
 
-int handshake(t_socket_client *client, t_nipc *rq) {
+int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting) {
 	if (rq->length > 0) {
 		char diskid[rq->length];
 		memcpy(diskid, rq->payload, rq->length);
-		registerdisk(diskid, client);
+		disks_register(diskid, client, waiting);
 	} else if (disks_size() == 0) {
 		t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 		nipc_setdata(nipc, "There are no disks ready.",
@@ -86,8 +87,10 @@ int handshake(t_socket_client *client, t_nipc *rq) {
 	return client->socket->desc;
 }
 
-void enqueueoperation(t_nipc *nipc, t_socket_client *client) {
+void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting) {
 	t_operation *op = operation_create(nipc);
+	op->client = client;
+	collection_list_add(waiting, op);
 	if (op->read) {
 		t_disk *dsk = disks_getidledisk();
 		dsk->pendings++;

@@ -14,8 +14,7 @@
 
 t_list *disks;
 void listener(t_list *waiting);
-int handshake(t_socket_client *client, t_nipc *rq);
-void registerdisk(char *name, t_socket_client *client);
-void enqueueoperation(t_nipc *nipc, t_socket_client *client);
+int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting);
+void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *wainting);
 
 #endif

@@ -42,6 +42,8 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 	t_operation *op = collection_list_popfirst(d->operations, findoperation);
 
 	nipc_send(nipc, op->client);
+
+	operation_destroy(op);
 }
 
 void processWriteRs(t_disk *d, t_nipc *nipc) {

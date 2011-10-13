@@ -4,14 +4,18 @@
 int disk_id = 1;
 t_list *disks;
 
-void registerdisk(char *name, t_socket_client *client) {
+void disks_init(void) {
+	disks = collection_list_create();
+}
+
+t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting) {
 	struct t_disk *dsk = malloc(sizeof(struct t_disk));
 
 	//TODO: validate duplicated name.
 
 	memcpy(&dsk->name, name, strlen(name) + 1);
 	dsk->id = disk_id;
-	dsk->operations = NULL;
+	dsk->operations = waiting;
 	dsk->client = client;
 
 	disk_id <<= 1;
@@ -21,6 +25,7 @@ void registerdisk(char *name, t_socket_client *client) {
 
 	dsk->thread = thread;
 	collection_list_add(disks, dsk);
+	return dsk;
 }
 
 t_disk *disks_getidledisk() {

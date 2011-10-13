@@ -23,10 +23,6 @@ t_operation *operation_create(t_nipc *nipc) {
 }
 
 void operation_destroy(t_operation *operation) {
-	if (operation->client != NULL
-	)
-		sockets_destroyClient(operation->client);
-
 	free(operation);
 }
 
