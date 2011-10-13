@@ -24,12 +24,12 @@ void listener(t_blist *waiting, t_log *logFile) {
 			return 0;
 
 		t_nipc *nipc = nipc_deserializer(buffer);
-		/*if (nipc->type == 0) {
+		if (nipc->type == 0) {
 			if (handshakeNewClient(client, nipc) == 0)
 				return client->socket->desc;
 
 			return 0;
-		}*/
+		}
 
 		t_disk_operation *op = getdiskoperation(nipc, client);
 		if (op == NULL)
