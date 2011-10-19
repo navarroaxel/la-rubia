@@ -17,7 +17,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 			return 0;
 
 		t_nipc *nipc = nipc_deserializer(buffer);
-		if (nipc->type == 0) {
+		if (nipc->type == NIPC_HANDSHAKE) {
 			if (handshakeNewClient(client, nipc) == 0)
 				return client->socket->desc;
 
@@ -49,7 +49,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 }
 
 void connectraid(t_blist *waiting, t_log *logFile) {
-	t_socket_client *client = sockets_createClient(NULL, 5800);
+	t_socket_client *client = sockets_createClient(config->bindIp, config->bindPort);
 	//TODO: Get IP & port from config.
 	sockets_connect(client, config->raidIp, config->raidPort);
 	handshake(client);
