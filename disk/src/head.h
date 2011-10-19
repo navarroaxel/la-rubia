@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include "common/collections/blist.h"
 #include "common/collections/list.h"
+#include "common/utils/config.h"
 #include "common/utils/log.h"
 #include "disk.h"
 #include "location.h"

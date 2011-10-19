@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "common/utils/sockets.h"
+#include "common/utils/config.h"
 #include "common/collections/blist.h"
 #include "common/nipc.h"
 #include "common/utils/log.h"

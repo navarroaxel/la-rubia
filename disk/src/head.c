@@ -3,6 +3,7 @@
 struct t_disk_config disk_data;
 t_location *current;
 int movement = 1;
+extern config_disk * config;
 
 void init_head(t_blist *waiting, t_blist *processed, t_log *logFile) {
 	current = location_create(0);
@@ -116,7 +117,7 @@ void *head_fscan(void *args) {
 }
 
 void init_disk() {
-	strcpy(disk_data.path, "/home/utn_so/fat32.disk");
+	strcpy(disk_data.path, config->volumeFilePath);
 	int file;
 	uint32_t filesize;
 	if ((file = open(disk_data.path, O_RDWR)) > 0) {

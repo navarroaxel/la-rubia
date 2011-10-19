@@ -1,6 +1,10 @@
 <config>
-  <ip>127.0.0.1</ip>
-  <portproc>6500</portproc>
+  <volumefile>/home/nico/fat32.disk</volumefile>
+  <logfile>/home/nico/ppd.log</logfile>
+  <raidip>127.0.0.1</raidip>
+  <raidport>8000</raidport>
+  <bindip>127.0.0.1</bindip>
+  <bindport>7000</bindport>
   <mode>LISTEN</mode>
   <algorithm>CSCAN</algorithm>
   <portconsole>6500</portconsole>

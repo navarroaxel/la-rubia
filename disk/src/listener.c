@@ -1,8 +1,10 @@
 #include "listener.h"
 
+extern config_disk * config;
+
 void listener(t_blist *waiting, t_log *logFile) {
 	//TODO: Get IP & port from config.
-	t_socket_server *server = sockets_createServer("127.0.0.1", 5800);
+	t_socket_server *server = sockets_createServer(config->bindIp, config->bindPort);
 
 	sockets_listen(server);
 
@@ -49,7 +51,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 void connectraid(t_blist *waiting, t_log *logFile) {
 	t_socket_client *client = sockets_createClient(NULL, 5800);
 	//TODO: Get IP & port from config.
-	sockets_connect(client, "127.0.0.1", 5100);
+	sockets_connect(client, config->raidIp, config->raidPort);
 	handshake(client);
 
 	t_socket_buffer *buffer;
