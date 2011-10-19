@@ -88,7 +88,7 @@ config_fsp *xmlGetConfigStructFsp(t_xmlFile *xmlFile) {
 	strcpy(xmlParam->diskIp,xmlFileGetParam(xmlFile, "diskip"));
 	xmlParam->diskPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "bindport"));
 	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "bindip"));
-	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskiort"));
+	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskport"));
 	xmlParam->maxConnections = (uint16_t)atoi(xmlFileGetParam(xmlFile, "maxconnections"));
 	xmlParam->sizeCache = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sizecache"));
 	return xmlParam;
@@ -113,8 +113,8 @@ config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
 	xmlParam->readTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "readtime"));
 	xmlParam->writeTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "writetime"));
 	xmlParam->rpm = (uint16_t)atoi (xmlFileGetParam(xmlFile, "rpm"));
-	strcpy(xmlParam->volumeFilePath,xmlFileGetParam(xmlFile, "volumeFile"));
-	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logFile"));
+	strcpy(xmlParam->volumeFilePath,xmlFileGetParam(xmlFile, "volumefile"));
+	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logfile"));
 
 	return xmlParam;
 }
