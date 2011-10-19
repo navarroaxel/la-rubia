@@ -13,19 +13,20 @@
 #include "disk.h"
 #include "common/nipc.h"
 #include "common/utils/sockets.h"
+#include "common/utils/config.h"
 #include "assert.h"
 /**
  * Read Sector into buffer;
  */
 t_socket_client *client;
 sem_t semaforo;
-extern t_fat_config fatConfig;
 static int disk_is_initialized = 0;
+extern config_fsp * config;
 
 int disk_initialize() {
 	sem_init(&semaforo, 0, 1);
-	client = sockets_createClient("127.0.0.1", fatConfig.bindPort);
-	sockets_connect(client, fatConfig.diskIp,fatConfig.diskPort);
+	client = sockets_createClient(config->bindIp, config->bindPort);
+	sockets_connect(client, config->diskIp,config->diskPort);
 	t_nipc * nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_send(nipc,client);
 	nipc_destroy(nipc);
@@ -70,7 +71,7 @@ int disk_readSector(uint32_t sector, t_sector * buf) {
 	nipc = nipc_deserializer(buffer);
 	sockets_bufferDestroy(buffer);
 	rs = (t_disk_readSectorRs *)nipc->payload;
-	memcpy(buf, rs->data,512);
+	memcpy(buf, rs->data,FAT_SECTOR_SIZE);
 	nipc_destroy(nipc);
 	sem_post(&semaforo);
 	return 1;
@@ -80,7 +81,7 @@ int disk_writeSector(uint32_t sector, t_sector * buf) {
 	sem_wait(&semaforo);
 	t_disk_writeSectorRq *rq = malloc(sizeof(t_disk_writeSectorRq));
 	rq->offset = sector;
-	memcpy(rq->data,buf,512);
+	memcpy(rq->data,buf,FAT_SECTOR_SIZE);
 
 	t_nipc *nipc = nipc_create(NIPC_WRITESECTOR_RQ);
 	t_disk_writeSectorRs *rs;

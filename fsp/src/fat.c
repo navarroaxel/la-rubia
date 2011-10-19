@@ -24,11 +24,10 @@
 
 
 t_fat_bootsector bootSector;
-t_fat_config fatConfig;
 uint32_t * fatTable;
 
 int main2(){
-	fat_initialize();
+	//fat_initialize();
 	t_fat_file_list * dir, *p;
 	char fileName[15];
 	dir = fat_getRootDirectory();
@@ -60,14 +59,6 @@ int main2(){
 }
 
 void fat_initialize(){
-	t_xmlFile * configFile = loadConfig("config.xml");
-	config_fsp * config = xmlGetConfigStructFsp(configFile);
-	strcpy(fatConfig.diskIp,config->ip);
-	fatConfig.diskPort=config->port;
-	fatConfig.bindPort=5679;
-	fatConfig.cacheSizeInClusters=config->sizeCache/4096;
-	free(config);
-	freeXmlFile(configFile);
 	disk_initialize();
 	bootSector = fat_readBootSector();
 	fat_loadFAT();

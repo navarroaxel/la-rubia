@@ -1,8 +1,11 @@
 <config>
-  <ip>127.0.0.1</ip>
-  <port>5800</port>
-  <maxConnections>5</maxConnections>  
-  <sizeCache>6500</sizeCache>
+  <diskip>127.0.0.1</diskip>
+  <diskport>5800</diskport>
+  <bindip>127.0.0.1</bindip>
+  <bindport>5678</bindport>
+  <maxconnections>5</maxconnections>  
+  <sizecache>6500</sizecache>
+  <logfile>/home/nico/fsp.log</logfile>
 </config>
 
 

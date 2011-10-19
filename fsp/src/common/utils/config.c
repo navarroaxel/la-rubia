@@ -85,17 +85,21 @@ config_raid *xmlGetConfigStructRaid(t_xmlFile *xmlFile) {
 
 config_fsp *xmlGetConfigStructFsp(t_xmlFile *xmlFile) {
 	config_fsp *xmlParam = (config_fsp*)malloc(sizeof(config_fsp));
-	strcpy(xmlParam->ip,xmlFileGetParam(xmlFile, "ip"));
-	xmlParam->port = (uint16_t)atoi(xmlFileGetParam(xmlFile, "port"));
-	xmlParam->maxConnections = (uint16_t)atoi(xmlFileGetParam(xmlFile, "maxConnections"));
-	xmlParam->sizeCache = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sizeCache"));
+	strcpy(xmlParam->diskIp,xmlFileGetParam(xmlFile, "diskip"));
+	xmlParam->diskPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "bindport"));
+	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "bindip"));
+	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskiort"));
+	xmlParam->maxConnections = (uint16_t)atoi(xmlFileGetParam(xmlFile, "maxconnections"));
+	xmlParam->sizeCache = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sizecache"));
 	return xmlParam;
 }
 
 config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
 	config_disk *xmlParam = (config_disk*)malloc(sizeof(config_disk));
-	strcpy(xmlParam->ip,xmlFileGetParam(xmlFile, "ip"));
-	xmlParam->portProc = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portproc"));
+	strcpy(xmlParam->raidIp,xmlFileGetParam(xmlFile, "raidip"));
+	xmlParam->raidPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "raidport"));
+	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "raidip"));
+	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "raidport"));
 	strcpy(xmlParam->mode,xmlFileGetParam(xmlFile, "mode"));
 	strcpy(xmlParam->algorithm,xmlFileGetParam(xmlFile, "algorithm"));
 	xmlParam->portConsole = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portconsole"));
@@ -109,6 +113,8 @@ config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
 	xmlParam->readTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "readtime"));
 	xmlParam->writeTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "writetime"));
 	xmlParam->rpm = (uint16_t)atoi (xmlFileGetParam(xmlFile, "rpm"));
+	strcpy(xmlParam->volumeFilePath,xmlFileGetParam(xmlFile, "volumeFile"));
+	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logFile"));
 
 	return xmlParam;
 }

@@ -15,8 +15,10 @@ typedef struct config_raid {
 } config_raid;
 
 typedef struct config_disk {
-	char ip[15];
-	uint16_t portProc;
+	char raidIp[16];
+	uint16_t raidPort;
+	char bindIp[15];
+	uint16_t bindPort;
 	char mode[10];
 	char algorithm[4];
 	uint16_t portConsole;
@@ -29,13 +31,18 @@ typedef struct config_disk {
 	uint16_t writeTime;
 	uint16_t readTime;
 	uint16_t rpm;
+	char volumeFilePath[255];
+	char logFilePath[255];
 } config_disk;
 
 typedef struct config_fsp {
-	char ip[15];
-	uint16_t port;
+	char diskIp[16];
+	uint16_t diskPort;
+	char bindIp[15];
+	uint16_t bindPort;
 	uint16_t maxConnections;
 	uint16_t sizeCache;
+	char logFilePath[255];
 } config_fsp;
 
 int xmlFileGetFileSize(t_xmlFile *xmlFile);

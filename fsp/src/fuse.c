@@ -18,6 +18,7 @@
 #include "console.h"
 
 t_log * logFile;
+config_fsp * config;
 
 static int fuselage_getattr(const char *path, struct stat *stbuf)
 {
@@ -128,7 +129,9 @@ static struct fuse_operations fsp_oper = {
 
 int main(int argc, char *argv[])
 {
-	logFile= log_create("FSP","/home/nico/fsp.log",8,1);
+	t_xmlFile * configFile = loadConfig("config.xml");
+	config = xmlGetConfigStructFsp(configFile);
+	logFile= log_create("FSP",config->logFilePath,8,1);
 	fat_initialize();
 	pthread_t consoleThread;
 	pthread_attr_t consoleAttr;
@@ -136,5 +139,7 @@ int main(int argc, char *argv[])
 	pthread_attr_setdetachstate(&consoleAttr, PTHREAD_CREATE_JOINABLE);
 	pthread_create(&consoleThread, &consoleAttr, &console, NULL);
 	fuse_main(argc, argv, &fsp_oper, NULL);
+	free(config);
+	freeXmlFile(configFile);
 	return 0;
 }

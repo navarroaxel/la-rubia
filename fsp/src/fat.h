@@ -9,6 +9,7 @@
 #define FAT_H_
 #include "fatTypes.h"
 #include <stdint.h>
+#include "common/utils/config.h"
 t_fat_bootsector fat_readBootSector();
 typedef struct stat t_stat;
 
