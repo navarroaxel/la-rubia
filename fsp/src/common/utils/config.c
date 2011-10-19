@@ -98,8 +98,8 @@ config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
 	config_disk *xmlParam = (config_disk*)malloc(sizeof(config_disk));
 	strcpy(xmlParam->raidIp,xmlFileGetParam(xmlFile, "raidip"));
 	xmlParam->raidPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "raidport"));
-	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "raidip"));
-	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "raidport"));
+	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "bindip"));
+	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "bindport"));
 	strcpy(xmlParam->mode,xmlFileGetParam(xmlFile, "mode"));
 	strcpy(xmlParam->algorithm,xmlFileGetParam(xmlFile, "algorithm"));
 	xmlParam->portConsole = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portconsole"));
