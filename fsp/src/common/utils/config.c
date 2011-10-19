@@ -86,11 +86,12 @@ config_raid *xmlGetConfigStructRaid(t_xmlFile *xmlFile) {
 config_fsp *xmlGetConfigStructFsp(t_xmlFile *xmlFile) {
 	config_fsp *xmlParam = (config_fsp*)malloc(sizeof(config_fsp));
 	strcpy(xmlParam->diskIp,xmlFileGetParam(xmlFile, "diskip"));
-	xmlParam->diskPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "bindport"));
+	xmlParam->diskPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskport"));
 	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "bindip"));
-	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskport"));
+	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "bindport"));
 	xmlParam->maxConnections = (uint16_t)atoi(xmlFileGetParam(xmlFile, "maxconnections"));
 	xmlParam->sizeCache = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sizecache"));
+	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logfile"));
 	return xmlParam;
 }
 

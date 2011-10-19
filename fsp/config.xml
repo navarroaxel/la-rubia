@@ -1,8 +1,8 @@
 <config>
   <diskip>127.0.0.1</diskip>
-  <diskport>5800</diskport>
+  <diskport>7000</diskport>
   <bindip>127.0.0.1</bindip>
-  <bindport>5678</bindport>
+  <bindport>6000</bindport>
   <maxconnections>5</maxconnections>  
   <sizecache>6500</sizecache>
   <logfile>/home/nico/fsp.log</logfile>
