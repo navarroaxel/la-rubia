@@ -2,20 +2,23 @@
 
 void diskconnect(void);
 
+
 int main(void) {
 	//diskconnect();
 	disks_init();
 	t_list *waiting = collection_list_create();
+	t_log *log = log_create("RAID", "/home/utn_so/raid.log",
+		WARNING | DEBUG | ERROR | INFO, M_CONSOLE_DISABLE);
 
-	listener(waiting);
+	listener(waiting, log);
 
 	return EXIT_SUCCESS;
 }
 
 void diskconnect(void) {
-	t_socket_client *client = sockets_createClient("127.0.0.1", 5500);
+	t_socket_client *client = sockets_createClient(NULL, 5500);
 
-	sockets_connect(client, "127.0.0.1", 5800);
+	sockets_connect(client, "127.0.0.1", 7000);
 	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
 	rq->offset = 0;
 
@@ -30,11 +33,12 @@ void diskconnect(void) {
 	buffer = sockets_recv(client);
 	nipc2 = nipc_deserializer(buffer);
 	rs = nipc2->payload;
+	exit(0);
 }
 
-void listener(t_list *waiting) {
+void listener(t_list *waiting, t_log *log) {
 	//TODO: Get IP & port from config.
-	t_socket_server *server = sockets_createServer("127.0.0.1", 5100);
+	t_socket_server *server = sockets_createServer(NULL, 5100);
 
 	sockets_listen(server);
 
@@ -48,9 +52,9 @@ void listener(t_list *waiting) {
 
 		t_nipc *nipc = nipc_deserializer(buffer);
 		if (nipc->type == NIPC_HANDSHAKE)
-			return handshake(client, nipc, waiting);
+			return handshake(client, nipc, waiting, log);
 
-		enqueueoperation(nipc, client, waiting);
+		enqueueoperation(nipc, client, waiting, log);
 
 		nipc_destroy(nipc);
 		sockets_bufferDestroy(buffer);
@@ -65,11 +69,12 @@ void listener(t_list *waiting) {
 	}
 }
 
-int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting) {
+int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
 	if (rq->length > 0) {
-		char diskid[rq->length];
-		memcpy(diskid, rq->payload, rq->length);
-		disks_register(diskid, client, waiting);
+		char diskname[rq->length];
+		memcpy(diskname, rq->payload, rq->length);
+		log_info(log, "LISTENER", "Se ha conectado el disco: %s", diskname);
+		disks_register(diskname, client, waiting, log);
 	} else if (disks_size() == 0) {
 		t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 		nipc_setdata(nipc, "There are no disks ready.",
@@ -77,17 +82,17 @@ int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting) {
 
 		nipc_send(nipc, client);
 		nipc_destroy(nipc);
-		return 0;
+		return false;
 	}
 
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_setdata(nipc, NULL, 0);
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
-	return client->socket->desc;
+	return true;
 }
 
-void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting) {
+void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_log *log) {
 	t_operation *op = operation_create(nipc);
 	op->client = client;
 	collection_list_add(waiting, op);
@@ -95,6 +100,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting) {
 		t_disk *dsk = disks_getidledisk();
 		dsk->pendings++;
 		op->disk = dsk->id;
+		log_info(log, "LISTENER", "LECTURA sector %i disco %s", op->offset, dsk->name);
 		nipc_send(nipc, dsk->client);
 	} else {
 		t_socket_buffer *buffer = nipc_serializer(nipc);
@@ -104,6 +110,8 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting) {
 			op->disk |= disk->id;
 			disk->pendings++;
 		}
+		//TODO: cuando un disco se este sync discriminarlo.
+		log_info(log, "LISTENER", "ESCRITURA sector %i todos los discos.");
 		collection_list_iterator(disks, sendrequest);
 	}
 }

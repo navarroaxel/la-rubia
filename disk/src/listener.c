@@ -4,7 +4,7 @@ extern config_disk * config;
 
 void listener(t_blist *waiting, t_log *logFile) {
 	//TODO: Get IP & port from config.
-	t_socket_server *server = sockets_createServer(config->bindIp, config->bindPort);
+	t_socket_server *server = sockets_createServer(NULL, config->bindPort);
 
 	sockets_listen(server);
 

@@ -1,11 +1,11 @@
 <config>
-  <volumefile>/home/nico/fat32.disk</volumefile>
-  <logfile>/home/nico/ppd.log</logfile>
+  <volumefile>/home/utn_so/fat32.disk</volumefile>
+  <logfile>/home/utn_so/ppd.log</logfile>
   <raidip>127.0.0.1</raidip>
-  <raidport>8000</raidport>
+  <raidport>5100</raidport>
   <bindip>127.0.0.1</bindip>
-  <bindport>7000</bindport>
-  <mode>LISTEN</mode>
+  <bindport>5500</bindport>
+  <mode>CONNECT</mode>
   <algorithm>CSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>

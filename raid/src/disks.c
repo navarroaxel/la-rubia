@@ -8,7 +8,7 @@ void disks_init(void) {
 	disks = collection_list_create();
 }
 
-t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting) {
+t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting, t_log *log) {
 	struct t_disk *dsk = malloc(sizeof(struct t_disk));
 
 	//TODO: validate duplicated name.
@@ -16,6 +16,7 @@ t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting) {
 	memcpy(&dsk->name, name, strlen(name) + 1);
 	dsk->id = disk_id;
 	dsk->operations = waiting;
+	dsk->log = log;
 	dsk->client = client;
 
 	disk_id <<= 1;
