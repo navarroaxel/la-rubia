@@ -23,6 +23,17 @@ t_location *location_clone(t_location *l) {
 	return x;
 }
 
+uint32_t location_getoffset(t_location *location) {
+	return getoffset(location->cylinder, location->sector);
+}
+
+void location_readsector(t_location *l){
+	if(islimitsector(l->sector))
+		l->sector = 0;
+	else
+		l->sector += 1;
+}
+
 int locations_string(t_list *locations, char *s) {
 	int i = 0;
 	void closure(void *data) {
@@ -49,3 +60,4 @@ int location_string(t_location *l, char *s) {
 void location_destroy(t_location *l) {
 	free(l);
 }
+

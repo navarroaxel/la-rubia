@@ -47,7 +47,7 @@ void *head_cscan(void *args) {
 		//planning_log(p, q->logFile);
 		planning_destroy(p);
 
-		e->result = e->read ? disk_read(e->offset, &e->data) : disk_write(e->offset, &e->data);
+		e->result = e->read ? disk_read(current, &e->data) : disk_write(current, &e->data);
 
 		collection_blist_push(q->processed, e);
 	}
@@ -133,16 +133,17 @@ void init_disk() {
 		fprintf(stderr, "Error mapping input file"), exit(1);
 }
 
-int disk_read(uint32_t offset, t_sector *sector) {
-	//TODO: head object with position
+int disk_read(t_location *location, t_sector *sector) {
 	//TODO: delay tracktime & readtime
-	memcpy(sector, disk_data.diskFile + offset * DISK_SECTOR_SIZE,
+	memcpy(sector, disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE,
 	sizeof(t_sector));
+	location_readsector(location);
 	return DISK_RESULT_SUCCESS;
 }
 
-int disk_write(uint32_t offset, t_sector *sector) {
+int disk_write(t_location *location, t_sector *sector) {
 	//TODO: delay tracktime & writetime
-	memcpy(disk_data.diskFile + offset * DISK_SECTOR_SIZE, sector, sizeof(t_sector));
+	memcpy(disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE, sector, sizeof(t_sector));
+	location_readsector(location);
 	return DISK_RESULT_SUCCESS;
 }

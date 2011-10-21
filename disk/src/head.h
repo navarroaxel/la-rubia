@@ -31,7 +31,7 @@ t_location *head_currentlocation(void);
 t_planning *head_cscanmove(uint32_t requested);
 
 void init_disk();
-int disk_read(uint32_t offset, t_sector *sector);
-int disk_write(uint32_t offset, t_sector *sector);
+int disk_read(t_location *location, t_sector *sector);
+int disk_write(t_location *location, t_sector *sector);
 
 #endif

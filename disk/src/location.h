@@ -16,6 +16,8 @@ t_location *location_create(uint32_t offset);
 t_location *location_clone(t_location *l);
 void location_set(t_location *l, uint32_t offset);
 void location_copy(t_location *l1, t_location *l2);
+uint32_t location_getoffset(t_location *location);
+void location_readsector(t_location *l);
 int location_string(t_location *l, char *s);
 int locations_string(t_list *locations, char *s);
 void location_destroy(t_location *l);

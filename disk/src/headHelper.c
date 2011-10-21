@@ -13,9 +13,13 @@ int islimitsector(int sector) {
 
 uint16_t getcylinder(uint32_t offset) {
 	//TODO: Tomar consts de config file.
-	return offset / (config->head * config->sector); //head * sector
+	return offset / (config->head * config->sector);
 }
 
 uint16_t getsector(uint32_t offset) {
 	return offset % config->sector;
+}
+
+uint32_t getoffset(uint16_t cylinder, uint16_t sector){
+	return cylinder * config->sector + sector;
 }

@@ -2,7 +2,7 @@
 
 void pconsole(void) {
 	printf("Iniciando...\n");
-	sleep(3);
+	sleep(5);
 
 	t_socket_client *client = sockets_createClientUnix(SOCKET_UNIX_PATH);
 	sockets_connectUnix(client, SOCKET_UNIX_PATH);
@@ -28,13 +28,14 @@ void info(void *context, t_array *args) {
 	t_socket_client *client = context;
 	char code = 1;
 	sockets_send(client, &code, sizeof(char));
+
 	t_socket_buffer *buffer = sockets_recv(client);
 
-	if (buffer->data[0] == 1){
+	if (buffer->data[0] == 1) {
 		t_location *location = location_create(0);
 		int offset = 1;
 		int tmpsize;
-		memcpy(&location->cylinder, buffer->data + offset, tmpsize=sizeof(uint16_t));
+		memcpy(&location->cylinder, buffer->data + offset, tmpsize = sizeof(uint16_t));
 		offset += tmpsize;
 		memcpy(&location->sector, buffer->data+offset, tmpsize);
 
