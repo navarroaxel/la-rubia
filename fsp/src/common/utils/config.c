@@ -77,9 +77,12 @@ char *xmlStreamGetParam(char *xmlStream, const char *param) {
 
 config_raid *xmlGetConfigStructRaid(t_xmlFile *xmlFile) {
 	config_raid *xmlParam = (config_raid*)malloc(sizeof(config_raid));
-	xmlParam->portFs = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portfs"));
-	xmlParam->portPpd = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portppd"));
+	strcpy(xmlParam->bindIpFs,xmlFileGetParam(xmlFile, "bindipfs"));
+	xmlParam->fsPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "fsport"));
+	strcpy(xmlParam->bindIpDisk,xmlFileGetParam(xmlFile, "bindipdisk"));
+	xmlParam->diskPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskport"));
 	xmlParam->consoleEnabled = (uint16_t)atoi(xmlFileGetParam(xmlFile, "consoleenabled"));
+	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logfile"));
 	return xmlParam;
 }
 

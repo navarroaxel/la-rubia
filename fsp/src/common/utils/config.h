@@ -1,5 +1,6 @@
 #ifndef CONFIG_C
 #define CONFIG_C
+#include <stdio.h>
 
 typedef struct t_xmlFile {
 	FILE* f;
@@ -9,9 +10,12 @@ typedef struct t_xmlFile {
 
 
 typedef struct config_raid {
-   uint16_t portFs;
-   uint16_t portPpd;
+   char bindIpFs[15];
+   uint16_t fsPort;
+   char bindIpDisk[15];
+   uint16_t diskPort;
    uint8_t consoleEnabled;
+   char logFilePath[255];
 } config_raid;
 
 typedef struct config_disk {

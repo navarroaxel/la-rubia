@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "common/nipc.h"
 #include "common/utils/sockets.h"
+#include "common/utils/config.h"
 #include "common/collections/list.h"
 #include "operations.h"
 #include "disk.h"
