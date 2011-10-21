@@ -2,6 +2,7 @@
 #define CONFIG_C
 #include <stdio.h>
 
+
 typedef struct t_xmlFile {
 	FILE* f;
 	char* Content;

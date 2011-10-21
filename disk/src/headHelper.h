@@ -2,7 +2,7 @@
 #define HEADHELPER_H_
 
 #include <stdint.h>
-
+#include "common/utils/config.h"
 #define SOCKET_UNIX_PATH "/tmp/lol"
 
 int islimitcylinder(int cylinder);

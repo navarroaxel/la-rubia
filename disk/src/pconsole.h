@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+#include <unistd.h>
 #include "location.h"
 #include "common/utils/commands.h"
 #include "common/utils/sockets.h"
