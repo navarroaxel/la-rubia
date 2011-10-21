@@ -54,6 +54,9 @@ void *head_cscan(void *args) {
 	return NULL;
 }
 
+t_location *head_currentlocation(void) {
+	return location_clone(current);
+}
 
 t_planning *head_cscanmove(uint32_t requested) {
 	t_planning *p = planning_create();

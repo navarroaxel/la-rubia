@@ -5,7 +5,7 @@
   <raidport>5100</raidport>
   <bindip>127.0.0.1</bindip>
   <bindport>5500</bindport>
-  <mode>CONNECT</mode>
+  <mode>LISTEN</mode>
   <algorithm>CSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>

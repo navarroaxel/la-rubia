@@ -3,7 +3,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include "location.h"
 #include "common/utils/commands.h"
 #include "common/utils/sockets.h"
 

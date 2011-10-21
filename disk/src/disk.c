@@ -38,7 +38,6 @@ int main(void) {
 		perror("Modo incorrecto");
 	}
 
-
 	free(config);
 	freeXmlFile(configFile);
 	return EXIT_SUCCESS;

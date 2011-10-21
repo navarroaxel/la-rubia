@@ -27,6 +27,7 @@ struct queues {
 void init_head(t_blist *waiting, t_blist *processed, t_log *logFile);
 void *head_cscan(void *args);
 void *head_fscan(void *args);
+t_location *head_currentlocation(void);
 t_planning *head_cscanmove(uint32_t requested);
 
 void init_disk();

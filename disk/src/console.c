@@ -14,13 +14,30 @@ void *console(void *args) {
 	t_socket_server *server = sockets_createServerUnix(SOCKET_UNIX_PATH);
 
 	 sockets_listen(server);
-	 t_socket_client *a = sockets_acceptUnix(server);
+	 t_socket_client *client = sockets_acceptUnix(server);
 
 	 t_socket_buffer *buffer;
 	 while(true){
-		 buffer = sockets_recv(a);
+		 buffer = sockets_recv(client);
 
-		 //TODO process this msg!!
+		 switch(buffer->data[0])
+		 {
+		 case 1:
+			 sockets_bufferDestroy(buffer);
+			 int tmpsize;
+			 int offset = sizeof(char);
+			 buffer = malloc(sizeof(t_socket_buffer));
+			 t_location *location = head_currentlocation();
+
+			 buffer->data[0] = 1;
+			 memcpy(buffer->data + offset, &location->cylinder, tmpsize = sizeof(uint16_t));
+			 offset += tmpsize;
+			 memcpy(buffer->data + offset, &location->sector, tmpsize);
+			 buffer->size = offset + tmpsize;
+
+			 sockets_sendBuffer(client, buffer);
+			 break;
+		 }
 
 		 sockets_bufferDestroy(buffer);
 	 }
