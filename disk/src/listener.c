@@ -49,7 +49,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 
 void connectraid(t_blist *waiting, t_log *logFile) {
 	t_socket_client *client = sockets_createClient(config->bindIp, config->bindPort);
-	//TODO: Get IP & port from config.
+
 	sockets_connect(client, config->raidIp, config->raidPort);
 	handshake(client);
 
@@ -80,7 +80,7 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 int handshake(t_socket_client *client) {
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 
-	nipc_setdata(nipc, strdup("myid"), strlen("myid") + 1);
+	nipc_setdata(nipc, config->diskname, strlen(config->diskname) + 1);
 
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
