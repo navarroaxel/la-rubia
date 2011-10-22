@@ -10,6 +10,7 @@
 #include "fatHelpers.h"
 #include "common/utils/utils.h"
 
+
 extern t_fat_bootsector bootSector;
 extern uint32_t * fatTable;
 

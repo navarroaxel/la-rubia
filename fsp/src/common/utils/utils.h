@@ -8,10 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <unicode/utypes.h>
 #include <unicode/putil.h>
 #include <unicode/uiter.h>
 #include "log.h"
+#include "unicode/ustring.h"
 
 char *charmalloc(int len);
 
