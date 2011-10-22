@@ -40,6 +40,8 @@ int disk_initialize() {
 		printf("Error de Handshake");
 		exit(0);
 	}
+	nipc_destroy(nipc);
+	sockets_bufferDestroy(buffer);
 	disk_is_initialized = 1;
 
 	return 0;

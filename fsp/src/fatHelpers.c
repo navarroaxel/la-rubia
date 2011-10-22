@@ -206,12 +206,12 @@ void stringToUpper(char * string){
 }
 
 uint8_t lfn_checksum(const unsigned char *pFcbName){
-        int i;
-        unsigned char sum=0;
+	int i;
+	unsigned char sum=0;
 
-        for (i=11; i; i--)
-                sum = ((sum & 1) << 7) + (sum >> 1) + *pFcbName++;
-        return sum;
+	for (i=11; i; i--)
+			sum = ((sum & 1) << 7) + (sum >> 1) + *pFcbName++;
+	return sum;
 }
 
 uint32_t fat_getFreeClusterCount(){

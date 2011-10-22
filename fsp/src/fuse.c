@@ -136,10 +136,11 @@ int main(int argc, char *argv[])
 	pthread_t consoleThread;
 	pthread_attr_t consoleAttr;
 	pthread_attr_init(&consoleAttr);
-	pthread_attr_setdetachstate(&consoleAttr, PTHREAD_CREATE_JOINABLE);
+	pthread_attr_setdetachstate(&consoleAttr, PTHREAD_CREATE_DETACHED);
 	pthread_create(&consoleThread, &consoleAttr, &console, NULL);
 	fuse_main(argc, argv, &fsp_oper, NULL);
 	free(config);
 	freeXmlFile(configFile);
+	pthread_cancel(consoleThread);
 	return 0;
 }
