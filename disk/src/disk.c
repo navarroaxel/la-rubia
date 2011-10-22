@@ -12,10 +12,13 @@ t_log *logFile;
 config_disk * config;
 
 int main(void) {
-	if (fork() == 0) {
-		pconsole();
+	//TODO: Revisar porque con el fork tira SIGSEGV.
+	/*if (fork() == 0) {
+		pconsole(NULL);
 		return EXIT_SUCCESS;
-	}
+	}*/
+	init_pconsole();
+
 	t_xmlFile *configFile = loadConfig("config.xml");
 	config = xmlGetConfigStructDisk(configFile);
 

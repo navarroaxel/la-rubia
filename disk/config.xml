@@ -9,10 +9,10 @@
   <algorithm>CSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>
-  <diskid>1</diskid>
-  <cylinder>32768</cylinder>
-  <head>1</head>
-  <sector>32</sector>
+  <diskname>mydisk</diskname>
+  <cylinders>32768</cylinders>
+  <heads>1</heads>
+  <sectors>32</sectors>
   <jumptime>1</jumptime>
   <readtime>2</readtime>
   <writetime>3</writetime>

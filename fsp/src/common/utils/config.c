@@ -108,11 +108,10 @@ config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
 	strcpy(xmlParam->algorithm,xmlFileGetParam(xmlFile, "algorithm"));
 	xmlParam->portConsole = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portconsole"));
 	xmlParam->logEnabled = (uint8_t)atoi(xmlFileGetParam(xmlFile, "logenabled"));
-	xmlParam->diskId = (uint8_t)atoi(xmlFileGetParam(xmlFile, "diskid"));
-	xmlParam->cylinder = (uint8_t)atoi(xmlFileGetParam(xmlFile, "cylinder"));
-	xmlParam->head = (uint8_t)atoi(xmlFileGetParam(xmlFile, "head"));
-	xmlParam->sector = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sector"));
-	xmlParam->diskId = (uint8_t)atoi(xmlFileGetParam(xmlFile, "diskid"));
+	xmlParam->cylinders = (uint16_t)atoi(xmlFileGetParam(xmlFile, "cylinders"));
+	xmlParam->heads = (uint8_t)atoi(xmlFileGetParam(xmlFile, "heads"));
+	xmlParam->sectors = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sectors"));
+	strcpy(xmlParam->diskname, xmlFileGetParam(xmlFile, "diskname"));
 	xmlParam->jumpTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "jumptime"));
 	xmlParam->readTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "readtime"));
 	xmlParam->writeTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "writetime"));
@@ -122,4 +121,3 @@ config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
 
 	return xmlParam;
 }
-

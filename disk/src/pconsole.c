@@ -1,6 +1,17 @@
 #include "pconsole.h"
+#include <pthread.h>
 
-void pconsole(void) {
+void init_pconsole(void){
+	pthread_attr_t attr;
+	pthread_t console_id;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthread_create(&console_id, &attr, &pconsole, NULL);
+	pthread_attr_destroy(&attr);
+}
+
+void *pconsole(void* args) {
 	printf("Iniciando...\n");
 	sleep(5);
 
@@ -22,6 +33,7 @@ void pconsole(void) {
 	}
 
 	commands_destroy(cmd);
+	return NULL;
 }
 
 void info(void *context, t_array *args) {

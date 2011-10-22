@@ -9,7 +9,6 @@ typedef struct t_xmlFile {
 	int Size;
 } t_xmlFile;
 
-
 typedef struct config_raid {
    char bindIpFs[15];
    uint16_t fsPort;
@@ -28,10 +27,10 @@ typedef struct config_disk {
 	char algorithm[4];
 	uint16_t portConsole;
 	uint8_t logEnabled;
-	uint8_t diskId;
-	uint8_t cylinder;
-	uint8_t head;
-	uint16_t sector;
+	char diskname[13];
+	uint16_t cylinders;
+	uint8_t heads;
+	uint16_t sectors;
 	uint16_t jumpTime;
 	uint16_t writeTime;
 	uint16_t readTime;

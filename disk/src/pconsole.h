@@ -13,7 +13,8 @@
 
 #define SOCKET_UNIX_PATH "/tmp/lol"
 
-void pconsole(void);
+void init_pconsole(void);
+void *pconsole(void*);
 void info(void *context, t_array *args);
 void clean(void *context, t_array *args);
 void trace(void *context, t_array *args);

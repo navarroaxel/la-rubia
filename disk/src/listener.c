@@ -3,8 +3,7 @@
 extern config_disk * config;
 
 void listener(t_blist *waiting, t_log *logFile) {
-	//TODO: Get IP & port from config.
-	t_socket_server *server = sockets_createServer(NULL, config->bindPort);
+	t_socket_server *server = sockets_createServer("127.0.0.1", config->bindPort);
 
 	sockets_listen(server);
 
