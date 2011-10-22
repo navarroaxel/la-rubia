@@ -49,7 +49,7 @@ static int fuselage_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	//El resto por ahora no se usa
 	(void) offset;
 	(void) fi;
-	char fileName[12];
+	char fileName[14];
 	int res;
 	t_fat_file_entry file;
 	t_fat_file_list * dir;
