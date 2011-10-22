@@ -80,7 +80,7 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 int handshake(t_socket_client *client) {
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 
-	nipc_setdata(nipc, config->diskname, strlen(config->diskname) + 1);
+	nipc_setdata(nipc, strdup(config->diskname), strlen(config->diskname) + 1);
 
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
