@@ -1,4 +1,4 @@
-TOPDIR  := /home/nico/workspace/fsp/
+TOPDIR  := ./
 SRCDIR  := $(TOPDIR)src/
 OBJDIR  := $(TOPDIR)obj/
 BINDIR  := $(TOPDIR)bin/

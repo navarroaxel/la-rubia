@@ -1,62 +1,29 @@
-################################################################################
-# Automatically-generated file. Do not edit!
-################################################################################
+TOPDIR  := ./
+SRCDIR  := $(TOPDIR)src/
+OBJDIR  := $(TOPDIR)obj/
+BINDIR  := $(TOPDIR)bin/
+NAME    := raid
+EXE     := $(BINDIR)$(NAME)
 
--include ../makefile.init
+SFILES  := c
+OFILES  := o
+CC      := gcc
+CFLAGS  := -I/usr/include/fuse -O0 -g3 -Wall -c -fmessage-length=0 -g -D_FILE_OFFSET_BITS=64 -licui18n -licuuc -licudata -MMD -MP -pthread -lpthread -lm -lrt
+LDFLAGS := -licui18n -licuuc -licudata -MMD -MP -pthread -lpthread -lm -lrt -lfuse
+SOURCES := $(shell find $(SRCDIR) -name "*.$(SFILES)")
+OBJECTS := $(patsubst $(SRCDIR)%.$(SFILES), $(OBJDIR)%.$(OFILES), $(SOURCES))
 
-RM := rm -rf
+ALLFILES := $(SOURCES)
 
-# All of the sources participating in the build are defined here
--include sources.mk
--include src/common/utils/subdir.mk
--include src/common/collections/subdir.mk
--include src/common/subdir.mk
--include src/subdir.mk
--include subdir.mk
--include objects.mk
+.PHONY: all clean
 
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(strip $(C++_DEPS)),)
--include $(C++_DEPS)
-endif
-ifneq ($(strip $(C_DEPS)),)
--include $(C_DEPS)
-endif
-ifneq ($(strip $(CC_DEPS)),)
--include $(CC_DEPS)
-endif
-ifneq ($(strip $(CPP_DEPS)),)
--include $(CPP_DEPS)
-endif
-ifneq ($(strip $(CXX_DEPS)),)
--include $(CXX_DEPS)
-endif
-ifneq ($(strip $(C_UPPER_DEPS)),)
--include $(C_UPPER_DEPS)
-endif
-endif
+all:    $(EXE)
 
--include ../makefile.defs
+$(EXE): $(OBJECTS)
+	@$(CC) $^ -o $@ $(LDFLAGS)
 
-# Add inputs and outputs from these tool invocations to the build variables 
+$(OBJDIR)%$(OFILES):    $(SRCDIR)%$(SFILES)
+	@$(CC) $(CFLAGS) $< -o $@
 
-# All Target
-all: raid
-
-# Tool invocations
-raid: $(OBJS) $(USER_OBJS)
-	@echo 'Building target: $@'
-	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "raid" $(OBJS) $(USER_OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
-	@echo ' '
-
-# Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) raid
-	-@echo ' '
-
-.PHONY: all clean dependents
-.SECONDARY:
-
--include ../makefile.targets
+	@rm -f $(OBJECTS) $(EXE)
