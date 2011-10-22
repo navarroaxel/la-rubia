@@ -1,47 +1,29 @@
-################################################################################
-# Automatically-generated file. Do not edit!
-################################################################################
+TOPDIR  := /home/nico/workspace/fsp/
+SRCDIR  := $(TOPDIR)src/
+OBJDIR  := $(TOPDIR)obj/
+BINDIR  := $(TOPDIR)bin/
+NAME    := fsp
+EXE     := $(BINDIR)$(NAME)
 
--include ../makefile.init
+SFILES  := c
+OFILES  := o
+CC      := gcc
+CFLAGS  := -I/usr/include/fuse -O0 -g3 -Wall -c -fmessage-length=0 -g -D_FILE_OFFSET_BITS=64 -licui18n -licuuc -licudata -MMD -MP -pthread -lpthread -lm -lrt
+LDFLAGS := -licui18n -licuuc -licudata -MMD -MP -pthread -lpthread -lm -lrt -lfuse
+SOURCES := $(shell find $(SRCDIR) -name "*.$(SFILES)")
+OBJECTS := $(patsubst $(SRCDIR)%.$(SFILES), $(OBJDIR)%.$(OFILES), $(SOURCES))
 
-RM := rm -rf
+ALLFILES := $(SOURCES)
 
-# All of the sources participating in the build are defined here
--include sources.mk
--include subdir.mk
--include src/subdir.mk
--include src/common/utils/subdir.mk
--include src/common/subdir.mk
--include src/common/collections/subdir.mk
--include objects.mk
+.PHONY: all clean
 
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(strip $(C_DEPS)),)
--include $(C_DEPS)
-endif
-endif
+all:    $(EXE)
 
--include ../makefile.defs
+$(EXE): $(OBJECTS)
+	@$(CC) $^ -o $@ $(LDFLAGS)
 
-# Add inputs and outputs from these tool invocations to the build variables 
+$(OBJDIR)%$(OFILES):    $(SRCDIR)%$(SFILES)
+	@$(CC) $(CFLAGS) $< -o $@
 
-# All Target
-all: fsp
-
-# Tool invocations
-fsp: $(OBJS) $(USER_OBJS)
-	@echo 'Building target: $@'
-	@echo 'Invoking: GCC C Linker'
-	gcc  -o "fsp" $(OBJS) $(USER_OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
-	@echo ' '
-
-# Other Targets
 clean:
-	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) fsp
-	-@echo ' '
-
-.PHONY: all clean dependents
-.SECONDARY:
-
--include ../makefile.targets
+	@rm -f $(OBJECTS) $(EXE)
