@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include "common/utils/sockets.h"
+#include "common/utils/config.h"
 #include "head.h"
 
 #define SOCKET_UNIX_PATH "/tmp/lol"

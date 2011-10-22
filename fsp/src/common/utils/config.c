@@ -24,7 +24,7 @@ char* xmlFileReadFile(t_xmlFile *xmlFile, int from, int to) {
 
 char *xmlFileGetEndSection(const char *section) {
 	int i;
-	char* endSection = charmalloc(strlen(section)+1);
+	char* endSection = charmalloc(strlen(section) + 1);
 	endSection[0] = '/';
 	for (i = 1; section[i - 1]; i++)
 		endSection[i] = section[i - 1];
@@ -34,7 +34,8 @@ char *xmlFileGetEndSection(const char *section) {
 
 char *xmlFileGetParam(t_xmlFile *xmlFile, const char* param) {
 	char* paramValue;
-	int beginSection = strstr(xmlFile->Content, param) - xmlFile->Content + strlen(param) + 1;
+	int beginSection = strstr(xmlFile->Content, param) - xmlFile->Content
+			+ strlen(param) + 1;
 	char* endParam = xmlFileGetEndSection(param);
 	int endSection = strstr(xmlFile->Content, endParam) - xmlFile->Content - 2;
 	free(endParam);
@@ -46,7 +47,7 @@ char *xmlFileGetParam(t_xmlFile *xmlFile, const char* param) {
 }
 
 t_xmlFile *newXmlFile(char *path) {
-	t_xmlFile *xmlFile = (t_xmlFile*)malloc(sizeof(t_xmlFile));
+	t_xmlFile *xmlFile = (t_xmlFile*) malloc(sizeof(t_xmlFile));
 	xmlFile->f = fopen(path, "r+");
 	xmlFile->Size = xmlFileGetFileSize(xmlFile);
 	xmlFile->Content = xmlFileReadFile(xmlFile, 0, xmlFile->Size);
@@ -76,48 +77,52 @@ char *xmlStreamGetParam(char *xmlStream, const char *param) {
 }
 
 config_raid *xmlGetConfigStructRaid(t_xmlFile *xmlFile) {
-	config_raid *xmlParam = (config_raid*)malloc(sizeof(config_raid));
-	strcpy(xmlParam->bindIpFs,xmlFileGetParam(xmlFile, "bindipfs"));
-	xmlParam->fsPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "fsport"));
-	strcpy(xmlParam->bindIpDisk,xmlFileGetParam(xmlFile, "bindipdisk"));
-	xmlParam->diskPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskport"));
-	xmlParam->consoleEnabled = (uint16_t)atoi(xmlFileGetParam(xmlFile, "consoleenabled"));
-	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logfile"));
+	config_raid *xmlParam = (config_raid*) malloc(sizeof(config_raid));
+	strcpy(xmlParam->bindIpFs, xmlFileGetParam(xmlFile, "bindipfs"));
+	xmlParam->fsPort = (uint16_t) atoi(xmlFileGetParam(xmlFile, "fsport"));
+	strcpy(xmlParam->bindIpDisk, xmlFileGetParam(xmlFile, "bindipdisk"));
+	xmlParam->diskPort = (uint16_t) atoi(xmlFileGetParam(xmlFile, "diskport"));
+	xmlParam->consoleEnabled = (uint16_t) atoi(
+			xmlFileGetParam(xmlFile, "consoleenabled"));
+	strcpy(xmlParam->logFilePath, xmlFileGetParam(xmlFile, "logfile"));
 	return xmlParam;
 }
 
 config_fsp *xmlGetConfigStructFsp(t_xmlFile *xmlFile) {
-	config_fsp *xmlParam = (config_fsp*)malloc(sizeof(config_fsp));
-	strcpy(xmlParam->diskIp,xmlFileGetParam(xmlFile, "diskip"));
-	xmlParam->diskPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "diskport"));
-	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "bindip"));
-	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "bindport"));
-	xmlParam->maxConnections = (uint16_t)atoi(xmlFileGetParam(xmlFile, "maxconnections"));
-	xmlParam->sizeCache = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sizecache"));
-	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logfile"));
+	config_fsp *xmlParam = (config_fsp*) malloc(sizeof(config_fsp));
+	strcpy(xmlParam->diskIp, xmlFileGetParam(xmlFile, "diskip"));
+	xmlParam->diskPort = (uint16_t) atoi(xmlFileGetParam(xmlFile, "diskport"));
+	strcpy(xmlParam->bindIp, xmlFileGetParam(xmlFile, "bindip"));
+	xmlParam->bindPort = (uint16_t) atoi(xmlFileGetParam(xmlFile, "bindport"));
+	xmlParam->maxConnections = (uint16_t) atoi(
+			xmlFileGetParam(xmlFile, "maxconnections"));
+	xmlParam->sizeCache = (uint16_t) atoi(
+			xmlFileGetParam(xmlFile, "sizecache"));
+	strcpy(xmlParam->logFilePath, xmlFileGetParam(xmlFile, "logfile"));
 	return xmlParam;
 }
 
 config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
-	config_disk *xmlParam = (config_disk*)malloc(sizeof(config_disk));
-	strcpy(xmlParam->raidIp,xmlFileGetParam(xmlFile, "raidip"));
-	xmlParam->raidPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "raidport"));
-	strcpy(xmlParam->bindIp,xmlFileGetParam(xmlFile, "bindip"));
-	xmlParam->bindPort = (uint16_t)atoi(xmlFileGetParam(xmlFile, "bindport"));
-	strcpy(xmlParam->mode,xmlFileGetParam(xmlFile, "mode"));
-	strcpy(xmlParam->algorithm,xmlFileGetParam(xmlFile, "algorithm"));
-	xmlParam->portConsole = (uint16_t)atoi(xmlFileGetParam(xmlFile, "portconsole"));
-	xmlParam->logEnabled = (uint8_t)atoi(xmlFileGetParam(xmlFile, "logenabled"));
-	xmlParam->cylinders = (uint16_t)atoi(xmlFileGetParam(xmlFile, "cylinders"));
-	xmlParam->heads = (uint8_t)atoi(xmlFileGetParam(xmlFile, "heads"));
-	xmlParam->sectors = (uint16_t)atoi(xmlFileGetParam(xmlFile, "sectors"));
+	config_disk *xmlParam = (config_disk*) malloc(sizeof(config_disk));
+	strcpy(xmlParam->raidIp, xmlFileGetParam(xmlFile, "raidip"));
+	xmlParam->raidPort = (uint16_t) atoi(xmlFileGetParam(xmlFile, "raidport"));
+	strcpy(xmlParam->bindIp, xmlFileGetParam(xmlFile, "bindip"));
+	xmlParam->bindPort = (uint16_t) atoi(xmlFileGetParam(xmlFile, "bindport"));
+	strcpy(xmlParam->mode, xmlFileGetParam(xmlFile, "mode"));
+	strcpy(xmlParam->algorithm, xmlFileGetParam(xmlFile, "algorithm"));
+	xmlParam->portConsole = (uint16_t) atoi(xmlFileGetParam(xmlFile, "portconsole"));
+	xmlParam->logEnabled = (uint8_t) atoi(xmlFileGetParam(xmlFile, "logenabled"));
+	xmlParam->cylinders = (uint16_t) atoi(xmlFileGetParam(xmlFile, "cylinders"));
+	xmlParam->heads = (uint8_t) atoi(xmlFileGetParam(xmlFile, "heads"));
+	xmlParam->sectors = (uint16_t) atoi(xmlFileGetParam(xmlFile, "sectors"));
 	strcpy(xmlParam->diskname, xmlFileGetParam(xmlFile, "diskname"));
-	xmlParam->jumpTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "jumptime"));
-	xmlParam->readTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "readtime"));
-	xmlParam->writeTime = (uint16_t)atoi (xmlFileGetParam(xmlFile, "writetime"));
-	xmlParam->rpm = (uint16_t)atoi (xmlFileGetParam(xmlFile, "rpm"));
-	strcpy(xmlParam->volumeFilePath,xmlFileGetParam(xmlFile, "volumefile"));
-	strcpy(xmlParam->logFilePath,xmlFileGetParam(xmlFile, "logfile"));
+	xmlParam->jumpTime = (uint16_t) atoi(xmlFileGetParam(xmlFile, "jumptime"));
+	xmlParam->readTime = (uint16_t) atoi(xmlFileGetParam(xmlFile, "readtime"));
+	xmlParam->writeTime = (uint16_t) atoi(xmlFileGetParam(xmlFile, "writetime"));
+	xmlParam->rpm = (uint16_t) atoi(xmlFileGetParam(xmlFile, "rpm"));
+	strcpy(xmlParam->volumeFilePath, xmlFileGetParam(xmlFile, "volumefile"));
+	strcpy(xmlParam->logFilePath, xmlFileGetParam(xmlFile, "logfile"));
+	strcpy(xmlParam->socketunixpath, xmlFileGetParam(xmlFile, "socketunixpath"));
 
 	return xmlParam;
 }

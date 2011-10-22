@@ -10,6 +10,7 @@
 #include "location.h"
 #include "common/utils/commands.h"
 #include "common/utils/sockets.h"
+#include "common/utils/config.h"
 
 #define SOCKET_UNIX_PATH "/tmp/lol"
 

@@ -1,6 +1,7 @@
 #include "pconsole.h"
 #include <pthread.h>
 
+extern config_disk *config;
 void init_pconsole(void){
 	pthread_attr_t attr;
 	pthread_t console_id;
@@ -15,7 +16,7 @@ void *pconsole(void* args) {
 	printf("Iniciando...\n");
 	sleep(5);
 
-	t_socket_client *client = sockets_createClientUnix(SOCKET_UNIX_PATH);
+	t_socket_client *client = sockets_createClientUnix(config->socketunixpath);
 	sockets_connectUnix(client, SOCKET_UNIX_PATH);
 
 	t_commands *cmd = commands_createWithConext(client, ' ', '\n', ' ');

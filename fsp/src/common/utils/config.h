@@ -37,6 +37,7 @@ typedef struct config_disk {
 	uint16_t rpm;
 	char volumeFilePath[255];
 	char logFilePath[255];
+	char socketunixpath[255];
 } config_disk;
 
 typedef struct config_fsp {

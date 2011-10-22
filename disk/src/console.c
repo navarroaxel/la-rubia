@@ -1,5 +1,6 @@
 #include "console.h"
 
+extern config_disk *config;
 void init_console(void) {
 	pthread_attr_t attr;
 	pthread_t console_id;
@@ -11,7 +12,7 @@ void init_console(void) {
 }
 
 void *console(void *args) {
-	t_socket_server *server = sockets_createServerUnix(SOCKET_UNIX_PATH);
+	t_socket_server *server = sockets_createServerUnix(config->socketunixpath);
 
 	 sockets_listen(server);
 	 t_socket_client *client = sockets_acceptUnix(server);

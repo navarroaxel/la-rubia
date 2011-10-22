@@ -1,6 +1,6 @@
 #include "headHelper.h"
 
-extern config_disk * config;
+extern config_disk *config;
 int islimitcylinder(int cylinder) {
 	//TODO: cambiar por archivo de config.
 	return cylinder == config->cylinders - 1;

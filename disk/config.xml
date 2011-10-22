@@ -17,4 +17,5 @@
   <readtime>2</readtime>
   <writetime>3</writetime>
   <rpm>6000</rpm>
+  <socketunixpath>/tmp/lol</socketunixpath>
 </config>
