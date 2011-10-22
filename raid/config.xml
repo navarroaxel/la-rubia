@@ -1,8 +1,8 @@
 <config>
   <bindipfs>127.0.0.1</bindipfs>
-  <fsport>7000</fsport>
+  <fsport>9999</fsport>
   <bindipdisk>127.0.0.1</bindipdisk>
-  <diskport>8000</diskport>  
+  <diskport>7000</diskport>  
   <consoleenabled>1</consoleenabled>
-  <logfile>/home/nico/ppd.log</logfile>
+  <logfile>/home/utn_so/raid.log</logfile>
 </config>

@@ -1,13 +1,18 @@
 #include "raid.h"
-
+#include "common/utils/config.h"
 void diskconnect(void);
 
+config_raid * config;
 
 int main(void) {
 	//diskconnect();
+
+	t_xmlFile * configFile = loadConfig("config.xml");
+	config = xmlGetConfigStructRaid(configFile);
+
 	disks_init();
 	t_list *waiting = collection_list_create();
-	t_log *log = log_create("RAID", "/home/utn_so/raid.log",
+	t_log *log = log_create("RAID", config->logFilePath,
 		WARNING | DEBUG | ERROR | INFO, M_CONSOLE_DISABLE);
 
 	listener(waiting, log);
@@ -38,7 +43,7 @@ void diskconnect(void) {
 
 void listener(t_list *waiting, t_log *log) {
 	//TODO: Get IP & port from config.
-	t_socket_server *server = sockets_createServer(NULL, 5100);
+	t_socket_server *server = sockets_createServer(NULL, config->diskPort);
 
 	sockets_listen(server);
 
