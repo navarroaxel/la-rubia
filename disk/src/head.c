@@ -109,9 +109,9 @@ void *head_fscan(void *args) {
 					getnearestsectorasc);
 
 			if (e->read)
-				e->result = disk_read(e->offset, &e->data);
+				e->result = disk_read(current, &e->data);
 			else
-				e->result = disk_write(e->offset, &e->data);
+				e->result = disk_write(current, &e->data);
 
 			collection_blist_push(q->processed, e);
 		}
