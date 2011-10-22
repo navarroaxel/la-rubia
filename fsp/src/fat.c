@@ -91,10 +91,12 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
 	t_fat_file_list * p;
 	t_fat_file_list * pAnt=NULL;
 	t_cluster cluster;
-	int inEntry=0;
-	int i;
+	uint32_t dataCluster;
+	uint32_t inEntry=0;
+	uint32_t i;
 	while (1){
-		fat_addressing_readCluster(clusterN,&cluster);
+		dataCluster=fat_dataClusterToDiskCluster(clusterN);
+		fat_addressing_readCluster(dataCluster,&cluster);
 		for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat_file_data_entry)){
 				//Asumo que antes de la entrada posta tengo n de nombre largo, me quedo con la ultima nomas
 				//TODO: Opcional: Implementar LFN como corresponde (extra TP, copado para hacer testing)
@@ -142,7 +144,7 @@ void fat_destroyFileList(t_fat_file_list * fileList){
 }
 
 t_fat_file_list * fat_getRootDirectory(){
-	return fat_getFileListFromDirectoryCluster(fat_getRootDirectoryFirstCluster());
+	return fat_getFileListFromDirectoryCluster(2);
 }
 
 int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn){
@@ -196,7 +198,7 @@ t_fat_file_list * fat_getDirectoryListing(t_fat_file_entry * fileEntry){
 	uint32_t clusterN;
 	if (fileEntry==NULL)
 		return NULL;
-	clusterN=fat_dataClusterToDiskCluster(fat_getEntryFirstCluster(&fileEntry->dataEntry));
+	clusterN=fat_getEntryFirstCluster(&fileEntry->dataEntry);
 	return fat_getFileListFromDirectoryCluster(clusterN);
 }
 
