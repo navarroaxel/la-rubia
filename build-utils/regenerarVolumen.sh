@@ -4,5 +4,5 @@ sudo mount -o loop fat32.disk fuseMount/
 cd fuseMount/
 #sudo nano asd.txt
 cd ..
-sudo cp Desktop/chatGaby.txt fuseMount/
-#sudo umount -f fuseMount
+echo "hello world!" > asd.txt
+sudo umount -f fuseMount
