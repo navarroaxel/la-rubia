@@ -15,7 +15,7 @@
   <sectors>32</sectors>
   <jumptime>1</jumptime>
   <readtime>2</readtime>
-  <writetime>3</writetime>
+  <writetime>2</writetime>
   <rpm>6000</rpm>
   <socketunixpath>/tmp/lol</socketunixpath>
 </config>

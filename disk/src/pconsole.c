@@ -98,18 +98,17 @@ void trace(void *context, t_array *args) {
 	tmpsize = sizeof(uint32_t);
 	for(i = 0; i < array_size(args); i++) {
 		value = atol(array_get(args, i));
-		memcpy(&buffer->data + offset, &value, tmpsize);
+		memcpy(buffer->data + offset, &value, tmpsize);
 		offset += tmpsize;
 	}
-	buffer->size = 0;
+	buffer->size = offset;
 	sockets_sendBuffer(client, buffer);
 	sockets_bufferDestroy(buffer);
 
-	//TODO: Recibir los paquetes del trace
+	//TODO: procesar trace response.
 //	buffer = sockets_recv(client);
 //	if (buffer->data[0] == CONSOLE_TRACE) {
 //
 //	}
-//
 //	sockets_bufferDestroy(buffer);
 }

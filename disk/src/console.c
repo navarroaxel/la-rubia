@@ -60,10 +60,10 @@ void *console(void *args) {
 		 case CONSOLE_TRACE:
 			 offset = sizeof(char);
 			 tmpsize = sizeof(uint32_t);
-			 while (offset <= buffer->size) {
+			 while (offset < buffer->size) {
 				 op = malloc(sizeof(t_disk_operation));
 				 memcpy(&op->offset, buffer->data + offset, tmpsize);
-				 op->client = client;
+				 op->client = NULL;
 				 op->read = true;
 				 enqueueOperation(waiting, op);
 				 offset += tmpsize;

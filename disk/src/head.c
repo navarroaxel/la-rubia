@@ -134,7 +134,7 @@ void init_disk() {
 }
 
 int disk_read(t_location *location, t_sector *sector) {
-	//TODO: delay tracktime & readtime
+	sleep(config->readTime);
 	memcpy(sector, disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE,
 	sizeof(t_sector));
 	location_readsector(location);
@@ -142,7 +142,7 @@ int disk_read(t_location *location, t_sector *sector) {
 }
 
 int disk_write(t_location *location, t_sector *sector) {
-	//TODO: delay tracktime & writetime
+	sleep(config->writeTime);
 	memcpy(disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE, sector, sizeof(t_sector));
 	location_readsector(location);
 	return DISK_RESULT_SUCCESS;
