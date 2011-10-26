@@ -14,9 +14,9 @@ config_disk * config;
 int main(void) {
 	//TODO: Revisar porque con el fork tira SIGSEGV.
 	/*if (fork() == 0) {
-		pconsole(NULL);
-		return EXIT_SUCCESS;
-	}*/
+	 pconsole(NULL);
+	 return EXIT_SUCCESS;
+	 }*/
 	init_pconsole();
 
 	t_xmlFile *configFile = loadConfig("config.xml");
@@ -28,16 +28,16 @@ int main(void) {
 	logFile = log_create("PPD", config->logFilePath,
 			WARNING | DEBUG | ERROR | INFO, M_CONSOLE_DISABLE);
 
-	init_console();
+	init_console(waiting);
 
 	init_head(waiting, processed, logFile);
 
 	init_dispatcher(processed);
-	if(strcmp(config->mode,"CONNECT")==0){
+	if (strcmp(config->mode, "CONNECT") == 0) {
 		connectraid(waiting, logFile);
-	}else if (strcmp(config->mode,"LISTEN")==0){
+	} else if (strcmp(config->mode, "LISTEN") == 0) {
 		listener(waiting, logFile);
-	}else{
+	} else {
 		perror("Modo incorrecto");
 	}
 

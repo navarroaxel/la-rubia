@@ -2,17 +2,14 @@
 
 extern config_disk *config;
 int islimitcylinder(int cylinder) {
-	//TODO: cambiar por archivo de config.
 	return cylinder == config->cylinders - 1;
 }
 
 int islimitsector(int sector) {
-	//TODO: cambiar por archivo de config.
 	return sector == config->sectors - 1;
 }
 
 uint16_t getcylinder(uint32_t offset) {
-	//TODO: Tomar consts de config file.
 	return offset / (config->heads * config->sectors);
 }
 
@@ -22,4 +19,12 @@ uint16_t getsector(uint32_t offset) {
 
 uint32_t getoffset(uint16_t cylinder, uint16_t sector){
 	return cylinder * config->sectors + sector;
+}
+
+void enqueueOperation(t_blist *waiting, t_disk_operation *op) {
+	//encola la operacion en base al algoritmo de R&W utilizado.
+	int enqueueDiskOperation(void *data) {
+		return getcylinder(op->offset) >= getcylinder(((t_disk_operation *) data)->offset);
+	}
+	collection_blist_put(waiting, op, &enqueueDiskOperation);
 }

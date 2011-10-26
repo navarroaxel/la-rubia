@@ -124,11 +124,3 @@ t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client) {
 	return operation;
 }
 
-void enqueueOperation(t_blist *waiting, t_disk_operation *op) {
-	//encola la operacion en base al algoritmo de R&W utilizado.
-
-	int enqueueDiskOperation(void *data) {
-		return op->offset >= ((t_disk_operation *) data)->offset;
-	}
-	collection_blist_put(waiting, op, &enqueueDiskOperation);
-}

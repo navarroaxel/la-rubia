@@ -1,7 +1,7 @@
 #include "blist.h"
 
 t_blist *collection_blist_create(int maxLength) {
-	t_blist *list = (t_blist *) malloc(sizeof(t_blist));
+	t_blist *list = malloc(sizeof(t_blist));
 	list->head = NULL;
 	list->elements_count = 0;
 	if (sem_init(&list->semaphore, 0, 1) == -1) {
@@ -71,16 +71,16 @@ void collection_blist_push(t_blist *list, void *data) {
 	sem_wait(&list->semaphore);
 	t_link_element *new_element = malloc(sizeof(t_link_element));
 	new_element->data = data;
+	new_element->next = NULL;
 
-	t_link_element *e = list->head;
-	while (e != NULL)
-		e = e->next;
-
-	if (e == list->head) {
-		new_element->next = list->head;
+	if (list->head == NULL)
 		list->head = new_element;
-	} else {
-		new_element->next = e;
+	else {
+		t_link_element *e = list->head;
+		while (e->next != NULL)
+			e = e->next;
+
+		e->next = new_element;
 	}
 
 	list->elements_count++;

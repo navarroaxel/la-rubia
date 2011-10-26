@@ -9,10 +9,12 @@
 #include "common/utils/sockets.h"
 #include "common/utils/config.h"
 #include "head.h"
+#include "headHelper.h"
 
 #define SOCKET_UNIX_PATH "/tmp/lol"
 
-void init_console(void);
-void *console(void *args);
+void init_console(t_blist *waiting);
+void *console(void *waiting);
+void enqueueOperation(t_blist *waiting, t_disk_operation *op);
 
 #endif

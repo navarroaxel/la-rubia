@@ -10,6 +10,7 @@
 #include "common/nipc.h"
 #include "common/utils/log.h"
 #include "disk.h"
+#include "headHelper.h"
 
 void enqueueOperation(t_blist *waiting, t_disk_operation *op);
 void listener(t_blist *waiting, t_log *logFile);

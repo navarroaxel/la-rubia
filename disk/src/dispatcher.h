@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include "disk.h"
+#include "defines.h"
 #include "common/utils/sockets.h"
 #include "common/collections/blist.h"
 #include "common/nipc.h"

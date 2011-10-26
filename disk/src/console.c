@@ -1,17 +1,18 @@
 #include "console.h"
 
 extern config_disk *config;
-void init_console(void) {
+void init_console(t_blist *waiting) {
 	pthread_attr_t attr;
 	pthread_t console_id;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&console_id, &attr, &console, NULL);
+	pthread_create(&console_id, &attr, &console, (void*)waiting);
 	pthread_attr_destroy(&attr);
 }
 
 void *console(void *args) {
+	t_blist *waiting = args;
 	t_socket_server *server = sockets_createServerUnix(config->socketunixpath);
 
 	 sockets_listen(server);
@@ -42,7 +43,7 @@ void *console(void *args) {
 			 offset = sizeof(char);
 			 uint32_t sector, sectorto;
 
-			 memcpy(&sector, buffer->data + offset, tmpsize += sizeof(uint32_t));
+			 memcpy(&sector, buffer->data + offset, tmpsize = sizeof(uint32_t));
 			 offset += tmpsize;
 			 memcpy(&sectorto, buffer->data + offset, tmpsize);
 
@@ -53,9 +54,8 @@ void *console(void *args) {
 				 op->offset = sector;
 				 op->read = 0;
 				 memset(op->data, 0, sizeof(op->data));
-				 //TODO Enqueue operation;
+				 enqueueOperation(waiting, op);
 			 }
-
 			 break;
 		 case CONSOLE_TRACE:
 			 offset = sizeof(char);
@@ -65,7 +65,7 @@ void *console(void *args) {
 				 memcpy(&op->offset, buffer->data + offset, tmpsize);
 				 op->client = client;
 				 op->read = true;
-				 //TODO Enqueue operation
+				 enqueueOperation(waiting, op);
 				 offset += tmpsize;
 			 }
 			 break;
