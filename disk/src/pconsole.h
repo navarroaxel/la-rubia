@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include "defines.h"
 #include "location.h"
 #include "common/utils/commands.h"
 #include "common/utils/sockets.h"

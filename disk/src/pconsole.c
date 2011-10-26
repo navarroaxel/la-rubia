@@ -39,12 +39,12 @@ void *pconsole(void* args) {
 
 void info(void *context, t_array *args) {
 	t_socket_client *client = context;
-	char code = 1;
+	char code = CONSOLE_INFO;
 	sockets_send(client, &code, sizeof(char));
 
 	t_socket_buffer *buffer = sockets_recv(client);
 
-	if (buffer->data[0] == 1) {
+	if (buffer->data[0] == CONSOLE_INFO) {
 		t_location *location = location_create(0);
 		int offset = 1;
 		int tmpsize;
@@ -63,6 +63,24 @@ void clean(void *context, t_array *args) {
 		printf("clean <sector inicial> <sector final>\n");
 		return;
 	}
+
+	int offset, tmpsize;
+	t_socket_client *client = context;
+	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
+
+	uint32_t value = CONSOLE_CLEAN;
+
+	memcpy(buffer->data, &value, offset = sizeof(char));
+	value = atol(array_get(args, 0));
+	memcpy(buffer->data + offset, &value, tmpsize = sizeof(uint32_t) );
+	value = atol(array_get(args, 1));
+	offset += tmpsize;
+	memcpy(buffer->data + offset, &value, tmpsize);
+	buffer->size = offset + tmpsize;
+
+	sockets_sendBuffer(client, buffer);
+
+	sockets_bufferDestroy(buffer);
 }
 
 void trace(void *context, t_array *args) {
@@ -70,4 +88,28 @@ void trace(void *context, t_array *args) {
 		printf("trace [lista sectores]\n");
 		return;
 	}
+
+	int offset, tmpsize, i;
+	t_socket_client *client = context;
+	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
+
+	uint32_t value = CONSOLE_TRACE;
+	memcpy(buffer->data, &value, offset = sizeof(char));
+	tmpsize = sizeof(uint32_t);
+	for(i = 0; i < array_size(args); i++) {
+		value = atol(array_get(args, i));
+		memcpy(&buffer->data + offset, &value, tmpsize);
+		offset += tmpsize;
+	}
+	buffer->size = 0;
+	sockets_sendBuffer(client, buffer);
+	sockets_bufferDestroy(buffer);
+
+	//TODO: Recibir los paquetes del trace
+//	buffer = sockets_recv(client);
+//	if (buffer->data[0] == CONSOLE_TRACE) {
+//
+//	}
+//
+//	sockets_bufferDestroy(buffer);
 }

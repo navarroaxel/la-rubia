@@ -18,6 +18,11 @@ void *dispatcher(void *args) {
 		t_nipc *nipc = nipc_create(
 				e->read ? NIPC_READSECTOR_RS : NIPC_WRITESECTOR_RS);
 
+		if (e->client == NULL){
+			free(e);
+			continue;
+		}
+
 		if (e->read) {
 			t_disk_readSectorRs *rs = malloc(sizeof(t_disk_readSectorRs));
 			memcpy(rs->data, e->data, DISK_SECTOR_SIZE);

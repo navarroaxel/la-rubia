@@ -2,8 +2,10 @@
 #define CONSOLE_H_
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include "defines.h"
 #include "common/utils/sockets.h"
 #include "common/utils/config.h"
 #include "head.h"

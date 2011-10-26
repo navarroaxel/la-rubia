@@ -23,7 +23,7 @@ void *console(void *args) {
 
 		 switch(buffer->data[0])
 		 {
-		 case 1:
+		 case CONSOLE_INFO:
 			 sockets_bufferDestroy(buffer);
 			 int tmpsize;
 			 int offset = sizeof(char);
@@ -37,6 +37,37 @@ void *console(void *args) {
 			 buffer->size = offset + tmpsize;
 
 			 sockets_sendBuffer(client, buffer);
+			 break;
+		 case CONSOLE_CLEAN:
+			 offset = sizeof(char);
+			 uint32_t sector, sectorto;
+
+			 memcpy(&sector, buffer->data + offset, tmpsize += sizeof(uint32_t));
+			 offset += tmpsize;
+			 memcpy(&sectorto, buffer->data + offset, tmpsize);
+
+			 t_disk_operation *op;
+			 for (; sector <= sectorto; sector++) {
+				 op = malloc(sizeof(t_disk_operation));
+				 op->client = NULL;
+				 op->offset = sector;
+				 op->read = 0;
+				 memset(op->data, 0, sizeof(op->data));
+				 //TODO Enqueue operation;
+			 }
+
+			 break;
+		 case CONSOLE_TRACE:
+			 offset = sizeof(char);
+			 tmpsize = sizeof(uint32_t);
+			 while (offset <= buffer->size) {
+				 op = malloc(sizeof(t_disk_operation));
+				 memcpy(&op->offset, buffer->data + offset, tmpsize);
+				 op->client = client;
+				 op->read = true;
+				 //TODO Enqueue operation
+				 offset += tmpsize;
+			 }
 			 break;
 		 }
 
