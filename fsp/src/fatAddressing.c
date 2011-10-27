@@ -17,52 +17,58 @@
 
 extern t_fat_bootsector bootSector;
 
-int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster * buffer){
-	t_sector sector;
-	uint32_t offset;
-	t_cluster cluster;
-	uint32_t sectorN;
-
+int fat_addressing_readBlock(uint32_t blockNumber, t_block buffer){
+	uint32_t i;
+	uint32_t baseSector = blockNumber * FAT_BLOCK_SIZE/FAT_SECTOR_SIZE;
 	if (!disk_isInitialized())
 		disk_initialize();
-	if (!cache_isInitialized())
+	if(!cache_isInitialized())
 		cache_initialize();
-	if (cache_read(clusterNumber,buffer)){
-		return 0;
+	if(cache_read(blockNumber,buffer))
+		return 1;
+
+	for(i=0;i<FAT_BLOCK_SIZE/FAT_SECTOR_SIZE;i++){
+		disk_readSector(baseSector+i,&buffer[i*FAT_SECTOR_SIZE]);
 	}
-	uint32_t clusterFirstSector=clusterNumber*bootSector.sectorPerCluster;
-	uint32_t sectorSize=bootSector.bytesPerSector;
-	for (sectorN = 0 ; sectorN < bootSector.sectorPerCluster ; sectorN++) {
-		if (!disk_readSector(clusterFirstSector + sectorN , &sector)){
-			return 0;
-		}else{
-			offset = sectorN * sectorSize;
-			//copiame la data leida en el cluster con el offset que corresponde
-			memcpy(&(cluster[offset]), &sector,sectorSize); //WARNING: Aritmetica de Punteros
-		}
-	}
-	memcpy(buffer,&cluster,FAT_CLUSTER_SIZE);
-	cache_write(clusterNumber,&cluster);
+	cache_write(blockNumber,buffer);
 	return 1;
 }
-int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster * cluster){
-	t_sector sector;
-	uint32_t offset;
-	uint32_t sectorN;
-
+int fat_addressing_writeBlock(uint32_t blockNumber, t_block buffer){
+	uint32_t i;
+	uint32_t baseSector = blockNumber * FAT_BLOCK_SIZE/FAT_SECTOR_SIZE;
 	if (!disk_isInitialized())
 		disk_initialize();
+	if(!cache_isInitialized())
+		cache_initialize();
 
-	uint32_t clusterFirstSector=clusterNumber*bootSector.sectorPerCluster;
-	uint32_t sectorSize=bootSector.bytesPerSector;
-	for (sectorN = 0 ; sectorN < bootSector.sectorPerCluster ; sectorN++) {
-		offset = sectorN * sectorSize;
-		memcpy(&sector,&((*cluster)[offset]),sectorSize);
-		if (!disk_writeSector(clusterFirstSector + sectorN , &sector)){
-			return 0;
-		}
+	for(i=0;i<FAT_BLOCK_SIZE/FAT_SECTOR_SIZE;i++){
+		disk_writeSector(baseSector+i,&buffer[i*FAT_SECTOR_SIZE]);
 	}
-	cache_write(clusterNumber,cluster);
+	cache_write(blockNumber,buffer);
 	return 1;
+}
+
+int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster buffer){
+	uint32_t blocksPerCluster = FAT_CLUSTER_SIZE / FAT_BLOCK_SIZE;
+	uint32_t clusterFirstBlock = (fat_getRootDirectoryFirstCluster() + clusterNumber -2 ) * blocksPerCluster ;
+	uint32_t i;
+	for(i=0;i<blocksPerCluster;i++){
+		fat_addressing_readBlock(clusterFirstBlock+i,&buffer[i*FAT_BLOCK_SIZE]);
+	}
+	return 1;
+
+}
+int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster buffer){
+	uint32_t blocksPerCluster = FAT_CLUSTER_SIZE / FAT_BLOCK_SIZE;
+	uint32_t clusterFirstBlock = (fat_getRootDirectoryFirstCluster() + clusterNumber -2 ) * blocksPerCluster ;
+	uint32_t i;
+	for (i = 0 ; i < blocksPerCluster ; i++) {
+		fat_addressing_writeBlock(clusterFirstBlock+i,&buffer[i*FAT_BLOCK_SIZE]);
+	}
+	return 1;
+}
+
+uint32_t fat_getRootDirectoryFirstCluster(){
+	return ((uint32_t) bootSector.reservedSectorCount + (uint32_t)bootSector.numberFATs * bootSector.sectorPerFAT32)/bootSector.sectorPerCluster ;
 }
 

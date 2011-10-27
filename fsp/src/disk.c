@@ -15,6 +15,7 @@
 #include "common/utils/sockets.h"
 #include "common/utils/config.h"
 #include "assert.h"
+
 /**
  * Read Sector into buffer;
  */
@@ -43,7 +44,6 @@ int disk_initialize() {
 	nipc_destroy(nipc);
 	sockets_bufferDestroy(buffer);
 	disk_is_initialized = 1;
-
 	return 0;
 }
 
@@ -51,7 +51,7 @@ int disk_isInitialized() {
 	return disk_is_initialized;
 }
 
-int disk_readSector(uint32_t sector, t_sector * buf) {
+int disk_readSector(uint32_t sector, t_sector buf) {
 	sem_wait(&semaforo);
 	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
 	rq->offset = sector;
@@ -79,7 +79,7 @@ int disk_readSector(uint32_t sector, t_sector * buf) {
 	return 1;
 }
 
-int disk_writeSector(uint32_t sector, t_sector * buf) {
+int disk_writeSector(uint32_t sector, t_sector buf) {
 	sem_wait(&semaforo);
 	t_disk_writeSectorRq *rq = malloc(sizeof(t_disk_writeSectorRq));
 	rq->offset = sector;

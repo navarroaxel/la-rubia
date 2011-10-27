@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #define FAT_SECTOR_SIZE 512
+#define FAT_BLOCK_SIZE 1024
 #define FAT_CLUSTER_SIZE 4096
 #define FAT_LAST_CLUSTER 0x0FFFFFFF
 #define FAT_FREE_CLUSTER 0x00000000
@@ -17,6 +18,7 @@
 
 typedef uint8_t t_sector[FAT_SECTOR_SIZE];
 typedef uint8_t t_cluster[FAT_CLUSTER_SIZE];
+typedef uint8_t t_block[FAT_BLOCK_SIZE];
 
 typedef struct {
 	uint8_t  jmpBoot[3];                    /* 0  Jump to boot code.                                */

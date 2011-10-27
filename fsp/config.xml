@@ -5,7 +5,7 @@
   <bindport>6000</bindport>
   <maxconnections>5</maxconnections>  
   <sizecache>6500</sizecache>
-  <logfile>/home/utn_so/fsp.log</logfile>
+  <logfile>/home/nico/fsp.log</logfile>
 </config>
 
 

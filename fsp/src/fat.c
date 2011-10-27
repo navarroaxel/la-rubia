@@ -25,8 +25,13 @@
 
 t_fat_bootsector bootSector;
 uint32_t * fatTable;
+extern config_fsp * config;
 
 int main2(){
+	t_xmlFile * configFile = loadConfig("config.xml");
+	config = xmlGetConfigStructFsp(configFile);
+	//logFile= log_create("FSP",config->logFilePath,8,1);
+	fat_initialize();
 	//fat_initialize();
 	t_fat_file_list * dir, *p;
 	char fileName[15];
@@ -66,21 +71,21 @@ void fat_initialize(){
 
 void fat_loadFAT(){
 	uint32_t i,totalClusters=bootSector.totalSectors32/bootSector.sectorPerCluster;
-	t_cluster cluster;
-	uint32_t entriesPerCluster =FAT_CLUSTER_SIZE/FAT_FAT_ENTRY_SIZE;
+	t_block block;
+	uint32_t entriesPerBlock =FAT_BLOCK_SIZE/FAT_FAT_ENTRY_SIZE;
 	fatTable = (uint32_t *) malloc(totalClusters * FAT_FAT_ENTRY_SIZE);
-	for (i=0;i<totalClusters/ (entriesPerCluster);i++){
-		fat_addressing_readCluster(fat_getFATFirstCluster()+i,&cluster);
-		memcpy(fatTable+i*entriesPerCluster,&cluster,FAT_CLUSTER_SIZE);
+	for (i=0;i<totalClusters/ (entriesPerBlock);i++){
+		fat_addressing_readBlock(fat_getFATFirstBlock()+i,block);
+		memcpy(fatTable+i*entriesPerBlock,&block,FAT_BLOCK_SIZE);
 	}
 	return;
 }
 
 t_fat_bootsector fat_readBootSector(){
 	t_fat_bootsector bs;
-	t_sector cluster;
-	if (disk_readSector(0,&cluster)){
-		memcpy(&bs,&cluster,sizeof(t_fat_bootsector));
+	t_block block;
+	if (fat_addressing_readBlock(0,block)){
+		memcpy(&bs,&block,sizeof(t_fat_bootsector));
 	}
 	return bs;
 }
@@ -95,8 +100,8 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
 	uint32_t inEntry=0;
 	uint32_t i;
 	while (1){
-		dataCluster=fat_dataClusterToDiskCluster(clusterN);
-		fat_addressing_readCluster(dataCluster,&cluster);
+		//dataCluster=fat_dataClusterToDiskCluster(clusterN);
+		fat_addressing_readCluster(clusterN,cluster);
 		for(i =0; i<sizeof(t_cluster);i+=sizeof(t_fat_file_data_entry)){
 				//Asumo que antes de la entrada posta tengo n de nombre largo, me quedo con la ultima nomas
 				//TODO: Opcional: Implementar LFN como corresponde (extra TP, copado para hacer testing)
@@ -222,6 +227,14 @@ t_stat fat_statFile(t_fat_file_entry * file){
 	}
 	return fileStat;
 }
+uint32_t fat_advanceNClusters(uint32_t clusterStart, uint32_t offset){
+	uint32_t i;
+	for (i=0;i< offset;i++){
+		clusterStart=fat_getNextCluster(clusterStart);
+		if (clusterStart==FAT_LAST_CLUSTER) return 0;
+	}
+	return clusterStart;
+}
 
 int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf){
 	//HERE BE DRAGONS
@@ -242,16 +255,13 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 	}
 	clustersInRead = ceil(((float)offset+sizeToRead)/FAT_CLUSTER_SIZE)-((float)offset/FAT_CLUSTER_SIZE); //cuantos cluster me insume la lectura
 	// Me ubico en el primer cluster de la lectura
-	for (i=0;i< offset/FAT_CLUSTER_SIZE;i++){
-		dataCluster=fat_getNextCluster(dataCluster);
-		if (dataCluster==FAT_LAST_CLUSTER) return 0;
-	}
+	dataCluster=fat_advanceNClusters(dataCluster,offset/FAT_CLUSTER_SIZE);
 	leftToRead = sizeToRead;
 	positionInFile= offset;
 	positionInBuffer=0;
 	for (i=0;i<clustersInRead;i++){
-		diskCluster=fat_dataClusterToDiskCluster(dataCluster);
-		fat_addressing_readCluster(diskCluster,&cluster);
+		//diskCluster=fat_dataClusterToDiskCluster(dataCluster);
+		fat_addressing_readCluster(dataCluster,cluster);
 		offsetInsideCluster = positionInFile % FAT_CLUSTER_SIZE;
 		if(leftToRead > FAT_CLUSTER_SIZE - offsetInsideCluster){
 			thisReadSize=FAT_CLUSTER_SIZE - offsetInsideCluster;
@@ -271,7 +281,7 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 
 void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 	uint16_t longNameUTF16[14];
-	char longName[14];
+	char longName[14]="";
 	if (fileEntry->hasLongNameEntry==1){
 		memcpy(longNameUTF16,&fileEntry->longNameEntry.nameStart,10);
 		memcpy(longNameUTF16+5,&fileEntry->longNameEntry.nameMiddle,12);
@@ -354,8 +364,8 @@ int fat_setFileEntry(const char *path, t_fat_file_entry * fileEntry){
 	char fileName[15],anotherName[15];
 	splitPathName(path,directoryPath,fileName);
 	fat_getFileFromPath(directoryPath,&directory);
-	clusterN =fat_dataClusterToDiskCluster(fat_getEntryFirstCluster(&directory.dataEntry));
-	fat_addressing_readCluster(clusterN,&cluster);
+	clusterN =fat_getEntryFirstCluster(&directory.dataEntry);
+	fat_addressing_readCluster(clusterN,cluster);
 
 	for(i=0;i<FAT_CLUSTER_SIZE;i+=sizeof(t_fat_file_data_entry)){
 		memcpy(&tempDataEntry,cluster+i,sizeof(t_fat_file_data_entry));
@@ -386,7 +396,7 @@ int fat_setFileEntry(const char *path, t_fat_file_entry * fileEntry){
 			inEntry=0;
 		}
 	}
-	fat_addressing_writeCluster(clusterN,&cluster);
+	fat_addressing_writeCluster(clusterN,cluster);
 	return 1;
 }
 
@@ -442,15 +452,15 @@ int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry){
 	uint32_t dataCluster,diskCluster, freeSpaceStart;
 	fat_getFileFromPath(directoryPath,&dirEntry);
 	dataCluster = fat_getEntryFirstCluster(&dirEntry.dataEntry);
-	diskCluster = fat_dataClusterToDiskCluster(dataCluster);
-	fat_addressing_readCluster(diskCluster,&cluster);
+	//diskCluster = fat_dataClusterToDiskCluster(dataCluster);
+	fat_addressing_readCluster(dataCluster,cluster);
 	while((freeSpaceStart = fat_findFreeEntries(&cluster,2))==-1){
 		dataCluster=fat_getNextCluster(dataCluster);
-		diskCluster = fat_dataClusterToDiskCluster(dataCluster);
-		fat_addressing_readCluster(diskCluster,&cluster);
+		//diskCluster = fat_dataClusterToDiskCluster(dataCluster);
+		fat_addressing_readCluster(dataCluster,cluster);
 	}
 	memcpy(&cluster[freeSpaceStart],&fileEntry.longNameEntry,sizeof(t_fat_long_name_entry));
 	memcpy(&cluster[freeSpaceStart + sizeof(t_fat_long_name_entry)],&fileEntry.dataEntry,sizeof(t_fat_file_data_entry));
-	fat_addressing_writeCluster(diskCluster,&cluster);
+	fat_addressing_writeCluster(dataCluster,cluster);
 	return 0;
 }
