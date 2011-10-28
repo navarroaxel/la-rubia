@@ -111,20 +111,33 @@ static int fuselage_read(const char *path, char *buf, size_t size, off_t offset,
 	log_debug(logFile,"FSP","END READ archivo %s\nsize:%d\noffset%d\n",path,size,offset);
 	return res;
 }
+static int fuselage_write(const char *path, const char *buf, size_t size, off_t offset,
+		struct fuse_file_info *fi)
+{
+	log_debug(logFile,"FSP","START WRITE archivo %s\nsize:%d\noffset%d\n",path,size,offset);
+	int res= fat_write(path,buf,size,offset);
+	log_debug(logFile,"FSP","END WRITE archivo %s\nsize:%d\noffset%d\n",path,size,offset);
+	return res;
+}
 
 static int fuselage_truncate (const char * path, off_t size){
-	return fat_truncate(path,size);
+	log_debug(logFile,"FSP","START TRUNCATE archivo %s\nsize:%d\n",path,size);
+	int res = fat_truncate(path,size);
+	log_debug(logFile,"FSP","END TRUNCATE archivo %s\n",path);
+	return res;
 }
 static int fuselage_rename(const char * from,const char * to){
 	return fat_move(from,to);
 }
+
 static struct fuse_operations fsp_oper = {
 	.getattr   = fuselage_getattr,
 	.readdir = fuselage_readdir,
 	.open   = fuselage_open,
 	.read   = fuselage_read,
 	.truncate = fuselage_truncate,
-	.rename = fuselage_rename
+	.rename = fuselage_rename,
+	.write = fuselage_write
 };
 
 int main(int argc, char *argv[])

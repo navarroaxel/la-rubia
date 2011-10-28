@@ -317,15 +317,26 @@ int fat_addFreeClusterToChain(uint32_t lastClusterOfChain){
 int fat_removeLastClusterFromFile(t_fat_file_entry * file){
 	uint32_t lastCluster,theOneBefore;
 	lastCluster = fat_getFileLastCluster(file);
-	theOneBefore = fat_getClusterPointingTo(lastCluster,fat_getEntryFirstCluster(&file->dataEntry));
-	fat_fat_setValue(lastCluster,FAT_FREE_CLUSTER);
-	fat_fat_setValue(theOneBefore,FAT_LAST_CLUSTER);
+	if(lastCluster!=fat_getEntryFirstCluster(&file->dataEntry)){
+		theOneBefore = fat_getClusterPointingTo(lastCluster,fat_getEntryFirstCluster(&file->dataEntry));
+		fat_fat_setValue(lastCluster,FAT_FREE_CLUSTER);
+		fat_fat_setValue(theOneBefore,FAT_LAST_CLUSTER);
+	}else{
+		fat_fat_setValue(lastCluster,FAT_FREE_CLUSTER);
+		fat_setEntryFirstCluster(0,&file->dataEntry);
+	}
 	return 0;
 }
 
 int fat_addClusterToFile(t_fat_file_entry * file){
-	uint32_t lastCluster = fat_getFileLastCluster(file);
-	fat_addFreeClusterToChain(lastCluster);
+	if(fat_getEntryFirstCluster(&file->dataEntry)!=0){
+		uint32_t lastCluster = fat_getFileLastCluster(file);
+		fat_addFreeClusterToChain(lastCluster);
+	}else{
+		uint32_t firstCluster=fat_getNextFreeCluster(0);
+		fat_fat_setValue(firstCluster,FAT_LAST_CLUSTER);
+		fat_setEntryFirstCluster(firstCluster,&file->dataEntry);
+	}
 	return 0;
 }
 
@@ -348,7 +359,7 @@ int fat_truncate(const char * path,off_t newSize){
 	}
 	file.dataEntry.fileSize = newSize;
 	fat_setFileEntry(path,&file);
-	return 1;
+	return 0;
 }
 
 int fat_setFileEntry(const char *path, t_fat_file_entry * fileEntry){
@@ -464,3 +475,48 @@ int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry){
 	fat_addressing_writeCluster(dataCluster,cluster);
 	return 0;
 }
+
+
+int fat_write(const char *path, const char *buf, size_t size, off_t offset){
+	t_cluster cluster;
+	uint32_t dataCluster, sizeToWrite;
+	uint32_t i,offsetInsideCluster,leftToWrite;
+	uint32_t positionInBuffer,positionInFile;
+	uint32_t clustersInWrite;
+	uint32_t thisWriteSize;
+	t_fat_file_entry fileEntry;
+	fat_getFileFromPath(path,&fileEntry);
+
+
+	if(offset +size > fileEntry.dataEntry.fileSize){ // si me pide escribir mas alla del tamaño maximo, lo trunco al tamaño que necesite
+		fat_truncate(path,offset+size);
+		fat_getFileFromPath(path,&fileEntry);
+	}
+	dataCluster = fat_getEntryFirstCluster(&fileEntry.dataEntry);
+	sizeToWrite = size;
+	clustersInWrite = ceil(((float)offset+sizeToWrite)/FAT_CLUSTER_SIZE)-((float)offset/FAT_CLUSTER_SIZE); //cuantos cluster me insume la escritura
+	// Me ubico en el primer cluster de la escritura
+	dataCluster=fat_advanceNClusters(dataCluster,offset/FAT_CLUSTER_SIZE);
+	leftToWrite = sizeToWrite;
+	positionInFile= offset;
+	positionInBuffer=0;
+	for (i=0;i<clustersInWrite;i++){
+		fat_addressing_readCluster(dataCluster,cluster);
+		offsetInsideCluster = positionInFile % FAT_CLUSTER_SIZE;
+		if(leftToWrite > FAT_CLUSTER_SIZE - offsetInsideCluster){
+			thisWriteSize=FAT_CLUSTER_SIZE - offsetInsideCluster;
+		}else{
+			thisWriteSize=leftToWrite;
+		}
+		memcpy(&cluster[offsetInsideCluster],&buf[positionInBuffer],thisWriteSize);
+		fat_addressing_writeCluster(dataCluster,cluster);
+		positionInFile+=thisWriteSize;
+		positionInBuffer+=thisWriteSize;
+		leftToWrite-=thisWriteSize;
+		dataCluster=fat_getNextCluster(dataCluster);
+	}
+	return sizeToWrite;
+
+	return 0;
+}
+

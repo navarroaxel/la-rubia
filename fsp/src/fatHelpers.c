@@ -31,6 +31,12 @@ uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	return firstCluster;
 }
 
+void fat_setEntryFirstCluster(uint32_t firstCluster ,t_fat_file_data_entry * fileEntry ){
+	fileEntry->firstClusterLow=firstCluster & 0x0000FFFF;
+	fileEntry->firstClusterHigh=firstCluster >> 8;
+	return;
+}
+
 uint32_t fat_getFATFirstBlock(){
 	return bootSector.reservedSectorCount*FAT_SECTOR_SIZE/FAT_BLOCK_SIZE;
 }
@@ -40,18 +46,19 @@ uint32_t fat_getNextCluster(uint32_t currentCluster){
 }
 
 int fat_fat_setValue(uint32_t clusterN,uint32_t next){
-	uint32_t entriesPerCluster = FAT_CLUSTER_SIZE / FAT_FAT_ENTRY_SIZE;
-	uint32_t diskCluster = fat_getFATAddressOfEntry(clusterN);
-	t_cluster cluster;
+	uint32_t entriesPerBlock = FAT_BLOCK_SIZE / FAT_FAT_ENTRY_SIZE;
+	uint32_t diskBlock = fat_getFATAddressOfEntry(clusterN);
+	t_block block;
 	fatTable[clusterN]=next;
-	memcpy(&cluster,&fatTable[clusterN - clusterN % entriesPerCluster],FAT_CLUSTER_SIZE);
-	fat_addressing_writeCluster(diskCluster,cluster);
+	memcpy(&block,&fatTable[clusterN - clusterN % entriesPerBlock],FAT_BLOCK_SIZE);
+	fat_addressing_writeBlock(diskBlock,block);
 	return 0;
 }
 
 uint32_t fat_getClusterCount(t_fat_file_data_entry * file){
 	uint32_t ret=1;
 	uint32_t currentCluster = fat_getEntryFirstCluster(file);
+	if(currentCluster==0) return 0;
 	while((currentCluster = fat_getNextCluster(currentCluster)) != FAT_LAST_CLUSTER)
 		ret++;
 	return ret;
@@ -80,8 +87,8 @@ uint32_t fat_getNextFreeCluster(uint32_t start){
 }
 
 uint32_t fat_getFATAddressOfEntry(uint32_t clusterN){
-	uint32_t entriesPerFATCluster= FAT_CLUSTER_SIZE/FAT_FAT_ENTRY_SIZE;
-	return fat_getFATFirstBlock() + clusterN / entriesPerFATCluster;
+	uint32_t entriesPerFATBlock= FAT_BLOCK_SIZE/FAT_FAT_ENTRY_SIZE;
+	return fat_getFATFirstBlock() + clusterN / entriesPerFATBlock;
 }
 
 uint32_t fat_getFileLastCluster(t_fat_file_entry * file){

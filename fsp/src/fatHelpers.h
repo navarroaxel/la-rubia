@@ -9,6 +9,7 @@
 #define FATHELPERS_H_
 
 uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry );
+void fat_setEntryFirstCluster(uint32_t firstCluster ,t_fat_file_data_entry * fileEntry );
 uint32_t fat_getFATFirstBlock();
 uint32_t fat_getNextCluster(uint32_t currentCluster);
 uint32_t fat_getClusterCount(t_fat_file_data_entry * file);
