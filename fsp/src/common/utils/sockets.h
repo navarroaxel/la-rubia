@@ -39,7 +39,7 @@
 	#include <netinet/in.h>
 	#include "../collections/list.h"
 
-	#define DEFAULT_BUFFER_SIZE 	2048
+	#define DEFAULT_BUFFER_SIZE 	16384
 	#define DEFAULT_MAX_CONEXIONS 	100
 	#define SELECT_USEC_TIMEOUT 	500
 
