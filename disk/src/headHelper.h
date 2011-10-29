@@ -8,8 +8,11 @@
 
 #define SOCKET_UNIX_PATH "/tmp/lol"
 
+int getsectortime();
 int islimitcylinder(int cylinder);
+int getlimitcylinder(void);
 int islimitsector(int sector);
+int getlimitsector(void);
 uint16_t getcylinder(uint32_t offset);
 uint16_t getsector(uint32_t offset);
 uint32_t getoffset(uint16_t cylinder, uint16_t sector);

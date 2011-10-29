@@ -73,7 +73,8 @@ void collection_blist_push(t_blist *list, void *data) {
 	new_element->data = data;
 	new_element->next = NULL;
 
-	if (list->head == NULL)
+	if (list->head == NULL
+		)
 		list->head = new_element;
 	else {
 		t_link_element *e = list->head;
@@ -138,22 +139,27 @@ void *collection_blist_popfirst(t_blist *list, int(*closure)(void*)) {
 }
 
 void collection_blist_move(t_blist *blist, t_list *list) {
-	sem_wait(&list->semaforo);
+	sem_wait(&blist->empty);
 	sem_wait(&blist->semaphore);
+	sem_wait(&list->semaforo);
 
-	if (blist->head != NULL) {
-		t_link_element *e = blist->head;
+	if (list->head != NULL) {
+		t_link_element *e = list->head;
 		while (e->next != NULL)
 			e = e->next;
 
-		e->next = list->head;
+		e->next = blist->head;
 	} else
-		blist->head = list->head;
+		list->head = blist->head;
 
-	blist->elements_count += list->elements_count;
+	list->elements_count += blist->elements_count--;
+	blist->head = NULL;
+	sem_post(&blist->full);
 
-	list->head = NULL;
-	list->elements_count = 0;
+	for (; blist->elements_count > 0; blist->elements_count--) {
+		sem_wait(&blist->empty);
+		sem_post(&blist->full);
+	}
 
 	sem_post(&blist->semaphore);
 	sem_post(&list->semaforo);

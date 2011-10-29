@@ -24,7 +24,7 @@ typedef struct config_disk {
 	char bindIp[15];
 	uint16_t bindPort;
 	char mode[10];
-	char algorithm[4];
+	char algorithm[6];
 	uint16_t portConsole;
 	uint8_t logEnabled;
 	char diskname[13];
