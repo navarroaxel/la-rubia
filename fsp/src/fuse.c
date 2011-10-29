@@ -133,12 +133,19 @@ static int fuselage_rename(const char * from,const char * to){
 	return res;
 }
 
-static int fuselage_mkdir(const char * from,mode_t mode){
-	log_debug(logFile,"FSP","START MKDIR from %s\n",from);
-	int res = fat_mkdir(from);
-	log_debug(logFile,"FSP","END MKDIR from %s\n",from);
+static int fuselage_mkdir(const char * path,mode_t mode){
+	log_debug(logFile,"FSP","START MKDIR from %s\n",path);
+	int res = fat_mkdir(path);
+	log_debug(logFile,"FSP","END MKDIR from %s\n",path);
 	return res;
 }
+static int fuselage_create(const char * path, mode_t mode, struct fuse_file_info * fi){
+	log_debug(logFile,"FSP","START CREATE from %s\n",path);
+	int res = fat_mkFile(path);
+	log_debug(logFile,"FSP","END CREATE from %s\n",path);
+	return res;
+}
+
 
 static struct fuse_operations fsp_oper = {
 	.getattr   = fuselage_getattr,
@@ -148,7 +155,8 @@ static struct fuse_operations fsp_oper = {
 	.truncate = fuselage_truncate,
 	.rename = fuselage_rename,
 	.write = fuselage_write,
-	.mkdir = fuselage_mkdir
+	.mkdir = fuselage_mkdir,
+	.create = fuselage_create
 };
 
 int main(int argc, char *argv[])
