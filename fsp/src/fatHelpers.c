@@ -121,8 +121,11 @@ void splitPathName(const char * path,char * dir, char * file){
 		dir[i]=path[i];
 		i++;
 	}
-	dir[i]='/';
-	dir[i+1]='\0';
+	if (i==0){
+		dir[i]='/';
+		i++;
+	}
+	dir[i]='\0';
 	strcpy(file,lastSlash+1);
 }
 
@@ -143,7 +146,12 @@ int fat_renameFile(const char * newName, t_fat_file_entry * destinationDir, t_fa
 	char extension[4];
 	char fullShortName[12];
 	uint16_t longName[14];
-	splitNameExtension(newName,nameWithoutExtension,extension);
+	if (fileEntry->dataEntry.attributes!=0x10){//no es un dir
+		splitNameExtension(newName,nameWithoutExtension,extension);
+	}else{
+		strncpy(nameWithoutExtension,newName,8);
+		strncpy(extension,"   ",3);
+	}
 	fat_generateShortName(nameWithoutExtension,destinationDir,shortName);
 	stringToUpper(extension);
 	stringToUpper(shortName);

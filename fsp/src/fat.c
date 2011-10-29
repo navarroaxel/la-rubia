@@ -462,11 +462,9 @@ int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry){
 	uint32_t dataCluster, freeSpaceStart;
 	fat_getFileFromPath(directoryPath,&dirEntry);
 	dataCluster = fat_getEntryFirstCluster(&dirEntry.dataEntry);
-	//diskCluster = fat_dataClusterToDiskCluster(dataCluster);
 	fat_addressing_readCluster(dataCluster,cluster);
 	while((freeSpaceStart = fat_findFreeEntries(&cluster,2))==-1){
 		dataCluster=fat_getNextCluster(dataCluster);
-		//diskCluster = fat_dataClusterToDiskCluster(dataCluster);
 		fat_addressing_readCluster(dataCluster,cluster);
 	}
 	memcpy(&cluster[freeSpaceStart],&fileEntry.longNameEntry,sizeof(t_fat_long_name_entry));
@@ -518,6 +516,30 @@ int fat_write(const char *path, const char *buf, size_t size, off_t offset){
 
 	return 0;
 }
+
+int fat_mkdir(const char * path){
+	char parent[255], name[15];
+	uint32_t clusterNumber;
+	t_cluster cleanCluster;
+	t_fat_file_entry fileEntry,parentEntry;
+	memset(&fileEntry,0,sizeof(fileEntry));
+	splitPathName(path,parent,name);
+	fat_getFileFromPath(parent,&parentEntry);
+	fileEntry.dataEntry.attributes=0x10; //tengo que setarlo antes del rename
+	fat_renameFile(name,&parentEntry,&fileEntry);
+	fileEntry.longNameEntry.sequenceN= 0x41; //Primera y ultima (0x01+0x40);
+	fileEntry.longNameEntry.attributes=0x0F;
+	clusterNumber= fat_getNextFreeCluster(0);
+	fat_fat_setValue(clusterNumber,FAT_LAST_CLUSTER);
+	fat_setEntryFirstCluster(clusterNumber,&fileEntry.dataEntry);
+	fat_addEntry(parent,fileEntry);
+
+	memset(cleanCluster,0,FAT_CLUSTER_SIZE);
+	fat_addressing_writeCluster(clusterNumber,cleanCluster);
+	return 0;
+}
+
+
 
 void fat_cleanup(){
 	disk_cleanup();
