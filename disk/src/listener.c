@@ -12,31 +12,34 @@ void listener(t_blist *waiting, t_log *logFile) {
 
 	int recvClient(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
+		uint32_t offsetInBuffer=0;
+		t_nipc *nipc;
 		if (buffer == NULL)
 			return 0;
 
-		t_nipc *nipc = nipc_deserializer(buffer);
-		if (nipc->type == NIPC_HANDSHAKE) {
-			if (handshakeNewClient(client, nipc) == 0)
-				return client->socket->desc;
+		while(offsetInBuffer<buffer->size){
+			nipc = nipc_deserializer(buffer,offsetInBuffer);
+			offsetInBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
 
-			return 0;
+			if (nipc->type == NIPC_HANDSHAKE) {
+				if (handshakeNewClient(client, nipc) == 0)
+					return client->socket->desc;
+
+				return 0;
+			}
+			t_disk_operation *op = getdiskoperation(nipc, client);
+			nipc_destroy(nipc);
+			if (op == NULL)
+				return 0;
+
+			log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
+				op->read ? "lectura" : "escritura",
+				op->offset
+			);
+
+			enqueueOperation(waiting, op);
 		}
-
 		sockets_bufferDestroy(buffer);
-
-		t_disk_operation *op = getdiskoperation(nipc, client);
-		nipc_destroy(nipc);
-		if (op == NULL)
-			return 0;
-
-		log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
-			op->read ? "lectura" : "escritura",
-			op->offset
-		);
-
-		enqueueOperation(waiting, op);
-
 		return client->socket->desc;
 	}
 
@@ -58,7 +61,7 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 	t_disk_operation *op;
 	while(true) {
 		buffer = sockets_recv(client);
-		nipc = nipc_deserializer(buffer);
+		nipc = nipc_deserializer(buffer,0);
 		sockets_bufferDestroy(buffer);
 
 		op = getdiskoperation(nipc, client);
@@ -87,7 +90,7 @@ int handshake(t_socket_client *client) {
 
 	t_socket_buffer *buffet = sockets_recv(client);
 
-	nipc = nipc_deserializer(buffet);
+	nipc = nipc_deserializer(buffet,0);
 	return nipc->type == NIPC_HANDSHAKE && nipc->length == 0;
 }
 

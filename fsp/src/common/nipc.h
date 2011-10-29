@@ -55,7 +55,7 @@ void *nipc_getdata(t_nipc *nipc);
 void nipc_destroy(t_nipc *nipc);
 void *nipc_getdata_destroy(t_nipc *nipc);
 t_socket_buffer *nipc_serializer(t_nipc *nipc);
-t_nipc *nipc_deserializer(t_socket_buffer *buffer);
+t_nipc *nipc_deserializer(t_socket_buffer *buffer, uint32_t dataStart);
 t_nipc *nipc_clone(t_nipc *nipc);
 void nipc_send(t_nipc *nipc, t_socket_client *client);
 
