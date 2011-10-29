@@ -49,7 +49,7 @@ t_nipc *nipc_deserializer(t_socket_buffer *buffer,uint32_t offsetinBuffer) {
 	int tmpsize, offset = 0;
 	t_nipc *nipc = malloc(sizeof(t_nipc));
 	assert(buffer->size!=0);
-	uint32_t dataStart =  buffer->data +offsetinBuffer;
+	char * dataStart =  buffer->data +offsetinBuffer;
 	memcpy(&nipc->type, dataStart, tmpsize = sizeof(uint8_t));
 	offset += tmpsize;
 
