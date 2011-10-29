@@ -35,4 +35,5 @@ int fat_setFileEntry(const char *path, t_fat_file_entry * fileEntry);
 int fat_move(const char * from,const char * to);
 int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry);
 int fat_write(const char *path, const char *buf, size_t size, off_t offset);
+void fat_cleanup(void);
 #endif /* FAT_H_ */

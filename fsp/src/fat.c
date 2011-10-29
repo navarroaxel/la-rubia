@@ -75,7 +75,7 @@ void fat_loadFAT(){
 	uint32_t entriesPerBlock =FAT_BLOCK_SIZE/FAT_FAT_ENTRY_SIZE;
 	fatTable = (uint32_t *) malloc(totalClusters * FAT_FAT_ENTRY_SIZE);
 	for (i=0;i<totalClusters/ (entriesPerBlock);i++){
-		fat_addressing_readBlock(fat_getFATFirstBlock()+i,block);
+		fat_addressing_readBlocks(fat_getFATFirstBlock()+i,1,block);
 		memcpy(fatTable+i*entriesPerBlock,&block,FAT_BLOCK_SIZE);
 	}
 	return;
@@ -84,7 +84,7 @@ void fat_loadFAT(){
 t_fat_bootsector fat_readBootSector(){
 	t_fat_bootsector bs;
 	t_block block;
-	if (fat_addressing_readBlock(0,block)){
+	if (fat_addressing_readBlocks(0,1,block)){
 		memcpy(&bs,&block,sizeof(t_fat_bootsector));
 	}
 	return bs;
@@ -96,7 +96,6 @@ t_fat_file_list * fat_getFileListFromDirectoryCluster(uint32_t clusterN){
 	t_fat_file_list * p;
 	t_fat_file_list * pAnt=NULL;
 	t_cluster cluster;
-	uint32_t dataCluster;
 	uint32_t inEntry=0;
 	uint32_t i;
 	while (1){
@@ -239,7 +238,7 @@ uint32_t fat_advanceNClusters(uint32_t clusterStart, uint32_t offset){
 int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf){
 	//HERE BE DRAGONS
 	t_cluster cluster;
-	uint32_t dataCluster,diskCluster, sizeToRead;
+	uint32_t dataCluster, sizeToRead;
 	uint32_t i,offsetInsideCluster,leftToRead;
 	uint32_t positionInBuffer,positionInFile;
 	uint32_t clustersInRead;
@@ -460,7 +459,7 @@ uint32_t fat_findFreeEntries(t_cluster * cluster,size_t numberOfEntries){
 int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry){
 	t_fat_file_entry dirEntry;
 	t_cluster cluster;
-	uint32_t dataCluster,diskCluster, freeSpaceStart;
+	uint32_t dataCluster, freeSpaceStart;
 	fat_getFileFromPath(directoryPath,&dirEntry);
 	dataCluster = fat_getEntryFirstCluster(&dirEntry.dataEntry);
 	//diskCluster = fat_dataClusterToDiskCluster(dataCluster);
@@ -518,5 +517,10 @@ int fat_write(const char *path, const char *buf, size_t size, off_t offset){
 	return sizeToWrite;
 
 	return 0;
+}
+
+void fat_cleanup(){
+	disk_cleanup();
+	free(fatTable);
 }
 

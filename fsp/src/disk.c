@@ -10,39 +10,24 @@
 #include <errno.h>
 #include <stdint.h>
 #include "fatTypes.h"
+#include "common/utils/sockets.h"
 #include "disk.h"
 #include "common/nipc.h"
-#include "common/utils/sockets.h"
 #include "common/utils/config.h"
+#include "common/utils/array.h"
 #include "assert.h"
 
-/**
- * Read Sector into buffer;
- */
-t_socket_client *client;
-sem_t semaforo;
+const int connPoolSize = 10;
+sem_t poolResources,ConnGetMutex;
 static int disk_is_initialized = 0;
 extern config_fsp * config;
+t_disk_connection * connPool;
 
 int disk_initialize() {
-	sem_init(&semaforo, 0, 1);
-	client = sockets_createClient(config->bindIp, config->bindPort);
-	sockets_connect(client, config->diskIp,config->diskPort);
-	t_nipc * nipc = nipc_create(NIPC_HANDSHAKE);
-	nipc_send(nipc,client);
-	nipc_destroy(nipc);
-	t_socket_buffer *buffer = sockets_recv(client);
-	if(buffer==NULL){
-		printf("Error de Handshake");
-		exit(0);
-	}
-	nipc = nipc_deserializer(buffer);
-	if (nipc->length!=0){
-		printf("Error de Handshake");
-		exit(0);
-	}
-	nipc_destroy(nipc);
-	sockets_bufferDestroy(buffer);
+	sem_init(&poolResources, 0, connPoolSize);
+	sem_init(&ConnGetMutex, 0, 1);
+	connPool = (t_disk_connection *) malloc(sizeof(t_disk_connection)*connPoolSize);
+	memset (connPool,0,sizeof(t_disk_connection)*connPoolSize);
 	disk_is_initialized = 1;
 	return 0;
 }
@@ -50,59 +35,144 @@ int disk_initialize() {
 int disk_isInitialized() {
 	return disk_is_initialized;
 }
+t_disk_connection * disk_getConnection(){
+	sem_wait(&poolResources);
+	sem_wait(&ConnGetMutex);
+	int i;
+	t_disk_connection * conn = NULL;
+	for (i=0;i<connPoolSize;i++){
+		if(connPool[i].inUse) continue;
 
-int disk_readSector(uint32_t sector, t_sector buf) {
-	sem_wait(&semaforo);
-	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
-	rq->offset = sector;
+		if(!connPool[i].connected){
+			disk_connect(&connPool[i],i);
+		}
 
-	t_nipc *nipc = nipc_create(NIPC_READSECTOR_RQ);
+		connPool[i].inUse =1;
+		conn = &connPool[i];
+		break;
+	}
+	assert(conn!=NULL);
+	sem_post(&ConnGetMutex);
+	return conn;
+}
+
+void disk_ReleaseConnection(t_disk_connection * conn){
+	conn->inUse=0;
+	sem_post(&poolResources);
+}
+
+int disk_connect(t_disk_connection * conn,uint16_t portOffset){
+	conn->client = sockets_createClient(config->bindIp, config->bindPort +portOffset);
+	sockets_connect(conn->client, config->diskIp,config->diskPort);
+	t_nipc * nipc = nipc_create(NIPC_HANDSHAKE);
+	nipc_send(nipc,conn->client);
+	nipc_destroy(nipc);
+	t_socket_buffer *buffer = sockets_recv(conn->client);
+	if(buffer==NULL){
+		conn->connected=0;
+		return 0;
+	}
+	nipc = nipc_deserializer(buffer,0);
+	if (nipc->length!=0){
+		conn->connected=0;
+		return 0;
+	}
+	nipc_destroy(nipc);
+	sockets_bufferDestroy(buffer);
+	conn->connected =1;
+	return 1;
+}
+void disk_freeConn(t_disk_connection * conn){
+	if (conn->client!=NULL)
+		sockets_destroyClient(conn->client);
+}
+
+void disk_cleanup(void){
+	int i;
+	for(i=0;i<connPoolSize;i++){
+		disk_freeConn(connPool+i);
+	}
+	free(connPool);
+}
+
+int disk_readSectors(uint32_t sectorsStart,uint32_t length, uint8_t * buf) {
+	t_disk_connection * conn = disk_getConnection();
+	uint32_t i;
+	t_nipc *nipc;
+	t_socket_buffer *buffer;
 	t_disk_readSectorRs *rs;
-	nipc_setdata(nipc, rq, sizeof(t_disk_readSectorRq));
+	uint32_t offsetInBuffer=0;
+	for(i=0;i<length;i++){
+		t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
+		rq->offset = sectorsStart + i;
+		nipc = nipc_create(NIPC_READSECTOR_RQ);
+		nipc_setdata(nipc, rq, sizeof(t_disk_readSectorRq));
 
-	t_socket_buffer *buffer = (t_socket_buffer *) nipc_serializer(nipc);
-	sockets_send(client, buffer->data, buffer->size);
-	sockets_bufferDestroy(buffer);
-	nipc_destroy(nipc);
-
-	buffer = sockets_recv(client);
-	if(buffer==NULL){
-		printf("%d",sector);
-		exit(0);
+		buffer = (t_socket_buffer *) nipc_serializer(nipc);
+		sockets_send(conn->client, buffer->data, buffer->size);
+		sockets_bufferDestroy(buffer);
+		nipc_destroy(nipc);
 	}
-	nipc = nipc_deserializer(buffer);
-	sockets_bufferDestroy(buffer);
-	rs = (t_disk_readSectorRs *)nipc->payload;
-	memcpy(buf, rs->data,FAT_SECTOR_SIZE);
-	nipc_destroy(nipc);
-	sem_post(&semaforo);
+	i=0;
+	while(i<length){
+		uint32_t offsetInSocketBuffer=0;
+		buffer = sockets_recv(conn->client);
+		while(offsetInSocketBuffer<buffer->size){
+			if(buffer==NULL){
+				printf("%d",sectorsStart +i);
+				exit(0);
+			}
+			nipc = nipc_deserializer(buffer,offsetInSocketBuffer);
+			offsetInSocketBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
+			rs = (t_disk_readSectorRs *)nipc->payload;
+			offsetInBuffer = (rs->offset - sectorsStart)*FAT_SECTOR_SIZE;
+			memcpy(buf+offsetInBuffer, rs->data,FAT_SECTOR_SIZE);
+			nipc_destroy(nipc);
+			i++;
+		}
+		sockets_bufferDestroy(buffer);
+	}
+	disk_ReleaseConnection(conn);
 	return 1;
 }
 
-int disk_writeSector(uint32_t sector, t_sector buf) {
-	sem_wait(&semaforo);
-	t_disk_writeSectorRq *rq = malloc(sizeof(t_disk_writeSectorRq));
-	rq->offset = sector;
-	memcpy(rq->data,buf,FAT_SECTOR_SIZE);
-
-	t_nipc *nipc = nipc_create(NIPC_WRITESECTOR_RQ);
+int disk_writeSectors(uint32_t sectorsStart,uint32_t length, uint8_t * buf) {
+	t_disk_connection * conn = disk_getConnection();
+	uint32_t i;
+	t_nipc *nipc;
+	t_socket_buffer *buffer;
 	t_disk_writeSectorRs *rs;
-	nipc_setdata(nipc, rq, sizeof(t_disk_writeSectorRq));
+	for(i=0;i<length;i++){
+		t_disk_writeSectorRq *rq = malloc(sizeof(t_disk_writeSectorRq));
+		rq->offset = sectorsStart+i;
+		memcpy(rq->data,buf+i*FAT_SECTOR_SIZE,FAT_SECTOR_SIZE);
 
-	t_socket_buffer *buffer = (t_socket_buffer *) nipc_serializer(nipc);
-	sockets_send(client, buffer->data, buffer->size);
-	sockets_bufferDestroy(buffer);
-	nipc_destroy(nipc);
+		nipc = nipc_create(NIPC_WRITESECTOR_RQ);
+		nipc_setdata(nipc, rq, sizeof(t_disk_writeSectorRq));
 
-	buffer = sockets_recv(client);
-	if(buffer==NULL){
-		printf("%d",sector);
-		exit(0);
+		buffer = (t_socket_buffer *) nipc_serializer(nipc);
+		sockets_send(conn->client, buffer->data, buffer->size);
+		sockets_bufferDestroy(buffer);
+		nipc_destroy(nipc);
 	}
-	nipc = nipc_deserializer(buffer);
-	sockets_bufferDestroy(buffer);
-	rs = (t_disk_writeSectorRs *)nipc->payload;
-	nipc_destroy(nipc);
-	sem_post(&semaforo);
+	i=0;
+	while(i<length){
+		uint32_t offsetInSocketBuffer=0;
+		buffer = sockets_recv(conn->client);
+		while(offsetInSocketBuffer<buffer->size){
+			if(buffer==NULL){
+				printf("%d",sectorsStart +i);
+				exit(0);
+			}
+			nipc = nipc_deserializer(buffer,offsetInSocketBuffer);
+			offsetInSocketBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
+			rs = (t_disk_writeSectorRs *)nipc->payload;
+			nipc_destroy(nipc);
+			i++;
+		}
+		sockets_bufferDestroy(buffer);
+	}
+	disk_ReleaseConnection(conn);
 	return 1;
 }
+

@@ -51,7 +51,7 @@ int fat_fat_setValue(uint32_t clusterN,uint32_t next){
 	t_block block;
 	fatTable[clusterN]=next;
 	memcpy(&block,&fatTable[clusterN - clusterN % entriesPerBlock],FAT_BLOCK_SIZE);
-	fat_addressing_writeBlock(diskBlock,block);
+	fat_addressing_writeBlocks(diskBlock,1,block);
 	return 0;
 }
 

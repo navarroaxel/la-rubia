@@ -155,5 +155,6 @@ int main(int argc, char *argv[])
 	free(config);
 	freeXmlFile(configFile);
 	pthread_cancel(consoleThread);
+	fat_cleanup();
 	return 0;
 }
