@@ -45,6 +45,6 @@ void fat_fileCacheFlush(const char * path);
 
 void fat_file_readCluster(const char * path,uint32_t clusterNumber,t_cluster cluster);
 void fat_file_writeCluster(const char * path,uint32_t clusterNumber,t_cluster cluster);
-
+int fat_signalHandler(int signum);
 void fat_cleanup(void);
 #endif /* FAT_H_ */

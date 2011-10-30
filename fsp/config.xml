@@ -4,7 +4,7 @@
   <bindip>127.0.0.1</bindip>
   <bindport>6000</bindport>
   <maxconnections>5</maxconnections>  
-  <sizecache>6500</sizecache>
+  <sizecache>16384</sizecache>
   <logfile>/home/nico/fsp.log</logfile>
 </config>
 

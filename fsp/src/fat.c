@@ -22,13 +22,14 @@
 #include "common/collections/list.h"
 #include <math.h>
 #include "common/utils/config.h"
+#include <signal.h>
 
 
 t_fat_bootsector bootSector;
 uint32_t * fatTable;
 extern config_fsp * config;
 t_list *filesCache;
-
+volatile sig_atomic_t dumping=0;
 
 int main2(){
 	t_xmlFile * configFile = loadConfig("config.xml");
@@ -69,6 +70,7 @@ int main2(){
 void fat_initialize(){
 	disk_initialize();
 	filesCache = collection_list_create();
+	signal(SIGUSR1,fat_signalHandler);
 	bootSector = fat_readBootSector();
 	fat_loadFAT();
 }
@@ -687,6 +689,32 @@ void fat_file_writeCluster(const char * path,uint32_t clusterNumber,t_cluster cl
 	fileNode->clusterStart=clusterNumber;
 	memcpy(fileNode->cache[0].data,cluster,FAT_CLUSTER_SIZE);
 	return;
+}
+
+int fat_signalHandler(int signum){
+	if (dumping ==1){
+		perror("ya estoy dumpeando, no rompas las bolas");
+	}else{
+		dumping=1;
+		FILE * f = fopen("cache_dump.txt","ab");
+		int32_t i,clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
+		void printCacheContents(void * node){
+			t_fat_cache_list * node2 =(t_fat_cache_list *)node;
+			fprintf(f,"-----------------------------------------");
+			fprintf(f,"Archivo: %s\n",node2->path);
+			fprintf(f,"Tamaño de Bloque de Cache: %d\n",FAT_CLUSTER_SIZE);
+			fprintf(f,"Cantidad de Bloques de Cache: %d\n",clustersCached);
+			for (i=0;i<clustersCached;i++){
+				fprintf(f,"Contenido de Bloque de Cache %d:\n",i);
+				fprintf(f,"%s\n",node2->cache[i].data);
+			};
+			return;
+		}
+		dumping=0;
+		collection_list_iterator(filesCache,printCacheContents);
+		fclose(f);
+	}
+	return dumping;
 }
 
 void fat_cleanup(){
