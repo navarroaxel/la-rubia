@@ -5,7 +5,7 @@ void diskconnect(void);
 config_raid * config;
 
 int main(void) {
-	//diskconnect();
+	diskconnect();
 
 	t_xmlFile * configFile = loadConfig("config.xml");
 	config = xmlGetConfigStructRaid(configFile);
@@ -36,7 +36,7 @@ void diskconnect(void) {
 	sockets_send(client, buffer->data, buffer->size);
 
 	buffer = sockets_recv(client);
-	nipc2 = nipc_deserializer(buffer);
+	nipc2 = nipc_deserializer(buffer, 0);
 	rs = nipc2->payload;
 	exit(0);
 }
@@ -55,7 +55,7 @@ void listener(t_list *waiting, t_log *log) {
 		if (buffer == NULL)
 			return 0;
 
-		t_nipc *nipc = nipc_deserializer(buffer);
+		t_nipc *nipc = nipc_deserializer(buffer, 0);
 		if (nipc->type == NIPC_HANDSHAKE)
 			return handshake(client, nipc, waiting, log);
 

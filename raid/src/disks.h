@@ -2,6 +2,7 @@
 #define DISKS_H_
 
 #include <limits.h>
+#include <signal.h>
 #include <pthread.h>
 #include "common/collections/list.h"
 #include "common/utils/sockets.h"
@@ -15,7 +16,7 @@ typedef struct t_disk{
 	t_list *operations;
 	t_log *log;
 	t_socket_client *client;
-	int pendings; //TODO: Revisar de poner un semaphore para hacer esta operacion segura.
+	volatile sig_atomic_t pendings; //TODO: Revisar de poner un semaphore para hacer esta operacion segura.
 } t_disk;
 
 void disks_init(void);

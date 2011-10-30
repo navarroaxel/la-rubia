@@ -13,7 +13,7 @@ void *disk(void *args) {
 		}
 
 		dsk->pendings--;
-		nipc = nipc_deserializer(buffer);
+		nipc = nipc_deserializer(buffer, 0);
 		sockets_bufferDestroy(buffer);
 
 		switch (nipc->type) {
