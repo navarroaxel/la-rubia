@@ -8,7 +8,7 @@
 #include "common/utils/log.h"
 #include "common/utils/config.h"
 
-t_log *logFile;
+t_log *log;
 config_disk * config;
 
 int main(void) {
@@ -25,18 +25,18 @@ int main(void) {
 	t_blist *waiting = collection_blist_create(50);
 	t_blist *processed = collection_blist_create(50);
 
-	logFile = log_create("PPD", config->logFilePath,
+	log = log_create("PPD", config->logFilePath,
 			WARNING | DEBUG | ERROR | INFO, M_CONSOLE_DISABLE);
 
 	init_console(waiting);
 
-	init_head(waiting, processed, logFile);
+	init_head(waiting, processed, log);
 
-	init_dispatcher(processed);
+	init_dispatcher(processed, log);
 	if (strcmp(config->mode, "CONNECT") == 0) {
-		connectraid(waiting, logFile);
+		connectraid(waiting, log);
 	} else if (strcmp(config->mode, "LISTEN") == 0) {
-		listener(waiting, logFile);
+		listener(waiting, log);
 	} else {
 		perror("Modo incorrecto");
 	}

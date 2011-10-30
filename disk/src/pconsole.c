@@ -105,10 +105,12 @@ void trace(void *context, t_array *args) {
 	sockets_sendBuffer(client, buffer);
 	sockets_bufferDestroy(buffer);
 
-	//TODO: procesar trace response.
-//	buffer = sockets_recv(client);
-//	if (buffer->data[0] == CONSOLE_TRACE) {
-//
-//	}
-//	sockets_bufferDestroy(buffer);
+	for (i = 0; i < array_size(args); i++){
+		buffer = sockets_recv(client);
+		t_headtrace *trace = headtrace_create();
+		memcpy(trace, buffer->data, buffer->size);
+		headtrace_printf(trace);
+		headtrace_destroy(trace);
+		sockets_bufferDestroy(buffer);
+	}
 }

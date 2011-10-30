@@ -34,7 +34,6 @@ void *head_cscan(void *args) {
 	struct queues *q = (struct queues *) args;
 	uint16_t refcylinder;
 	t_disk_operation *e, *nextop;
-	t_headtrace *trace;
 
 	int getnextoperation(void *data) {
 		return getcylinder(((t_disk_operation *) data)->offset) >= refcylinder;
@@ -50,10 +49,12 @@ void *head_cscan(void *args) {
 					getnextoperation);
 		}
 
-		trace = head_cscanmove(e->offset);
+		e->headtrace = head_cscanmove(e->offset);
 
-
-		e->result = e->read ? disk_read(current, &e->data) : disk_write(current, &e->data);
+		e->result =
+				e->read ?
+						disk_read(current, &e->data) :
+						disk_write(current, &e->data);
 
 		refcylinder = current->cylinder;
 		nextop = collection_blist_getfirst(q->waiting, getnextoperation);
@@ -62,11 +63,11 @@ void *head_cscan(void *args) {
 			nextop = collection_blist_getfirst(q->waiting, getnextoperation);
 		}
 
-		if (nextop != NULL)
-			trace->next = location_create(nextop->offset);
+		if (nextop != NULL) {
+			location_set(&e->headtrace->next, nextop->offset);
+			e->headtrace->hasnext = true;
+		}
 
-		headtrace_log(trace, q->log);
-		headtrace_destroy(trace);
 		collection_blist_push(q->processed, e);
 	}
 	return NULL;
@@ -80,21 +81,26 @@ t_headtrace *head_cscanmove(uint32_t requested) {
 	t_headtrace *trace = headtrace_create();
 	location_copy(current, &trace->current);
 	location_set(&trace->requested, requested);
-	if (trace->requested.cylinder > trace->current.cylinder){
-		headtrace_setcylinderpath(trace, trace->current.cylinder, trace->requested.cylinder, 1);
-		trace->time = (trace->requested.cylinder - trace->current.cylinder) * config->jumpTime;
-	}
-	else if (trace->requested.cylinder < trace->current.cylinder) {
-		headtrace_setcylinderpath(trace, trace->current.cylinder, getlimitcylinder(), 1);
+	if (trace->requested.cylinder > trace->current.cylinder) {
+		headtrace_setcylinderpath(trace, trace->current.cylinder,
+				trace->requested.cylinder, 1);
+		trace->time = (trace->requested.cylinder - trace->current.cylinder)
+				* config->jumpTime;
+	} else if (trace->requested.cylinder < trace->current.cylinder) {
+		headtrace_setcylinderpath(trace, trace->current.cylinder,
+				getlimitcylinder(), 1);
 		headtrace_setcylinderpath(trace, 0, trace->requested.cylinder, 1);
-		trace->time = (getlimitcylinder() - trace->current.cylinder + trace->requested.cylinder) * config->jumpTime;
+		trace->time = (getlimitcylinder() - trace->current.cylinder
+				+ trace->requested.cylinder) * config->jumpTime;
 	}
 
 	trace->limitsector = getlimitsector();
 	if (trace->requested.sector >= trace->current.sector)
-		trace->time += (trace->requested.sector - trace->current.sector) * getsectortime();
+		trace->time += (trace->requested.sector - trace->current.sector)
+				* getsectortime();
 	else
-		trace->time += (getlimitsector() - trace->current.sector + trace->current.sector) * getsectortime();
+		trace->time += (getlimitsector() - trace->current.sector
+				+ trace->current.sector) * getsectortime();
 
 	location_set(current, requested);
 	return trace;
@@ -105,7 +111,6 @@ t_headtrace *head_cscanmove(uint32_t requested) {
 // ***
 void *head_fscan(void *args) {
 	uint16_t refcylinder;
-	t_headtrace *trace;
 	t_disk_operation *e, *nextop;
 	bool asc = true;
 	struct queues *q = args;
@@ -132,28 +137,29 @@ void *head_fscan(void *args) {
 
 				e = collection_list_popfirst(inprogress,
 						!asc ? getnearestsectorasc : getnearestsectordesc);
-				trace = head_fscanmove(e->offset, asc);
+				e->headtrace = head_fscanmove(e->offset, asc);
 				asc = !asc;
-			}
-			else
-				trace = head_fscanmove(e->offset, asc);
+			} else
+				e->headtrace = head_fscanmove(e->offset, asc);
 
-			headtrace_log(trace, q->log);
-			headtrace_destroy(trace);
 			e->result =
 					e->read ?
 							disk_read(current, &e->data) :
 							disk_write(current, &e->data);
 
 			refcylinder = current->cylinder;
-			nextop = collection_list_getfirst(inprogress, asc ? getnearestsectorasc : getnearestsectordesc);
+			nextop = collection_list_getfirst(inprogress,
+					asc ? getnearestsectorasc : getnearestsectordesc);
 			if (nextop == NULL) {
 				refcylinder = asc ? config->cylinders : 0;
-				nextop = collection_list_getfirst(inprogress, !asc ? getnearestsectorasc : getnearestsectordesc);
+				nextop = collection_list_getfirst(inprogress,
+						!asc ? getnearestsectorasc : getnearestsectordesc);
 			}
 
-			if (nextop != NULL)
-				trace->next = location_create(nextop->offset);
+			if (nextop != NULL) {
+				location_set(&e->headtrace->next, nextop->offset);
+				e->headtrace->hasnext = true;
+			}
 
 			collection_blist_push(q->processed, e);
 		}
@@ -166,33 +172,40 @@ t_headtrace *head_fscanmove(uint32_t requested, bool asc) {
 	location_copy(current, &trace->current);
 	location_set(&trace->requested, requested);
 	if (asc) {
-		if (trace->requested.cylinder > trace->current.cylinder){
-			headtrace_setcylinderpath(trace, trace->current.cylinder, trace->requested.cylinder, 1);
-			trace->time = (trace->requested.cylinder - trace->current.cylinder) * config->jumpTime;
+		if (trace->requested.cylinder > trace->current.cylinder) {
+			headtrace_setcylinderpath(trace, trace->current.cylinder,
+					trace->requested.cylinder, 1);
+			trace->time = (trace->requested.cylinder - trace->current.cylinder)
+					* config->jumpTime;
+		} else if (trace->requested.cylinder < trace->current.cylinder) {
+			headtrace_setcylinderpath(trace, trace->current.cylinder,
+					getlimitcylinder(), 1);
+			headtrace_setcylinderpath(trace, getlimitcylinder(),
+					trace->requested.cylinder, -1);
+			trace->time = (2 * getlimitcylinder() - trace->current.cylinder
+					- trace->requested.cylinder) * config->jumpTime;
 		}
-		else if (trace->requested.cylinder < trace->current.cylinder) {
-			headtrace_setcylinderpath(trace, trace->current.cylinder, getlimitcylinder(), 1);
-			headtrace_setcylinderpath(trace, getlimitcylinder(), trace->requested.cylinder, -1);
-			trace->time = (2 * getlimitcylinder() - trace->current.cylinder - trace->requested.cylinder) * config->jumpTime;
-		}
-	}
-	else {
-		if (trace->requested.cylinder < trace->current.cylinder){
-			headtrace_setcylinderpath(trace, trace->current.cylinder, trace->requested.cylinder, -1);
-			trace->time = (trace->current.cylinder - trace->requested.cylinder) * config->jumpTime;
-		}
-		else if (trace->requested.cylinder > trace->current.cylinder) {
+	} else {
+		if (trace->requested.cylinder < trace->current.cylinder) {
+			headtrace_setcylinderpath(trace, trace->current.cylinder,
+					trace->requested.cylinder, -1);
+			trace->time = (trace->current.cylinder - trace->requested.cylinder)
+					* config->jumpTime;
+		} else if (trace->requested.cylinder > trace->current.cylinder) {
 			headtrace_setcylinderpath(trace, trace->current.cylinder, 0, -1);
 			headtrace_setcylinderpath(trace, 0, trace->requested.cylinder, 1);
-			trace->time = (2 * getlimitcylinder() - trace->current.cylinder - trace->requested.cylinder) * config->jumpTime;
+			trace->time = (2 * getlimitcylinder() - trace->current.cylinder
+					- trace->requested.cylinder) * config->jumpTime;
 		}
 	}
 
 	trace->limitsector = getlimitsector();
 	if (trace->requested.sector >= trace->current.sector)
-		trace->time += (trace->requested.sector - trace->current.sector) * getsectortime();
+		trace->time += (trace->requested.sector - trace->current.sector)
+				* getsectortime();
 	else
-		trace->time += (getlimitsector() - trace->current.sector + trace->current.sector) * getsectortime();
+		trace->time += (getlimitsector() - trace->current.sector
+				+ trace->current.sector) * getsectortime();
 
 	location_set(current, requested);
 	return trace;

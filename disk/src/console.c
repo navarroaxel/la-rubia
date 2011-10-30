@@ -63,7 +63,8 @@ void *console(void *args) {
 			 while (offset < buffer->size) {
 				 op = malloc(sizeof(t_disk_operation));
 				 memcpy(&op->offset, buffer->data + offset, tmpsize);
-				 op->client = NULL;
+				 op->trace = true;
+				 op->client = client;
 				 op->read = true;
 				 enqueueOperation(waiting, op);
 				 offset += tmpsize;

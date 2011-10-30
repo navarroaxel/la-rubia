@@ -5,12 +5,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "common/collections/list.h"
+#include "defines.h"
 #include "headHelper.h"
-
-typedef struct t_location {
-	uint16_t cylinder;
-	uint16_t sector;
-} t_location;
 
 t_location *location_create(uint32_t offset);
 t_location *location_clone(t_location *l);
