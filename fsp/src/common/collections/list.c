@@ -405,6 +405,23 @@ void *collection_list_popfirst(t_list *list, int (*closure)(void *data)){
 	return data;
 }
 
+void *collection_list_getfirst(t_list *list, int (*closure)(void *data)){
+	sem_wait(&list->semaforo);
+
+	t_link_element *e = list->head;
+	while (e != NULL && !closure(e->data))
+		e = e->next;
+
+	if (e == NULL) {
+		sem_post(&list->semaforo);
+		return NULL;
+	}
+
+	void *data = e->data;
+	sem_post(&list->semaforo);
+	return data;
+}
+
 void *collection_list_poplast(t_list *list, int (*closure)(void *data)){
 	sem_wait(&list->semaforo);
 

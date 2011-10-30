@@ -1,12 +1,12 @@
 <config>
   <volumefile>/home/utn_so/fat32.disk</volumefile>
-  <logfile>/home/utn_so/ppd.log</logfile>
+  <logfile></logfile>
   <raidip>127.0.0.1</raidip>
   <raidport>7000</raidport>
   <bindip>127.0.0.1</bindip>
   <bindport>5000</bindport>
   <mode>LISTEN</mode>
-  <algorithm>CSCAN</algorithm>
+  <algorithm>FSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>
   <diskname>mydisk</diskname>

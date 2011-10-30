@@ -33,7 +33,7 @@ void init_head(t_blist *waiting, t_blist *processed, t_log *log) {
 void *head_cscan(void *args) {
 	struct queues *q = (struct queues *) args;
 	uint16_t refcylinder;
-	t_disk_operation *e;
+	t_disk_operation *e, *nextop;
 	t_headtrace *trace;
 
 	int getnextoperation(void *data) {
@@ -42,9 +42,8 @@ void *head_cscan(void *args) {
 
 	while (true) {
 		refcylinder = current->cylinder;
-		operations_log(q->waiting, q->log);
-		e = (t_disk_operation *) collection_blist_popfirst(q->waiting,
-				getnextoperation);
+		waiting_log(q->waiting, q->log);
+		e = collection_blist_popfirst(q->waiting, getnextoperation);
 		if (e == NULL) {
 			refcylinder = 0;
 			e = (t_disk_operation *) collection_blist_popfirst(q->waiting,
@@ -52,14 +51,22 @@ void *head_cscan(void *args) {
 		}
 
 		trace = head_cscanmove(e->offset);
+
+
+		e->result = e->read ? disk_read(current, &e->data) : disk_write(current, &e->data);
+
+		refcylinder = current->cylinder;
+		nextop = collection_blist_getfirst(q->waiting, getnextoperation);
+		if (nextop == NULL) {
+			refcylinder = 0;
+			nextop = collection_blist_getfirst(q->waiting, getnextoperation);
+		}
+
+		if (nextop != NULL)
+			trace->next = location_create(nextop->offset);
+
 		headtrace_log(trace, q->log);
 		headtrace_destroy(trace);
-
-		e->result =
-				e->read ?
-						disk_read(current, &e->data) :
-						disk_write(current, &e->data);
-
 		collection_blist_push(q->processed, e);
 	}
 	return NULL;
@@ -99,7 +106,7 @@ t_headtrace *head_cscanmove(uint32_t requested) {
 void *head_fscan(void *args) {
 	uint16_t refcylinder;
 	t_headtrace *trace;
-	t_disk_operation *e;
+	t_disk_operation *e, *nextop;
 	bool asc = true;
 	struct queues *q = args;
 	t_list *inprogress = collection_list_create();
@@ -116,6 +123,7 @@ void *head_fscan(void *args) {
 
 		while (collection_list_size(inprogress) > 0) {
 			refcylinder = current->cylinder;
+			inprogress_log(inprogress, q->log);
 			e = collection_list_popfirst(inprogress,
 					asc ? getnearestsectorasc : getnearestsectordesc);
 
@@ -136,6 +144,16 @@ void *head_fscan(void *args) {
 					e->read ?
 							disk_read(current, &e->data) :
 							disk_write(current, &e->data);
+
+			refcylinder = current->cylinder;
+			nextop = collection_list_getfirst(inprogress, asc ? getnearestsectorasc : getnearestsectordesc);
+			if (nextop == NULL) {
+				refcylinder = asc ? config->cylinders : 0;
+				nextop = collection_list_getfirst(inprogress, !asc ? getnearestsectorasc : getnearestsectordesc);
+			}
+
+			if (nextop != NULL)
+				trace->next = location_create(nextop->offset);
 
 			collection_blist_push(q->processed, e);
 		}

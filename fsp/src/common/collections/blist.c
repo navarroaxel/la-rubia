@@ -139,6 +139,23 @@ void *collection_blist_popfirst(t_blist *list, int(*closure)(void*)) {
 	return data;
 }
 
+void *collection_blist_getfirst(t_blist *list, int(*closure)(void*)) {
+	sem_wait(&list->semaphore);
+
+	t_link_element *e = list->head;
+	while (e != NULL && !closure(e->data))
+		e = e->next;
+
+	if (e == NULL) {
+		sem_post(&list->semaphore);
+		return NULL;
+	}
+
+	void *data = e->data;
+	sem_post(&list->semaphore);
+	return data;
+}
+
 void collection_blist_move(t_blist *blist, t_list *list) {
 	sem_wait(&blist->empty);
 	sem_wait(&blist->semaphore);

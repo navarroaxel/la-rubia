@@ -8,16 +8,16 @@ t_headtrace *headtrace_create() {
 	return trace;
 }
 
-void operations_log(t_blist *waiting, t_log *log){
+void waiting_log(t_blist *waiting, t_log *log){
 	int length;
 
-	if (log->file == NULL)
+	if (log == NULL)
 		return;
 
 	char *s = NULL;
 	int i = 0;
 	t_location *location = location_create(0);
-	void operations_string(void *data){
+	void locstr(void *data){
 		if (s == NULL)
 			s = malloc((length = collection_blist_size(waiting)) * 12);
 		else
@@ -27,7 +27,29 @@ void operations_log(t_blist *waiting, t_log *log){
 		location_set(location, op->offset);
 		i += location_string(location, s + i);
 	}
-	collection_blist_iterator(waiting, operations_string);
+	collection_blist_iterator(waiting, locstr);
+	log_info(log, "HEAD", "COLA DE PEDIDOS: [%s] (%i)", s, length);
+}
+
+void inprogress_log(t_list *inprogress, t_log *log){
+	int length;
+	if (log == NULL)
+		return;
+
+	char *s = NULL;
+	int i = 0;
+	t_location *location = location_create(0);
+	void locstr(void *data){
+		if (s == NULL)
+			s = malloc((length = collection_list_size(inprogress)) * 12);
+		else
+			s[i++] = ',';
+
+		t_disk_operation *op = data;
+		location_set(location, op->offset);
+		i += location_string(location, s + i);
+	}
+	collection_list_iterator(inprogress, locstr);
 	log_info(log, "HEAD", "COLA DE PEDIDOS: [%s] (%i)", s, length);
 }
 
@@ -38,7 +60,7 @@ void headtrace_log(t_headtrace *trace, t_log *log) {
 	char next[12];
 	int i, parts;
 
-	if (log->file == NULL)
+	if (log == NULL)
 			return;
 
 	location_string(&trace->current, current);

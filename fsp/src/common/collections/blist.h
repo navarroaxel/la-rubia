@@ -23,5 +23,6 @@ void collection_blist_iterator(t_blist *list, void(*closure)(void*));
 int collection_blist_size(t_blist *list);
 void collection_blist_move(t_blist *blist, t_list *list);
 void *collection_blist_popfirst(t_blist *blist, int(*closure)(void *data));
+void *collection_blist_getfirst(t_blist *list, int(*closure)(void*));
 
 #endif /*BLIST_H_*/
