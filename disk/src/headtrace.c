@@ -9,37 +9,112 @@ t_headtrace *headtrace_create() {
 }
 
 void headtrace_log(t_headtrace *trace, t_log *log) {
-	char path[4096];
+	char* path;
 	char current[12];
 	char requested[12];
 	char next[12];
+	int i, parts;
+
+	if (log->file == NULL)
+			return;
 
 	location_string(&trace->current, current);
 	location_string(&trace->requested, requested);
-	//locations_string(p->path, path);
+
+
 	location_string(trace->next, next);
 
-	log_info(log, "FSP", "INFO PLANIFICACION\n"
-	//"Cola de Pedidos: [%s]\n"
-	//"Tamano: %i\n"
-					"Posicion Actual: %s\n"
-					"Sector solicitado: %s\n"
-	//"Sectores recorridos: %s\n"
+	log_info(log, "FSP", "PLANIFICACION\n"
+			"Posicion Actual: %s\n"
+			"Sector solicitado: %s\n"
 			"Tiempo consumido: %ims\n"
 			"Proximo sector: %s", current, requested, trace->time, next);
+
+	path = cylinders_string(trace->cylinder_path1, trace->current.sector);
+	if (path != NULL) {
+		parts = strlen(path) / (165 * 12);
+		for (i = 0; i <= parts; i++){
+			if (i < parts)
+				path[(i + 1) * 165 * 12 - 1] = '\0';
+
+			log_info(log, "FSP", "PLANIFICACION\n"
+					"Sectores recorridos: %s", path + i * 165 * 12);
+		}
+		free(path);
+	}
+	if (trace->cylinder_path2 != NULL){
+		path = cylinders_string(trace->cylinder_path2, trace->current.sector);
+		parts = strlen(path) / (165 * 12);
+		for (i = 0; i <= parts; i++){
+			if (i < parts)
+				path[(i + 1) * 165 * 12 - 1] = '\0';
+
+			log_info(log, "FSP", "PLANIFICACION\n"
+					"Sectores recorridos: %s", path + i * 165 * 12);
+		}
+		free(path);
+	}
+	path = sectors_string(trace->current.sector, trace->requested.sector, trace->limitsector, trace->requested.cylinder);
+	if (path != NULL) {
+		parts = strlen(path) / (165 * 12);
+		for (i = 0; i <= parts; i++){
+			if (i < parts)
+				path[(i + 1) * 165 * 12 - 1] = '\0';
+
+			log_info(log, "FSP", "PLANIFICACION\n"
+					"Sectores recorridos: %s", path + i * 165 * 12);
+		}
+		free(path);
+	}
+}
+
+char *cylinders_string(t_headtrace_cylinder *path, uint16_t sector) {
+	int i, j;
+	if (path == NULL)
+		return NULL;
+
+	j = 0;
+	char *s = malloc((abs(path->end - path->start) + 1) * 12);
+	for (i = path->start; ; i += path->step) {
+		if (j != 0)
+			s[j++] = ',';
+
+		j += sprintf(s + j, "%5i:%5i", i, sector);
+		if (i == path->end)
+			break;
+	}
+
+	s[j] = '\0';
+	return s;
+}
+
+char *sectors_string(uint16_t start, uint16_t end, uint16_t limit,uint16_t cylinder) {
+	int i, j;
+	if (start == end)
+		return NULL;
+
+	j = 0;
+	char *s = malloc((end > start ? end - start : limit - start + end) * 12);
+	for (i = start + 1; i != end; i++) {
+		if (j != 0)
+			s[j++] = ',';
+
+		j += sprintf(s + j, "%5i:%5i", cylinder, i);
+		if (i == limit)
+			i = -1;
+	}
+	s[j] = '\0';
+	return s;
 }
 
 void headtrace_destroy(t_headtrace *trace) {
-	if (trace->next != NULL
-		)
+	if (trace->next != NULL)
 		location_destroy(trace->next);
 
-	if (trace->cylinder_path1 != NULL
-		)
+	if (trace->cylinder_path1 != NULL)
 		free(trace->cylinder_path1);
 
-	if (trace->cylinder_path2 != NULL
-		)
+	if (trace->cylinder_path2 != NULL)
 		free(trace->cylinder_path2);
 
 	free(trace);
