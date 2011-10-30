@@ -21,10 +21,10 @@
 struct queues {
 	t_blist *waiting;
 	t_blist *processed;
-	t_log *logFile;
+	t_log *log;
 };
 
-void init_head(t_blist *waiting, t_blist *processed, t_log *logFile);
+void init_head(t_blist *waiting, t_blist *processed, t_log *log);
 void *head_cscan(void *args);
 void *head_fscan(void *args);
 t_location *head_currentlocation(void);

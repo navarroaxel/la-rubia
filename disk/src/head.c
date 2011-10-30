@@ -5,7 +5,7 @@ t_location *current;
 int movement = 1;
 extern config_disk * config;
 
-void init_head(t_blist *waiting, t_blist *processed, t_log *logFile) {
+void init_head(t_blist *waiting, t_blist *processed, t_log *log) {
 	current = location_create(0);
 	init_disk();
 
@@ -15,7 +15,7 @@ void init_head(t_blist *waiting, t_blist *processed, t_log *logFile) {
 	struct queues *q = (struct queues *) malloc(sizeof(struct queues));
 	q->waiting = waiting;
 	q->processed = processed;
-	q->logFile = logFile;
+	q->log = log;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -42,6 +42,7 @@ void *head_cscan(void *args) {
 
 	while (true) {
 		refcylinder = current->cylinder;
+		operations_log(q->waiting, q->log);
 		e = (t_disk_operation *) collection_blist_popfirst(q->waiting,
 				getnextoperation);
 		if (e == NULL) {
@@ -51,7 +52,7 @@ void *head_cscan(void *args) {
 		}
 
 		trace = head_cscanmove(e->offset);
-		headtrace_log(trace, q->logFile);
+		headtrace_log(trace, q->log);
 		headtrace_destroy(trace);
 
 		e->result =
@@ -129,7 +130,7 @@ void *head_fscan(void *args) {
 			else
 				trace = head_fscanmove(e->offset, asc);
 
-			headtrace_log(trace, q->logFile);
+			headtrace_log(trace, q->log);
 			headtrace_destroy(trace);
 			e->result =
 					e->read ?

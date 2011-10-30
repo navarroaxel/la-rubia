@@ -8,8 +8,31 @@ t_headtrace *headtrace_create() {
 	return trace;
 }
 
+void operations_log(t_blist *waiting, t_log *log){
+	int length;
+
+	if (log->file == NULL)
+		return;
+
+	char *s = NULL;
+	int i = 0;
+	t_location *location = location_create(0);
+	void operations_string(void *data){
+		if (s == NULL)
+			s = malloc((length = collection_blist_size(waiting)) * 12);
+		else
+			s[i++] = ',';
+
+		t_disk_operation *op = data;
+		location_set(location, op->offset);
+		i += location_string(location, s + i);
+	}
+	collection_blist_iterator(waiting, operations_string);
+	log_info(log, "HEAD", "COLA DE PEDIDOS: [%s] (%i)", s, length);
+}
+
 void headtrace_log(t_headtrace *trace, t_log *log) {
-	char* path;
+	char *path;
 	char current[12];
 	char requested[12];
 	char next[12];
@@ -20,11 +43,9 @@ void headtrace_log(t_headtrace *trace, t_log *log) {
 
 	location_string(&trace->current, current);
 	location_string(&trace->requested, requested);
-
-
 	location_string(trace->next, next);
 
-	log_info(log, "FSP", "PLANIFICACION\n"
+	log_info(log, "HEAD", "PLANIFICACION\n"
 			"Posicion Actual: %s\n"
 			"Sector solicitado: %s\n"
 			"Tiempo consumido: %ims\n"
@@ -37,8 +58,7 @@ void headtrace_log(t_headtrace *trace, t_log *log) {
 			if (i < parts)
 				path[(i + 1) * 165 * 12 - 1] = '\0';
 
-			log_info(log, "FSP", "PLANIFICACION\n"
-					"Sectores recorridos: %s", path + i * 165 * 12);
+			log_info(log, "HEAD", "Sectores recorridos: %s", path + i * 165 * 12);
 		}
 		free(path);
 	}
@@ -49,8 +69,7 @@ void headtrace_log(t_headtrace *trace, t_log *log) {
 			if (i < parts)
 				path[(i + 1) * 165 * 12 - 1] = '\0';
 
-			log_info(log, "FSP", "PLANIFICACION\n"
-					"Sectores recorridos: %s", path + i * 165 * 12);
+			log_info(log, "HEAD", "Sectores recorridos: %s", path + i * 165 * 12);
 		}
 		free(path);
 	}
@@ -61,8 +80,7 @@ void headtrace_log(t_headtrace *trace, t_log *log) {
 			if (i < parts)
 				path[(i + 1) * 165 * 12 - 1] = '\0';
 
-			log_info(log, "FSP", "PLANIFICACION\n"
-					"Sectores recorridos: %s", path + i * 165 * 12);
+			log_info(log, "HEAD", "Sectores recorridos: %s", path + i * 165 * 12);
 		}
 		free(path);
 	}

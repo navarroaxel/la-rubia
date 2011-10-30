@@ -96,6 +96,7 @@ void collection_blist_iterator(t_blist *list, void(*closure)(void*)) {
 	t_link_element *e = list->head;
 	while (e != NULL) {
 		closure(e->data);
+		e = e->next;
 	}
 
 	sem_post(&list->semaphore);
