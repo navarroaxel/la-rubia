@@ -78,9 +78,10 @@ static int fuselage_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int fuselage_open(const char *path, struct fuse_file_info *fi)
 {
-	uint32_t clusterN;
-	t_fat_file_entry fileEntry;
+	/*uint32_t clusterN;
+	t_fat_file_entry fileEntry;*/
 	log_debug(logFile,"FSP","open archivo %s\n",path);
+	fat_createFileCache(path);
     /*if((fi->flags & 3) != O_RDONLY)
         return -EACCES;*/
 	/*fat_getFileFromPath(path,&fileEntry);
@@ -107,7 +108,7 @@ static int fuselage_read(const char *path, char *buf, size_t size, off_t offset,
 	int res;
 	t_fat_file_entry file;
 	fat_getFileFromPath(path,&file);
-	res = fat_readFileContents(&file,size,offset,buf);
+	res = fat_readFileContents(&file,size,offset,buf,path);
 	log_debug(logFile,"FSP","END READ archivo %s\nsize:%d\noffset%d\n",path,size,offset);
 	return res;
 }
@@ -142,8 +143,23 @@ static int fuselage_mkdir(const char * path,mode_t mode){
 static int fuselage_create(const char * path, mode_t mode, struct fuse_file_info * fi){
 	log_debug(logFile,"FSP","START CREATE from %s\n",path);
 	int res = fat_mkFile(path);
+	fat_createFileCache(path);
 	log_debug(logFile,"FSP","END CREATE from %s\n",path);
 	return res;
+}
+
+static int fuselage_flush(const char * path, struct fuse_file_info * fi){
+	log_debug(logFile,"FSP","START FLUSH from %s\n",path);
+	fat_fileCacheFlush(path);
+	log_debug(logFile,"FSP","END FLUSH from %s\n",path);
+	return 0;
+}
+
+static int fuselage_release(const char * path, struct fuse_file_info * fi){
+	log_debug(logFile,"FSP","START RELEAS from %s\n",path);
+	fat_destroyFileCache(path);
+	log_debug(logFile,"FSP","END RELEAS from %s\n",path);
+	return 0;
 }
 
 
@@ -156,7 +172,9 @@ static struct fuse_operations fsp_oper = {
 	.rename = fuselage_rename,
 	.write = fuselage_write,
 	.mkdir = fuselage_mkdir,
-	.create = fuselage_create
+	.create = fuselage_create,
+	.flush = fuselage_flush,
+	.release = fuselage_release
 };
 
 int main(int argc, char *argv[])

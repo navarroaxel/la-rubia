@@ -19,6 +19,7 @@
 #include "sys/stat.h"
 #include <assert.h>
 #include "common/utils/utils.h"
+#include "common/collections/list.h"
 #include <math.h>
 #include "common/utils/config.h"
 
@@ -26,6 +27,8 @@
 t_fat_bootsector bootSector;
 uint32_t * fatTable;
 extern config_fsp * config;
+t_list *filesCache;
+
 
 int main2(){
 	t_xmlFile * configFile = loadConfig("config.xml");
@@ -65,6 +68,7 @@ int main2(){
 
 void fat_initialize(){
 	disk_initialize();
+	filesCache = collection_list_create();
 	bootSector = fat_readBootSector();
 	fat_loadFAT();
 }
@@ -235,7 +239,7 @@ uint32_t fat_advanceNClusters(uint32_t clusterStart, uint32_t offset){
 	return clusterStart;
 }
 
-int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf){
+int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf,const char * path){
 	//HERE BE DRAGONS
 	t_cluster cluster;
 	uint32_t dataCluster, sizeToRead;
@@ -260,7 +264,9 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 	positionInBuffer=0;
 	for (i=0;i<clustersInRead;i++){
 		//diskCluster=fat_dataClusterToDiskCluster(dataCluster);
-		fat_addressing_readCluster(dataCluster,cluster);
+
+		fat_file_readCluster(path, dataCluster,cluster);
+
 		offsetInsideCluster = positionInFile % FAT_CLUSTER_SIZE;
 		if(leftToRead > FAT_CLUSTER_SIZE - offsetInsideCluster){
 			thisReadSize=FAT_CLUSTER_SIZE - offsetInsideCluster;
@@ -499,7 +505,9 @@ int fat_write(const char *path, const char *buf, size_t size, off_t offset){
 	positionInFile= offset;
 	positionInBuffer=0;
 	for (i=0;i<clustersInWrite;i++){
-		fat_addressing_readCluster(dataCluster,cluster);
+
+		fat_file_readCluster(path,dataCluster,cluster);
+
 		offsetInsideCluster = positionInFile % FAT_CLUSTER_SIZE;
 		if(leftToWrite > FAT_CLUSTER_SIZE - offsetInsideCluster){
 			thisWriteSize=FAT_CLUSTER_SIZE - offsetInsideCluster;
@@ -507,7 +515,7 @@ int fat_write(const char *path, const char *buf, size_t size, off_t offset){
 			thisWriteSize=leftToWrite;
 		}
 		memcpy(&cluster[offsetInsideCluster],&buf[positionInBuffer],thisWriteSize);
-		fat_addressing_writeCluster(dataCluster,cluster);
+		fat_file_writeCluster(path,dataCluster,cluster);
 		positionInFile+=thisWriteSize;
 		positionInBuffer+=thisWriteSize;
 		leftToWrite-=thisWriteSize;
@@ -563,6 +571,123 @@ int fat_mkFile(const char * path){
 	return 0;
 }
 
+void fat_createFileCache(const char * path){
+
+	int findFromPath(void * node){
+		t_fat_cache_list * node2 =(t_fat_cache_list *)node;
+		if (strcmp(path,node2->path)==0)return 1;
+		return 0;
+
+	}
+	t_fat_cache_list * fileNode;
+	if((fileNode = collection_list_find(filesCache,findFromPath))!= NULL){
+		fileNode->openCount++;
+		return;
+	}
+	int32_t clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
+	t_fat_file_cache * cache = (t_fat_file_cache *) malloc (sizeof(t_fat_file_cache) * clustersCached);
+	memset(cache,0xFF,sizeof(t_fat_file_cache) * clustersCached);
+
+	fileNode = (t_fat_cache_list *) malloc (sizeof(t_fat_cache_list));
+	strcpy(fileNode->path,path);
+	fileNode->openCount = 1;
+	fileNode->clusterStart= 0xFFFFFFFF;
+	fileNode->cache=cache;
+	collection_list_add(filesCache,fileNode);
+}
+
+void fat_destroyFileCache(const char * path){
+	int findFromPath(void * node){
+		t_fat_cache_list * node2 =(t_fat_cache_list *)node;
+		if (strcmp(path,node2->path)==0)return 1;
+		return 0;
+
+	}
+	void freeCacheNode(void * node){
+		t_fat_cache_list * node2 =(t_fat_cache_list *)node;
+		int32_t i,clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
+		for(i=0;i<clustersCached;i++){
+			if(node2->cache[i].clusterNumber!=0xFFFFFF){
+				fat_addressing_writeCluster(node2->cache[i].clusterNumber,node2->cache[i].data);
+			}
+		}
+
+		free(node2->cache);
+	}
+
+	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);
+	assert(fileNode!=NULL);
+	if (--fileNode->openCount > 0) return;
+
+	collection_list_removeByClosure(filesCache,findFromPath,freeCacheNode);
+}
+
+void fat_fileCacheLoad(t_fat_file_cache * cache,uint32_t clusterNumber){
+	uint32_t i;
+	int32_t clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
+	for(i=0;i<clustersCached;i++){
+		if(cache[i].clusterNumber!=0xFFFFFFFF){
+			fat_addressing_writeCluster(cache[i].clusterNumber,cache[i].data);
+		}
+		cache[i].clusterNumber = clusterNumber + i;
+		fat_addressing_readCluster(clusterNumber + i,cache[i].data);
+	}
+}
+
+void fat_fileCacheFlush(const char * path){
+	int findFromPath(void * node){
+		t_fat_cache_list * node2 =(t_fat_cache_list *)node;
+		if (strcmp(path,node2->path)==0)return 1;
+		return 0;
+
+	}
+	int32_t i,clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
+	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);
+	for(i=0;i<clustersCached;i++){
+		if(fileNode->cache[i].clusterNumber!=0xFFFFFFFF){
+			fat_addressing_writeCluster(fileNode->cache[i].clusterNumber,fileNode->cache[i].data);
+		}
+	}
+}
+void fat_file_readCluster(const char * path,uint32_t clusterNumber,t_cluster cluster){
+	int findFromPath(void * node){
+		t_fat_cache_list * node2 =(t_fat_cache_list *)node;
+		if (strcmp(path,node2->path)==0)return 1;
+		return 0;
+
+	}
+	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);
+	uint32_t cacheEntry = clusterNumber - fileNode->clusterStart;
+	int32_t clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
+	if ( cacheEntry >= 0 && cacheEntry < clustersCached){
+		memcpy(cluster,fileNode->cache[cacheEntry].data,FAT_CLUSTER_SIZE);
+		return;
+	}
+	fat_fileCacheLoad(fileNode->cache,clusterNumber);
+	fileNode->clusterStart=clusterNumber;
+	memcpy(cluster,fileNode->cache[0].data,FAT_CLUSTER_SIZE);
+	return;
+}
+
+void fat_file_writeCluster(const char * path,uint32_t clusterNumber,t_cluster cluster){
+	int findFromPath(void * node){
+		t_fat_cache_list * node2 =(t_fat_cache_list *)node;
+		if (strcmp(path,node2->path)==0)return 1;
+		return 0;
+
+	}
+	int32_t clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
+	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);
+	uint32_t cacheEntry = clusterNumber - fileNode->clusterStart;
+	if ( cacheEntry >= 0 && cacheEntry < clustersCached){
+		memcpy(fileNode->cache[cacheEntry].data,cluster,FAT_CLUSTER_SIZE);
+		return;
+	}
+	fat_fileCacheLoad(fileNode->cache,clusterNumber);
+	fileNode->clusterStart=clusterNumber;
+	memcpy(fileNode->cache[0].data,cluster,FAT_CLUSTER_SIZE);
+	return;
+}
 
 void fat_cleanup(){
 	disk_cleanup();

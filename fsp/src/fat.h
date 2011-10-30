@@ -20,7 +20,7 @@ void fat_initialize();
 t_fat_file_list * fat_getDirectoryListing(t_fat_file_entry * fileEntry);
 int fat_getFileFromPath(const char * path,t_fat_file_entry * rtn);
 t_stat fat_statFile(t_fat_file_entry * file);
-int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf);
+int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset, char * buf,const char * path);
 void fat_getName (t_fat_file_entry * fileEntry, char * buff);
 t_fat_file_list * fat_getRootDirectory();
 int fat_addFreeClusterToChain(uint32_t lastClusterOfChain);
@@ -37,5 +37,14 @@ int fat_addEntry(const char * directoryPath, t_fat_file_entry fileEntry);
 int fat_write(const char *path, const char *buf, size_t size, off_t offset);
 int fat_mkdir(const char * path);
 int fat_mkFile(const char * path);
+void fat_createFileCache(const char * path);
+void fat_destroyFileCache(const char * path);
+void fat_fileCacheLoad(t_fat_file_cache * cache,uint32_t clusterNumber);
+void fat_fileCacheFlush(const char * path);
+
+
+void fat_file_readCluster(const char * path,uint32_t clusterNumber,t_cluster cluster);
+void fat_file_writeCluster(const char * path,uint32_t clusterNumber,t_cluster cluster);
+
 void fat_cleanup(void);
 #endif /* FAT_H_ */
