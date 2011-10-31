@@ -12,7 +12,7 @@
 #define NIPC_WRITESECTOR_RQ 3
 #define NIPC_READSECTOR_RS 4
 #define NIPC_WRITESECTOR_RS 5
-#define NIPC_DISKCONNECT 6
+#define NIPC_DISKCHS 6
 
 #define DISK_RESULT_SUCCESS 0
 #define DISK_RESULT_FAILED 1
@@ -48,6 +48,12 @@ typedef struct t_disk_writeSectorRs {
 	uint8_t result;
 	uint32_t offset;
 } __attribute__ ((packed)) t_disk_writeSectorRs;
+
+typedef struct t_disk_chs {
+	uint16_t cylinders;
+	uint8_t heads;
+	uint16_t sectors;
+} __attribute__ ((packed)) t_disk_chs;
 
 t_nipc *nipc_create(uint8_t type);
 void nipc_setdata(t_nipc *nipc, void *data, uint16_t length);

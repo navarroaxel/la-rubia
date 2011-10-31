@@ -1,5 +1,6 @@
 #include "nipc.h"
 #include <assert.h>
+
 t_nipc *nipc_create(uint8_t type) {
 	t_nipc *nipc = (t_nipc *) malloc(sizeof(t_nipc));
 	nipc->type = type;
@@ -48,7 +49,7 @@ t_socket_buffer *nipc_serializer(t_nipc *nipc) {
 t_nipc *nipc_deserializer(t_socket_buffer *buffer,uint32_t offsetinBuffer) {
 	int tmpsize, offset = 0;
 	t_nipc *nipc = malloc(sizeof(t_nipc));
-	assert(buffer->size!=0);
+
 	char * dataStart =  buffer->data +offsetinBuffer;
 	memcpy(&nipc->type, dataStart, tmpsize = sizeof(uint8_t));
 	offset += tmpsize;

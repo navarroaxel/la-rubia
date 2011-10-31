@@ -8,8 +8,8 @@
 #include "common/utils/log.h"
 #include "common/utils/config.h"
 
-t_log *log;
-config_disk * config;
+config_disk *config;
+t_log *logFile;
 
 int main(void) {
 	//TODO: Revisar porque con el fork tira SIGSEGV.
@@ -25,18 +25,18 @@ int main(void) {
 	t_blist *waiting = collection_blist_create(50);
 	t_blist *processed = collection_blist_create(50);
 
-	log = log_create("PPD", config->logFilePath,
+	logFile = log_create("PPD", config->logFilePath,
 			WARNING | DEBUG | ERROR | INFO, M_CONSOLE_DISABLE);
 
 	init_console(waiting);
 
-	init_head(waiting, processed, log);
+	init_head(waiting, processed, logFile);
 
-	init_dispatcher(processed, log);
+	init_dispatcher(processed, logFile);
 	if (strcmp(config->mode, "CONNECT") == 0) {
-		connectraid(waiting, log);
+		connectraid(waiting, logFile);
 	} else if (strcmp(config->mode, "LISTEN") == 0) {
-		listener(waiting, log);
+		listener(waiting, logFile);
 	} else {
 		perror("Modo incorrecto");
 	}

@@ -88,10 +88,35 @@ int handshake(t_socket_client *client) {
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
 
-	t_socket_buffer *buffet = sockets_recv(client);
+	t_socket_buffer *buffer = sockets_recv(client);
+	nipc = nipc_deserializer(buffer,0);
+	sockets_bufferDestroy(buffer);
+	if (nipc->type != NIPC_HANDSHAKE || nipc->length != 0) {
+		perror("Error al conectar con el RAID");
+		nipc_destroy(nipc);
+		return false;
+	}
 
-	nipc = nipc_deserializer(buffet,0);
-	return nipc->type == NIPC_HANDSHAKE && nipc->length == 0;
+	nipc_destroy(nipc);
+
+	nipc = nipc_create(NIPC_DISKCHS);
+	t_disk_chs *chs = malloc(sizeof(t_disk_chs));
+	chs->cylinders = config->cylinders;
+	chs->heads = config->heads;
+	chs->sectors = config->sectors;
+
+	nipc_setdata(nipc, chs, sizeof(t_disk_chs));
+
+	nipc_send(nipc, client);
+	nipc_destroy(nipc);
+
+	buffer = sockets_recv(client);
+	nipc = nipc_deserializer(buffer, 0);
+	sockets_bufferDestroy(buffer);
+
+	int ret = nipc->type == NIPC_DISKCHS || nipc->length == 0;
+	nipc_destroy(nipc);
+	return ret;
 }
 
 
