@@ -2,7 +2,9 @@
 #include "common/utils/config.h"
 void diskconnect(void);
 
-config_raid * config;
+config_raid *config;
+t_list *disks;
+uint32_t raidoffsetlimit;
 
 int main(void) {
 	diskconnect();
@@ -42,7 +44,6 @@ void diskconnect(void) {
 }
 
 void listener(t_list *waiting, t_log *log) {
-	//TODO: Get IP & port from config.
 	t_socket_server *server = sockets_createServer(NULL, config->diskPort);
 
 	sockets_listen(server);
@@ -75,12 +76,10 @@ void listener(t_list *waiting, t_log *log) {
 }
 
 int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
-	if (rq->length > 0) {
-		char diskname[rq->length];
-		memcpy(diskname, rq->payload, rq->length);
-		log_info(log, "LISTENER", "Se ha conectado el disco: %s", diskname);
-		disks_register(diskname, client, waiting, log);
-	} else if (disks_size() == 0) {
+	if (rq->length > 0)
+		return handshakedisk(client, rq, waiting, log);
+
+	if (disks_size() == 0) {
 		t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 		nipc_setdata(nipc, "There are no disks ready.",
 				strlen("There are no disks ready.") + 1);
@@ -95,6 +94,51 @@ int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) 
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
 	return true;
+}
+
+int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
+	char diskname[rq->length];
+	memcpy(diskname, rq->payload, rq->length);
+
+	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
+	nipc_setdata(nipc, NULL, 0);
+	nipc_send(nipc, client);
+	nipc_destroy(nipc);
+
+	t_socket_buffer *buffer = sockets_recv(client);
+	nipc = nipc_deserializer(buffer, 0);
+	sockets_bufferDestroy(buffer);
+	t_disk_chs *chs = nipc->payload;
+	nipc_destroy(nipc);
+	bool syncdisk = false;
+	if (nipc->type != NIPC_DISKCHS)
+		return false;
+
+	if (raidoffsetlimit != 0) {
+		syncdisk = true;
+		if (raidoffsetlimit < chs->cylinders * chs->heads * chs->sectors) {
+			nipc = nipc_create(NIPC_ERROR);
+			nipc_setdata(nipc, strdup("Invalid CHS"), strlen("Invalid CHS"));
+			nipc_send(nipc, client);
+			nipc_destroy(nipc);
+			log_warning(log, "LISTENER", "No se pudo conectar el disco %s (%i,%i,%i)", diskname, chs->cylinders, chs->heads, chs->sectors);
+			return false;
+		}
+	} else {
+		raidoffsetlimit = chs->cylinders * chs->heads * chs->sectors;
+	}
+
+	nipc = nipc_create(NIPC_DISKCHS);
+	nipc_setdata(nipc, NULL, 0);
+	nipc_send(nipc, client);
+	nipc_destroy(nipc);
+
+	log_info(log, "LISTENER", "Se ha conectado el disco: %s", diskname);
+	t_disk *dsk = disks_register(diskname, client, waiting, log);
+	if (syncdisk)
+		init_syncer(dsk);
+
+	return false;
 }
 
 void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_log *log) {

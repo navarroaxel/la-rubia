@@ -9,7 +9,7 @@
 #include "operations.h"
 #include "common/utils/log.h"
 
-typedef struct t_disk{
+typedef struct t_disk {
 	uint32_t id;
 	char name[13];
 	pthread_t thread;
@@ -17,6 +17,7 @@ typedef struct t_disk{
 	t_log *log;
 	t_socket_client *client;
 	volatile sig_atomic_t pendings; //TODO: Revisar de poner un semaphore para hacer esta operacion segura.
+	uint32_t offsetlimit;
 } t_disk;
 
 void disks_init(void);

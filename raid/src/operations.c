@@ -18,6 +18,7 @@ t_operation *operation_create(t_nipc *nipc) {
 		break;
 	}
 
+	op->syncqueue = op->client = NULL;
 	op->disk = 0;
 	return op;
 }

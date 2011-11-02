@@ -10,13 +10,16 @@
 #include "common/utils/sockets.h"
 #include "common/utils/config.h"
 #include "common/collections/list.h"
+#include "syncer.h"
 #include "operations.h"
 #include "disk.h"
 #include "common/utils/config.h"
 
-t_list *disks;
+extern uint32_t raidoffsetlimit;
+
 void listener(t_list *waiting, t_log *log);
 int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log);
+int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log);
 void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_log *log);
 
 #endif

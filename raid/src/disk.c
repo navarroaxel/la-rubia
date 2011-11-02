@@ -41,8 +41,12 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 
 	t_operation *op = collection_list_popfirst(d->operations, findoperation);
 
-	nipc_send(nipc, op->client);
+	if (op->client == NULL){
+		collection_blist_push(op->syncqueue, nipc);
+		return;
+	}
 
+	nipc_send(nipc, op->client);
 	operation_destroy(op);
 }
 
@@ -62,9 +66,9 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 		return !op->read && op->offset == rs->offset && op->disk == 0;
 	}
 
+	collection_list_iterator(d->operations, findrequest);
 	if (operationReady) {
-		t_operation *op = collection_list_popfirst(d->operations,
-				findoperation);
+		t_operation *op = collection_list_popfirst(d->operations, findoperation);
 		nipc_send(nipc, op->client);
 		operation_destroy(op);
 	}
