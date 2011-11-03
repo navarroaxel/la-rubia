@@ -8,6 +8,7 @@ void *disk(void *args) {
 	while (true) {
 		buffer = sockets_recv(dsk->client);
 		if (buffer == NULL) {
+			log_info(dsk->log, dsk->name, "El disco %s se ha desconectado", dsk->name);
 			reallocateoperations(dsk);
 			return NULL;
 		}

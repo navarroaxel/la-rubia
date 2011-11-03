@@ -81,7 +81,7 @@ int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) 
 
 	if (disks_size() == 0) {
 		t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
-		nipc_setdata(nipc, "There are no disks ready.",
+		nipc_setdata(nipc, strdup("There are no disks ready."),
 				strlen("There are no disks ready.") + 1);
 
 		nipc_send(nipc, client);
@@ -133,7 +133,7 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
 
-	log_info(log, "LISTENER", "Se ha conectado el disco: %s", diskname);
+	log_info(log, "LISTENER", "Se ha conectado el disco %s", diskname);
 	t_disk *dsk = disks_register(diskname, client, waiting, log);
 	if (syncdisk)
 		init_syncer(dsk);

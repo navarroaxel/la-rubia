@@ -14,6 +14,10 @@ void *syncer(void *args){
 	t_disk *dsk = args;
 	t_blist *syncqueue = collection_blist_create(50);
 
+	char thread_name[21] = "syncer-";
+	thread_name[sprintf(thread_name + strlen(thread_name), dsk->name)] = '\0';
+	log_info(dsk->log, thread_name, "Se inicio la sincronizacion del disco %s", dsk->name);
+
 	int i = 0;
 	while (i < 20){
 		enqueueread(i++, syncqueue);
@@ -25,7 +29,10 @@ void *syncer(void *args){
 
 		if (i < raidoffsetlimit)
 			enqueueread(i, syncqueue);
+
+		log_info(dsk->log, thread_name, "Se sincronizo el disco %s hasta el sector %i", dsk->name, dsk->offsetlimit);
 	}
+	log_info(dsk->log, thread_name, "Se finalizo la sincronizacion del disco %s", dsk->name);
 	return NULL;
 }
 
