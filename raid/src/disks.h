@@ -22,10 +22,11 @@ typedef struct t_disk {
 
 void disks_init(void);
 t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting, t_log *log);
-t_disk *disks_getidledisk();
+t_disk *disks_getidledisk(uint32_t offset);
 int disks_size(void);
 void disks_foreach(void(*closure)(void*));
 void disks_remove(t_disk *disk);
 void disks_destroy(t_disk *disk);
+void disks_verifystate();
 
 #endif

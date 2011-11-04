@@ -7,9 +7,7 @@ t_list *disks;
 uint32_t raidoffsetlimit;
 
 int main(void) {
-	diskconnect();
-
-	t_xmlFile * configFile = loadConfig("config.xml");
+	t_xmlFile *configFile = loadConfig("config.xml");
 	config = xmlGetConfigStructRaid(configFile);
 
 	disks_init();
@@ -97,7 +95,7 @@ int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) 
 }
 
 int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
-	char diskname[rq->length];
+	char diskname[13];
 	memcpy(diskname, rq->payload, rq->length);
 
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
@@ -109,14 +107,16 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 	nipc = nipc_deserializer(buffer, 0);
 	sockets_bufferDestroy(buffer);
 	t_disk_chs *chs = nipc->payload;
-	nipc_destroy(nipc);
-	bool syncdisk = false;
-	if (nipc->type != NIPC_DISKCHS)
+	if (nipc->type != NIPC_DISKCHS){
+		nipc_destroy(nipc);
 		return false;
+	}
 
+	bool syncdisk = false;
 	if (raidoffsetlimit != 0) {
 		syncdisk = true;
-		if (raidoffsetlimit < chs->cylinders * chs->heads * chs->sectors) {
+		if (chs->cylinders * chs->heads * chs->sectors < raidoffsetlimit) {
+			nipc_destroy(nipc);
 			nipc = nipc_create(NIPC_ERROR);
 			nipc_setdata(nipc, strdup("Invalid CHS"), strlen("Invalid CHS"));
 			nipc_send(nipc, client);
@@ -128,6 +128,7 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 		raidoffsetlimit = chs->cylinders * chs->heads * chs->sectors;
 	}
 
+	nipc_destroy(nipc);
 	nipc = nipc_create(NIPC_DISKCHS);
 	nipc_setdata(nipc, NULL, 0);
 	nipc_send(nipc, client);
@@ -137,6 +138,8 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 	t_disk *dsk = disks_register(diskname, client, waiting, log);
 	if (syncdisk)
 		init_syncer(dsk);
+	else
+		dsk->offsetlimit = raidoffsetlimit;
 
 	return false;
 }
@@ -146,7 +149,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_
 	op->client = client;
 	collection_list_add(waiting, op);
 	if (op->read) {
-		t_disk *dsk = disks_getidledisk();
+		t_disk *dsk = disks_getidledisk(op->offset);
 		dsk->pendings++;
 		op->disk = dsk->id;
 		log_info(log, "LISTENER", "LECTURA sector %i disco %s", op->offset, dsk->name);

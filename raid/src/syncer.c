@@ -12,32 +12,30 @@ void init_syncer(t_disk *dsk) {
 
 void *syncer(void *args){
 	t_disk *dsk = args;
+	dsk->offsetlimit = 0;
 	t_blist *syncqueue = collection_blist_create(50);
 
-	char thread_name[21] = "syncer-";
-	thread_name[sprintf(thread_name + strlen(thread_name), dsk->name)] = '\0';
+	char thread_name[21];
+	sprintf(thread_name, "syncer-%s", dsk->name);
 	log_info(dsk->log, thread_name, "Se inicio la sincronizacion del disco %s", dsk->name);
 
-	int i = 0;
-	while (i < 20){
-		enqueueread(i++, syncqueue);
-	}
-
 	while (dsk->offsetlimit < raidoffsetlimit) {
-		t_disk_readSectorRs *rs = collection_blist_pop(syncqueue);
-		enqueuewrite(dsk, rs);
+		enqueueread(dsk->offsetlimit, syncqueue);
 
-		if (i < raidoffsetlimit)
-			enqueueread(i, syncqueue);
+		t_disk_readSectorRs * rs = collection_blist_pop(syncqueue);
+		enqueuewrite(dsk, rs);
+		dsk->offsetlimit++;
+		free(rs);
 
 		log_info(dsk->log, thread_name, "Se sincronizo el disco %s hasta el sector %i", dsk->name, dsk->offsetlimit);
 	}
 	log_info(dsk->log, thread_name, "Se finalizo la sincronizacion del disco %s", dsk->name);
+	collection_blist_destroy(syncqueue);
 	return NULL;
 }
 
 void enqueueread(int offset, t_blist *syncqueue) {
-	t_disk *dsk = disks_getidledisk();
+	t_disk *dsk = disks_getidledisk(offset);
 	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
 	rq->offset = offset;
 
@@ -45,6 +43,7 @@ void enqueueread(int offset, t_blist *syncqueue) {
 	nipc_setdata(nipc, rq, sizeof(t_disk_readSectorRq));
 
 	t_operation *op = operation_create(nipc);
+	op->disk = dsk->id;
 	op->syncqueue = syncqueue;
 	collection_list_add(dsk->operations, op);
 
@@ -57,12 +56,10 @@ void enqueuewrite(t_disk *dsk, t_disk_readSectorRs *rs){
 	t_disk_writeSectorRq *rq = malloc(sizeof(t_disk_writeSectorRq));
 	rq->offset = rs->offset;
 	memcpy(rq->data, rs->data, DISK_SECTOR_SIZE);
-
-	//TODO revisar si se encola este request en operations.
+	dsk->pendings++;
 
 	t_nipc *nipc = nipc_create(NIPC_WRITESECTOR_RQ);
 	nipc_setdata(nipc, rq, sizeof(t_disk_writeSectorRq));
 	nipc_send(nipc, dsk->client);
 	nipc_destroy(nipc);
-	dsk->pendings++;
 }

@@ -3,7 +3,7 @@
 
 int disk_id = 1;
 t_list *disks;
-
+uint32_t raidoffsetlimit;
 void disks_init(void) {
 	disks = collection_list_create();
 }
@@ -29,12 +29,12 @@ t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting, t_l
 	return dsk;
 }
 
-t_disk *disks_getidledisk() {
+t_disk *disks_getidledisk(uint32_t offset) {
 	int count = INT_MAX;
 	struct t_disk *disk;
 	void find_idledisk(void *data) {
 		t_disk *d = data;
-		if (d->pendings < count) {
+		if (offset <= d->offsetlimit && d->pendings < count) {
 			disk = data;
 			count = d->pendings;
 		}
@@ -42,6 +42,22 @@ t_disk *disks_getidledisk() {
 
 	collection_list_iterator(disks, find_idledisk);
 	return disk;
+}
+
+void disks_verifystate(){
+	bool valid = false;
+	void validator(void *data) {
+		t_disk *dsk = data;
+		if (dsk->offsetlimit == raidoffsetlimit)
+			valid = true;
+	}
+
+	collection_list_iterator(disks, validator);
+
+	if (!valid){
+		perror("No hay discos en estado valido");
+		exit(3);
+	}
 }
 
 int disks_size(void) {
@@ -64,3 +80,5 @@ void disks_destroy(t_disk *disk) {
 	sockets_destroyClient(disk->client);
 	free(disk);
 }
+
+

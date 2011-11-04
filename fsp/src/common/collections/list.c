@@ -175,8 +175,8 @@ void* collection_list_find( t_list *list, int (*closure)(void*) ){
  * @DESC: Itera la lista llamando al closure por cada elemento
  */
 void collection_list_iterator( t_list* list, void (*closure)(void*) ){
-	t_link_element *element = list->head;
 	sem_wait( &list->semaforo );
+	t_link_element *element = list->head;
 	while( element != NULL ){
 		closure(element->data);
 		element = element->next;

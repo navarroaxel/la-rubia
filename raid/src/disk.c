@@ -25,7 +25,6 @@ void *disk(void *args) {
 			processWriteRs(dsk, nipc);
 			break;
 		}
-
 		nipc_destroy(nipc);
 	}
 
@@ -43,7 +42,9 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 	t_operation *op = collection_list_popfirst(d->operations, findoperation);
 
 	if (op->client == NULL){
-		collection_blist_push(op->syncqueue, nipc);
+		rs = malloc(sizeof(t_disk_readSectorRs));
+		memcpy(rs, nipc->payload, sizeof(t_disk_readSectorRs));
+		collection_blist_push(op->syncqueue, rs);
 		return;
 	}
 
@@ -77,14 +78,14 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 
 void reallocateoperations(t_disk *dsk) {
 	disks_remove(dsk);
-	//TODO: si no hay otros discos parar todo el proceso.
+	disks_verifystate();
 
 	void itin(void *data) {
 		t_operation *op = (t_operation *) data;
 		if (!op->read)
 			op->disk &= ~dsk->id;
 		else if (op->disk == dsk->id) {
-			t_disk *d = disks_getidledisk();
+			t_disk *d = disks_getidledisk(op->offset);
 			d->pendings++;
 			t_nipc *nipc = operation_getnipc(op);
 			nipc_send(nipc, d->client);

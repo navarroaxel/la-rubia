@@ -182,3 +182,10 @@ void collection_blist_move(t_blist *blist, t_list *list) {
 	sem_post(&blist->semaphore);
 	sem_post(&list->semaforo);
 }
+
+void collection_blist_destroy(t_blist *list){
+	sem_destroy(&list->empty);
+	sem_destroy(&list->full);
+	sem_destroy(&list->semaphore);
+	free(list);
+}
