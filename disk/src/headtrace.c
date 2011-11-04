@@ -10,31 +10,6 @@ t_headtrace *headtrace_create() {
 	return trace;
 }
 
-void waiting_log(t_blist *waiting, t_log *log) {
-	int length;
-
-	if (log == NULL
-		)
-		return;
-
-	char *s = NULL;
-	int i = 0;
-	t_location *location = location_create(0);
-	void locstr(void *data) {
-		if (s == NULL
-			)
-			s = malloc((length = collection_blist_size(waiting)) * 12);
-		else
-			s[i++] = ',';
-
-		t_disk_operation *op = data;
-		location_set(location, op->offset);
-		i += location_string(location, s + i);
-	}
-	collection_blist_iterator(waiting, locstr);
-	log_info(log, "HEAD", "COLA DE PEDIDOS: [%s] (%i)", s, length);
-}
-
 void inprogress_log(t_list *inprogress, t_log *log) {
 	int length;
 	if (log == NULL

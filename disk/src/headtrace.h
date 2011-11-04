@@ -9,7 +9,6 @@
 
 t_headtrace *headtrace_create();
 void headtrace_destroy(t_headtrace *trace);
-void waiting_log(t_blist *waiting, t_log *log);
 void inprogress_log(t_list *inprogress, t_log *log);
 void headtrace_log (t_headtrace *trace, t_log *log);
 void headtrace_printf(t_headtrace *trace);
