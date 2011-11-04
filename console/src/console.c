@@ -1,6 +1,6 @@
 #include "console.h"
 
-void *main(int argc, char *const argv[]) {
+int main(int argc, char *const argv[]) {
 	printf(argv[0]);
 	t_socket_client *client = sockets_createClientUnix(argv[0]);
 	sockets_connectUnix(client, SOCKET_UNIX_PATH);
@@ -20,7 +20,7 @@ void *main(int argc, char *const argv[]) {
 	}
 
 	commands_destroy(cmd);
-	return NULL;
+	return EXIT_SUCCESS;
 }
 
 void info(void *context, t_array *args) {

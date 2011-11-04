@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 #include "common/utils/log.h"
+#include "common/collections/blist.h"
 #include "common/collections/list.h"
 #include "defines.h"
-#include "location.h"
 
 t_headtrace *headtrace_create();
 void headtrace_destroy(t_headtrace *trace);
