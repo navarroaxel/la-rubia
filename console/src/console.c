@@ -31,7 +31,7 @@ void info(void *context, t_array *args) {
 	t_socket_buffer *buffer = sockets_recv(client);
 
 	if (buffer->data[0] == 0){//CONSOLE_INFO) {
-		t_location *location = location_create(0);
+		t_location *location = malloc(sizeof(t_location));
 		int offset = 1;
 		int tmpsize;
 		memcpy(&location->cylinder, buffer->data + offset, tmpsize = sizeof(uint16_t));
