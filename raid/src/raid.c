@@ -12,8 +12,7 @@ int main(void) {
 
 	disks_init();
 	t_list *waiting = collection_list_create();
-	t_log *log = log_create("RAID", config->logFilePath,
-		WARNING | DEBUG | ERROR | INFO, M_CONSOLE_DISABLE);
+	t_log *log = log_create("RAID", config->logFilePath, WARNING | DEBUG | ERROR | INFO, config->consoleEnabled ? M_CONSOLE_ENABLE : M_CONSOLE_DISABLE);
 
 	listener(waiting, log);
 

@@ -56,7 +56,7 @@ void disks_verifystate(){
 
 	if (!valid){
 		perror("No hay discos en estado valido");
-		exit(3);
+		exit(EXIT_FAILURE);
 	}
 }
 
