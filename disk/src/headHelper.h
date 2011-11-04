@@ -21,5 +21,6 @@ uint16_t getsector(uint32_t offset);
 uint32_t getoffset(uint16_t cylinder, uint16_t sector);
 void enqueueOperation(t_blist *waiting, t_disk_operation *op);
 void waiting_log(t_blist *waiting, t_log *log);
+void inprogress_log(t_list *inprogress, t_log *log);
 
 #endif
