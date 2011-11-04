@@ -1,7 +1,7 @@
 #include "console.h"
 
 int main(int argc, char *const argv[]) {
-	printf(argv[0]);
+	printf("%s\n", argv[0]);
 	t_socket_client *client = sockets_createClientUnix(argv[0]);
 	sockets_connectUnix(client, SOCKET_UNIX_PATH);
 
@@ -25,19 +25,14 @@ int main(int argc, char *const argv[]) {
 
 void info(void *context, t_array *args) {
 	t_socket_client *client = context;
-	char code = 0;//CONSOLE_INFO;
+	char code = CONSOLE_INFO;
 	sockets_send(client, &code, sizeof(char));
 
 	t_socket_buffer *buffer = sockets_recv(client);
 
-	if (buffer->data[0] == 0){//CONSOLE_INFO) {
+	if (buffer->data[0] == CONSOLE_INFO) {
 		t_location *location = malloc(sizeof(t_location));
-		int offset = 1;
-		int tmpsize;
-		memcpy(&location->cylinder, buffer->data + offset, tmpsize = sizeof(uint16_t));
-		offset += tmpsize;
-		memcpy(&location->sector, buffer->data+offset, tmpsize);
-
+		memcpy(location, buffer->data + sizeof(char), sizeof(t_location));
 		printf("%i:%i\n", location->cylinder, location->sector);
 	}
 
@@ -54,7 +49,7 @@ void clean(void *context, t_array *args) {
 	t_socket_client *client = context;
 	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 
-	uint32_t value = 1;//CONSOLE_CLEAN;
+	uint32_t value = CONSOLE_CLEAN;
 
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	value = atol(array_get(args, 0));
@@ -79,7 +74,7 @@ void trace(void *context, t_array *args) {
 	t_socket_client *client = context;
 	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 
-	uint32_t value = 2;//CONSOLE_TRACE;
+	uint32_t value = CONSOLE_TRACE;
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	tmpsize = sizeof(uint32_t);
 	for(i = 0; i < array_size(args); i++) {
