@@ -31,10 +31,8 @@ void *console(void *args) {
 			 buffer = malloc(sizeof(t_socket_buffer));
 			 t_location *location = head_currentlocation();
 
-			 buffer->data[0] = 1;
-			 memcpy(buffer->data + offset, &location->cylinder, tmpsize = sizeof(uint16_t));
-			 offset += tmpsize;
-			 memcpy(buffer->data + offset, &location->sector, tmpsize);
+			 buffer->data[0] = CONSOLE_INFO;
+			 memcpy(buffer->data + offset, location, tmpsize = sizeof(t_location));
 			 buffer->size = offset + tmpsize;
 
 			 sockets_sendBuffer(client, buffer);
