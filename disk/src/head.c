@@ -94,7 +94,7 @@ t_headtrace *head_cscanmove(uint32_t requested) {
 				+ trace->requested.cylinder) * config->jumpTime;
 	}
 
-	trace->limitsector = getlimitsector();
+	trace->sectors = config->sectors;
 	if (trace->requested.sector >= trace->current.sector)
 		trace->time += (trace->requested.sector - trace->current.sector)
 				* getsectortime();
@@ -199,7 +199,7 @@ t_headtrace *head_fscanmove(uint32_t requested, bool asc) {
 		}
 	}
 
-	trace->limitsector = getlimitsector();
+	trace->sectors = config->sectors;
 	if (trace->requested.sector >= trace->current.sector)
 		trace->time += (trace->requested.sector - trace->current.sector)
 				* getsectortime();

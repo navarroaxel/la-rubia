@@ -105,7 +105,7 @@ void headtrace_log(t_headtrace *trace, t_log *log) {
 		free(path);
 	}
 	path = sectors_string(trace->current.sector, trace->requested.sector,
-			trace->limitsector, trace->requested.cylinder);
+			trace->sectors, trace->requested.cylinder);
 	if (path != NULL) {
 		parts = strlen(path) / (165 * 12);
 		for (i = 0; i <= parts; i++) {
@@ -144,7 +144,7 @@ void headtrace_printf(t_headtrace *trace) {
 			free(path);
 		}
 	}
-	path = sectors_string(trace->current.sector, trace->requested.sector, trace->limitsector, trace->requested.cylinder);
+	path = sectors_string(trace->current.sector, trace->requested.sector, trace->sectors, trace->requested.cylinder);
 	if (path != NULL) {
 		printf("Sectores recorridos: %s\n", path);
 		free(path);
@@ -156,7 +156,7 @@ char *cylinders_string(t_headtrace_cylinder *path, uint16_t sector) {
 
 	j = 0;
 	char *s = malloc((abs(path->end - path->start) + 1) * 12);
-	for (i = path->start;; i += path->step) {
+	for (i = path->start; ; i += path->step) {
 		if (j != 0)
 			s[j++] = ',';
 
@@ -169,25 +169,28 @@ char *cylinders_string(t_headtrace_cylinder *path, uint16_t sector) {
 	return s;
 }
 
-char *sectors_string(uint16_t start, uint16_t end, uint16_t limit,
+char *sectors_string(uint16_t start, uint16_t end, uint16_t sectors,
 		uint16_t cylinder) {
 	int i, j;
 	if (start == end)
 		return NULL;
 
 	j = 0;
-	char *s = malloc((end > start ? end - start : limit - start + end) * 12);
-	for (i = start + 1; i != end; i++) {
+	char *s = malloc((end > start ? end - start : sectors - end + start) * 12);
+	for (i = start + 1; ; i++) {
+		if (i == sectors)
+			i = 0;
+
 		if (j != 0)
 			s[j++] = ',';
 
 		j += sprintf(s + j, "%5i:%5i", cylinder, i);
-		if (i == limit)
-			i = -1;
+
+		if (i == end)
+			break;
 	}
 	s[j] = '\0';
 	return s;
-	//TODO no imprime el ultimo sector recorrido.
 }
 
 void headtrace_destroy(t_headtrace *trace) {

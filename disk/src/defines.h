@@ -26,7 +26,7 @@ typedef struct t_headtrace {
 	t_location requested;
 	t_headtrace_cylinder cylinder_path1;
 	t_headtrace_cylinder cylinder_path2;
-	uint16_t limitsector;
+	uint16_t sectors;
 	uint32_t time;
 	uint8_t hasnext;
 	t_location next;

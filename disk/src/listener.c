@@ -32,7 +32,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 			if (op == NULL)
 				return 0;
 
-			log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
+			log_info(logFile, "LISTENER", "LLEGO PEDIDO Tipo: %s Sector: %i",
 				op->read ? "lectura" : "escritura",
 				op->offset
 			);
@@ -61,7 +61,11 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 	t_disk_operation *op;
 	while(true) {
 		buffer = sockets_recv(client);
-		nipc = nipc_deserializer(buffer,0);
+		if (buffer == NULL){
+			perror("RAID desconectado");
+			return;
+		}
+		nipc = nipc_deserializer(buffer, 0);
 		sockets_bufferDestroy(buffer);
 
 		op = getdiskoperation(nipc, client);
@@ -71,7 +75,7 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 
 		enqueueOperation(waiting, op);
 
-		log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
+		log_info(logFile, "LISTENER", "LLEGO PEDIDO Tipo: %s Sector: %i",
 			op->read ? "lectura" : "escritura",
 			op->offset
 		);
@@ -83,7 +87,7 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 int handshake(t_socket_client *client) {
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 
-	nipc_setdata(nipc, strdup(config->diskname), strlen(config->diskname));
+	nipc_setdata(nipc, strdup(config->diskname), strlen(config->diskname) + 1);
 
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
@@ -121,19 +125,24 @@ int handshake(t_socket_client *client) {
 
 
 int handshakeNewClient(t_socket_client *client, t_nipc *nipc2) {
-	//TODO: Revisar si estoy en modo CONNECT.
-	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
+	t_nipc *nipc;
+	if (strcmp(config->mode, "LISTEN") != 0){
+		nipc = nipc_create(NIPC_ERROR);
+		nipc_setdata(nipc, strdup("Modo invalido"), strlen("Modo invalido") + 1);
+		nipc_send(nipc, client);
+		nipc_getdata_destroy(nipc);
+		return false;
+	}
+	nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_setdata(nipc, NULL, 0);
-	//TODO: la serializacion y el envio del buffer se repite, pasar a una funcion.
-	t_socket_buffer *buffer = nipc_serializer(nipc);
-	sockets_sendBuffer(client, buffer);
-	sockets_bufferDestroy(buffer);
+	nipc_send(nipc, client);
 	nipc_destroy(nipc);
-	return 0;
+	return true;
 }
 
 t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client) {
 	t_disk_operation *operation = malloc(sizeof(t_disk_operation));
+	operation->trace = false;
 	switch (nipc->type) {
 	case NIPC_READSECTOR_RQ:
 		operation->read = true;

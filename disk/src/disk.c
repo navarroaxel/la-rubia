@@ -19,7 +19,7 @@ int main(void) {
 	 }*/
 	init_pconsole();
 
-	t_xmlFile *configFile = loadConfig("config.xml");
+	t_xmlFile *configFile = loadConfig("config2.xml");
 	config = xmlGetConfigStructDisk(configFile);
 
 	t_blist *waiting = collection_blist_create(50);

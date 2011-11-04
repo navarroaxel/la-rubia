@@ -32,7 +32,7 @@ void *dispatcher(void *args) {
 			continue;
 		}
 
-		if (e->headtrace) {
+		if (e->trace) {
 			t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 			memcpy(buffer->data, e->headtrace, buffer->size = sizeof(t_headtrace));
 			sockets_sendBuffer(e->client, buffer);

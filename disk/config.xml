@@ -5,8 +5,8 @@
   <raidport>7000</raidport>
   <bindip>127.0.0.1</bindip>
   <bindport>5000</bindport>
-  <mode>LISTEN</mode>
-  <algorithm>FSCAN</algorithm>
+  <mode>CONNECT</mode>
+  <algorithm>CSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>
   <diskname>mydisk</diskname>
@@ -14,8 +14,8 @@
   <heads>1</heads>
   <sectors>32</sectors>
   <jumptime>1</jumptime>
-  <readtime>2</readtime>
-  <writetime>2</writetime>
+  <readtime>0</readtime>
+  <writetime>0</writetime>
   <rpm>1875</rpm>
   <socketunixpath>/tmp/lol</socketunixpath>
 </config>
