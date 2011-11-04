@@ -1,10 +1,7 @@
 #include "console.h"
-//extern config_disk *config;
 
 void *main(int argc, char *const argv[]) {
-	printf("Iniciando...\n");
-	sleep(5);
-
+	printf(argv[0]);
 	t_socket_client *client = sockets_createClientUnix(argv[0]);
 	sockets_connectUnix(client, SOCKET_UNIX_PATH);
 
@@ -28,12 +25,12 @@ void *main(int argc, char *const argv[]) {
 
 void info(void *context, t_array *args) {
 	t_socket_client *client = context;
-	char code = CONSOLE_INFO;
+	char code = 0;//CONSOLE_INFO;
 	sockets_send(client, &code, sizeof(char));
 
 	t_socket_buffer *buffer = sockets_recv(client);
 
-	if (buffer->data[0] == CONSOLE_INFO) {
+	if (buffer->data[0] == 0){//CONSOLE_INFO) {
 		t_location *location = location_create(0);
 		int offset = 1;
 		int tmpsize;
@@ -57,7 +54,7 @@ void clean(void *context, t_array *args) {
 	t_socket_client *client = context;
 	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 
-	uint32_t value = CONSOLE_CLEAN;
+	uint32_t value = 1;//CONSOLE_CLEAN;
 
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	value = atol(array_get(args, 0));
@@ -82,7 +79,7 @@ void trace(void *context, t_array *args) {
 	t_socket_client *client = context;
 	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 
-	uint32_t value = CONSOLE_TRACE;
+	uint32_t value = 2;//CONSOLE_TRACE;
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	tmpsize = sizeof(uint32_t);
 	for(i = 0; i < array_size(args); i++) {

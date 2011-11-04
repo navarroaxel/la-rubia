@@ -34,30 +34,6 @@ void location_readsector(t_location *l){
 		l->sector += 1;
 }
 
-int locations_string(t_list *locations, char *s) {
-	int i = 0;
-	void closure(void *data) {
-		if (i != 0)
-			s[i++] = ',';
-
-		t_location *l = data;
-		i += location_string(l, s + i);
-	}
-
-	collection_list_iterator(locations, closure);
-	return i;
-}
-
-int location_string(t_location *l, char *s) {
-	if (l == NULL) {
-		*s = '\0';
-		return 0;
-	}
-
-	return sprintf(s, "%i:%i", l->cylinder, l->sector);
-}
-
 void location_destroy(t_location *l) {
 	free(l);
 }
-

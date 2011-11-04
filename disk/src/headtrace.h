@@ -17,5 +17,7 @@ void headtrace_setcylinderpath(t_headtrace *trace, uint16_t start, uint16_t end,
 t_headtrace_cylinder *headtrace_cylinder_create();
 char *cylinders_string(t_headtrace_cylinder *path, uint16_t sector);
 char *sectors_string(uint16_t start, uint16_t end, uint16_t limit,uint16_t cylinder);
+int locations_string(t_list *locations, char *s);
+int location_string(t_location *l, char *s);
 
 #endif
