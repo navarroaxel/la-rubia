@@ -1,5 +1,5 @@
-#ifndef PCONSOLE_H_
-#define PCONSOLE_H_
+#ifndef CONSOLE_H_
+#define CONSOLE_H_
 
 #include <stdlib.h>
 #include <stdio.h>

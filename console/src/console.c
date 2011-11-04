@@ -1,22 +1,11 @@
-#include "pconsole.h"
-#include <pthread.h>
+#include "console.h"
+//extern config_disk *config;
 
-extern config_disk *config;
-void init_pconsole(void){
-	pthread_attr_t attr;
-	pthread_t console_id;
-
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&console_id, &attr, &pconsole, NULL);
-	pthread_attr_destroy(&attr);
-}
-
-void *pconsole(void* args) {
+void *main(int argc, char *const argv[]) {
 	printf("Iniciando...\n");
 	sleep(5);
 
-	t_socket_client *client = sockets_createClientUnix(config->socketunixpath);
+	t_socket_client *client = sockets_createClientUnix(argv[0]);
 	sockets_connectUnix(client, SOCKET_UNIX_PATH);
 
 	t_commands *cmd = commands_createWithConext(client, ' ', '\n', ' ');
