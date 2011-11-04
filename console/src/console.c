@@ -1,8 +1,11 @@
 #include "console.h"
 
 int main(int argc, char *const argv[]) {
-	printf("%s\n", argv[0]);
-	t_socket_client *client = sockets_createClientUnix(argv[0]);
+	if (argc != 2) 	{
+		perror("Invalid argument count");
+		return EXIT_FAILURE;
+	}
+	t_socket_client *client = sockets_createClientUnix(argv[1]);
 	sockets_connectUnix(client, SOCKET_UNIX_PATH);
 
 	t_commands *cmd = commands_createWithConext(client, ' ', '\n', ' ');
