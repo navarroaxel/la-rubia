@@ -2,6 +2,10 @@
 
 extern config_disk * config;
 
+void log_invalidrequest(t_log *logFile) {
+	log_warning(logFile, "LISTENER", "Llego un pedido invalido");
+}
+
 void log_incomingrequest(t_log *logFile, bool read, uint32_t offset) {
 	log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
 			read ? "lectura" : "escritura", offset);
@@ -34,24 +38,23 @@ void listener(t_blist *waiting, t_log *logFile) {
 			offsetInBuffer += nipc->length + sizeof(nipc->type)
 					+ sizeof(nipc->length);
 
-			if (nipc->type == NIPC_HANDSHAKE) {
-				if (handshakeNewClient(client, nipc) == 0)
-					return client->socket->desc;
+			if (nipc->type == NIPC_HANDSHAKE
+				)
+				return handshakeNewClient(client, nipc);
 
-				return false;
-			}
 			t_disk_operation *op = getdiskoperation(nipc, client);
 			nipc_destroy(nipc);
-			if (op == NULL
-			)
+			if (op == NULL) {
+				log_invalidrequest(logFile);
 				return false;
+			}
 
 			log_incomingrequest(logFile, op->read, op->offset);
 
 			enqueueOperation(waiting, op);
 		}
 		sockets_bufferDestroy(buffer);
-		return client->socket->desc;
+		return true;
 	}
 
 	t_list *clients = collection_list_create();
@@ -88,9 +91,10 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 
 			op = getdiskoperation(nipc, client);
 			nipc_destroy(nipc);
-			if (op == NULL
-				)
+			if (op == NULL) {
+				log_invalidrequest(logFile);
 				continue;
+			}
 
 			enqueueOperation(waiting, op);
 
@@ -183,4 +187,3 @@ t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client) {
 	operation->client = client;
 	return operation;
 }
-

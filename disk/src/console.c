@@ -15,18 +15,23 @@ void *console(void *args) {
 	t_blist *waiting = args;
 	t_socket_server *server = sockets_createServerUnix(config->socketunixpath);
 
-	sockets_listen(server);
+	if (!sockets_listen(server)){
+		perror("Socket Server cannot listen");
+		return NULL;
+	}
 
-	int child_pid = fork();
-	if (child_pid == 0) {
+	if (fork() == 0) {
 		char* arg_list[] = { "console", config->socketunixpath, NULL };
 		execvp(config->consolePath, arg_list);
 		perror("Error en execvp\n");
 		abort();
-	} else
-		printf("%i", child_pid);
+	}
 
 	t_socket_client *client = sockets_acceptUnix(server);
+	if (client == NULL){
+		perror("No se pudo establecer conexion con el cliente de la consola");
+		return NULL;
+	}
 	t_socket_buffer *buffer;
 	while (true) {
 		buffer = sockets_recv(client);
