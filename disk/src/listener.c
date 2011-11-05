@@ -2,10 +2,16 @@
 
 extern config_disk * config;
 
-void listener(t_blist *waiting, t_log *logFile) {
-	t_socket_server *server = sockets_createServer("127.0.0.1", config->bindPort);
+void log_incomingrequest(t_log *logFile, bool read, uint32_t offset) {
+	log_info(logFile, "LISTENER", "LLEGO PEDIDO\nTipo: %s\nSector: %i",
+			read ? "lectura" : "escritura", offset);
+}
 
-	if (server == NULL){
+void listener(t_blist *waiting, t_log *logFile) {
+	t_socket_server *server = sockets_createServer("127.0.0.1",
+			config->bindPort);
+
+	if (server == NULL) {
 		log_error(logFile, "LISTENER", "Socket Server es NULL");
 		return;
 	}
@@ -17,30 +23,30 @@ void listener(t_blist *waiting, t_log *logFile) {
 
 	int recvClient(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
-		uint32_t offsetInBuffer=0;
+		uint32_t offsetInBuffer = 0;
 		t_nipc *nipc;
-		if (buffer == NULL)
-			return 0;
+		if (buffer == NULL
+		)
+			return false;
 
-		while(offsetInBuffer<buffer->size){
-			nipc = nipc_deserializer(buffer,offsetInBuffer);
-			offsetInBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
+		while (offsetInBuffer < buffer->size) {
+			nipc = nipc_deserializer(buffer, offsetInBuffer);
+			offsetInBuffer += nipc->length + sizeof(nipc->type)
+					+ sizeof(nipc->length);
 
 			if (nipc->type == NIPC_HANDSHAKE) {
 				if (handshakeNewClient(client, nipc) == 0)
 					return client->socket->desc;
 
-				return 0;
+				return false;
 			}
 			t_disk_operation *op = getdiskoperation(nipc, client);
 			nipc_destroy(nipc);
-			if (op == NULL)
-				return 0;
+			if (op == NULL
+			)
+				return false;
 
-			log_info(logFile, "LISTENER", "LLEGO PEDIDO Tipo: %s Sector: %i",
-				op->read ? "lectura" : "escritura",
-				op->offset
-			);
+			log_incomingrequest(logFile, op->read, op->offset);
 
 			enqueueOperation(waiting, op);
 		}
@@ -56,36 +62,39 @@ void listener(t_blist *waiting, t_log *logFile) {
 }
 
 void connectraid(t_blist *waiting, t_log *logFile) {
-	t_socket_client *client = sockets_createClient(config->bindIp, config->bindPort +1);
+	t_socket_client *client = sockets_createClient(config->bindIp,
+			config->bindPort + 1);
 
 	sockets_connect(client, config->raidIp, config->raidPort);
 	handshake(client);
 
 	t_socket_buffer *buffer;
 	t_nipc *nipc;
+	int offsetInBuffer;
 	t_disk_operation *op;
-	while(true) {
+	while (true) {
+		offsetInBuffer = 0;
 		buffer = sockets_recv(client);
-		if (buffer == NULL){
-			perror("RAID desconectado");
+		if (buffer == NULL) {
+			log_error(logFile, "LISTENER", "RAID Desconectado");
 			return;
 		}
-		nipc = nipc_deserializer(buffer, 0);
+
+		while (offsetInBuffer < buffer->size) {
+			nipc = nipc_deserializer(buffer, offsetInBuffer);
+			offsetInBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
+
+			op = getdiskoperation(nipc, client);
+			nipc_destroy(nipc);
+			if (op == NULL)
+				continue;
+
+			enqueueOperation(waiting, op);
+
+			log_incomingrequest(logFile, op->read, op->offset);
+		}
 		sockets_bufferDestroy(buffer);
-
-		op = getdiskoperation(nipc, client);
-		nipc_destroy(nipc);
-		if (op == NULL)
-			continue;
-
-		enqueueOperation(waiting, op);
-
-		log_info(logFile, "LISTENER", "LLEGO PEDIDO Tipo: %s Sector: %i",
-			op->read ? "lectura" : "escritura",
-			op->offset
-		);
 	}
-
 	sockets_destroyClient(client);
 }
 
@@ -98,7 +107,7 @@ int handshake(t_socket_client *client) {
 	nipc_destroy(nipc);
 
 	t_socket_buffer *buffer = sockets_recv(client);
-	nipc = nipc_deserializer(buffer,0);
+	nipc = nipc_deserializer(buffer, 0);
 	sockets_bufferDestroy(buffer);
 	if (nipc->type != NIPC_HANDSHAKE || nipc->length != 0) {
 		perror("Error al conectar con el RAID");
@@ -128,12 +137,12 @@ int handshake(t_socket_client *client) {
 	return ret;
 }
 
-
 int handshakeNewClient(t_socket_client *client, t_nipc *nipc2) {
 	t_nipc *nipc;
-	if (strcmp(config->mode, "LISTEN") != 0){
+	if (strcmp(config->mode, "LISTEN") != 0) {
 		nipc = nipc_create(NIPC_ERROR);
-		nipc_setdata(nipc, strdup("Modo invalido"), strlen("Modo invalido") + 1);
+		nipc_setdata(nipc, strdup("Modo invalido"),
+				strlen("Modo invalido") + 1);
 		nipc_send(nipc, client);
 		nipc_getdata_destroy(nipc);
 		return false;
