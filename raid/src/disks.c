@@ -65,7 +65,7 @@ t_disk *disks_getbyname(char *name){
 		return strcmp(name, ((t_disk *)data)->name) == 0;
 	}
 
-	return collection_list_popfirst(disks, namecomparer);
+	return collection_list_getfirst(disks, namecomparer);
 }
 
 int disks_size(void) {
