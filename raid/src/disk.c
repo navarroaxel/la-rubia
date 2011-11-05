@@ -35,6 +35,10 @@ void log_clientlost(t_log *logFile, char *thread_name, bool read, uint32_t offse
 	log_warning(logFile, thread_name, "Se perdio cliente de operacion de %s offset %i", read ? "lectura" : "escritura" , offset);
 }
 
+void log_lostoperation(t_log *logFile, char *thread_name, bool read, uint32_t offset){
+	log_warning(logFile, thread_name, "Se perdio operacion de %s offset %i", read ? "lectura" : "escritura", offset);
+}
+
 void processReadRs(t_disk *d, t_nipc *nipc) {
 	t_disk_readSectorRs *rs = (t_disk_readSectorRs *) nipc->payload;
 
@@ -45,7 +49,7 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 
 	t_operation *op = collection_list_popfirst(d->operations, findoperation);
 	if (op == NULL){
-		log_warning(d->log, d->name, "Se perdio operacion de lectura offset %i", rs->offset);
+		log_lostoperation(d->log, d->name, true, rs->offset);
 		return;
 	}
 
@@ -86,6 +90,10 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 	collection_list_iterator(d->operations, findrequest);
 	if (operationReady) {
 		t_operation *op = collection_list_popfirst(d->operations, findoperation);
+		if (op == NULL){
+			log_lostoperation(d->log, d->name, false, rs->offset);
+			return;
+		}
 		if (op->client == NULL){
 			if (op->syncqueue == NULL){
 				log_clientlost(d->log, d->name, op->read, op->offset);
@@ -106,11 +114,11 @@ void reallocateoperations(t_disk *dsk) {
 	disks_remove(dsk);
 	disks_verifystate();
 
-	void itin(void *data) {
+	void updateOperationState(void *data) {
 		t_operation *op = (t_operation *) data;
-		if (!op->read)
+		if (!op->read){
 			op->disk &= ~dsk->id;
-		else if (op->disk == dsk->id) {
+		}else if (op->disk == dsk->id) {
 			t_disk *d = disks_getidledisk(op->offset);
 			d->pendings++;
 			t_nipc *nipc = operation_getnipc(op);
@@ -120,7 +128,9 @@ void reallocateoperations(t_disk *dsk) {
 		}
 	}
 
-	collection_list_iterator(dsk->operations, itin);
+	collection_list_iterator(dsk->operations, updateOperationState);
+
+	//TODO Clean writes ops.
 
 	disks_destroy(dsk);
 }
