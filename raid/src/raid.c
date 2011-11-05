@@ -115,12 +115,12 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 	if (raidoffsetlimit != 0) {
 		syncdisk = true;
 		if (chs->cylinders * chs->heads * chs->sectors < raidoffsetlimit) {
+			log_warning(log, "LISTENER", "No se pudo conectar el disco %s (%i,%i,%i)", diskname, chs->cylinders, chs->heads, chs->sectors);
 			nipc_destroy(nipc);
 			nipc = nipc_create(NIPC_ERROR);
 			nipc_setdata(nipc, strdup("Invalid CHS"), strlen("Invalid CHS"));
 			nipc_send(nipc, client);
 			nipc_destroy(nipc);
-			log_warning(log, "LISTENER", "No se pudo conectar el disco %s (%i,%i,%i)", diskname, chs->cylinders, chs->heads, chs->sectors);
 			return false;
 		}
 	} else {

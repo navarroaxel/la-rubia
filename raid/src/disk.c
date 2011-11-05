@@ -8,7 +8,8 @@ void *disk(void *args) {
 	while (true) {
 		buffer = sockets_recv(dsk->client);
 		if (buffer == NULL) {
-			log_info(dsk->log, dsk->name, "El disco %s se ha desconectado", dsk->name);
+			log_info(dsk->log, dsk->name, "El disco %s se ha desconectado",
+					dsk->name);
 			reallocateoperations(dsk);
 			return NULL;
 		}
@@ -31,12 +32,17 @@ void *disk(void *args) {
 	return NULL;
 }
 
-void log_clientlost(t_log *logFile, char *thread_name, bool read, uint32_t offset){
-	log_warning(logFile, thread_name, "Se perdio cliente de operacion de %s offset %i", read ? "lectura" : "escritura" , offset);
+void log_clientlost(t_log *logFile, char *thread_name, bool read,
+		uint32_t offset) {
+	log_warning(logFile, thread_name,
+			"Se perdio cliente de operacion de %s offset %i",
+			read ? "lectura" : "escritura", offset);
 }
 
-void log_lostoperation(t_log *logFile, char *thread_name, bool read, uint32_t offset){
-	log_warning(logFile, thread_name, "Se perdio operacion de %s offset %i", read ? "lectura" : "escritura", offset);
+void log_lostoperation(t_log *logFile, char *thread_name, bool read,
+		uint32_t offset) {
+	log_warning(logFile, thread_name, "Se perdio operacion de %s offset %i",
+			read ? "lectura" : "escritura", offset);
 }
 
 void processReadRs(t_disk *d, t_nipc *nipc) {
@@ -48,13 +54,13 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 	}
 
 	t_operation *op = collection_list_popfirst(d->operations, findoperation);
-	if (op == NULL){
+	if (op == NULL) {
 		log_lostoperation(d->log, d->name, true, rs->offset);
 		return;
 	}
 
-	if (op->client == NULL){
-		if (op->syncqueue == NULL){
+	if (op->client == NULL) {
+		if (op->syncqueue == NULL) {
 			log_clientlost(d->log, d->name, op->read, rs->offset);
 			operation_destroy(op);
 			return;
@@ -89,13 +95,14 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 
 	collection_list_iterator(d->operations, findrequest);
 	if (operationReady) {
-		t_operation *op = collection_list_popfirst(d->operations, findoperation);
-		if (op == NULL){
+		t_operation *op = collection_list_popfirst(d->operations,
+				findoperation);
+		if (op == NULL) {
 			log_lostoperation(d->log, d->name, false, rs->offset);
 			return;
 		}
-		if (op->client == NULL){
-			if (op->syncqueue == NULL){
+		if (op->client == NULL) {
+			if (op->syncqueue == NULL) {
 				log_clientlost(d->log, d->name, op->read, op->offset);
 				operation_destroy(op);
 				return;
@@ -116,9 +123,9 @@ void reallocateoperations(t_disk *dsk) {
 
 	void updateOperationState(void *data) {
 		t_operation *op = (t_operation *) data;
-		if (!op->read){
+		if (!op->read) {
 			op->disk &= ~dsk->id;
-		}else if (op->disk == dsk->id) {
+		} else if (op->disk == dsk->id) {
 			t_disk *d = disks_getidledisk(op->offset);
 			d->pendings++;
 			t_nipc *nipc = operation_getnipc(op);
@@ -130,7 +137,30 @@ void reallocateoperations(t_disk *dsk) {
 
 	collection_list_iterator(dsk->operations, updateOperationState);
 
-	//TODO Clean writes ops.
+	while (true) {
+		int getReadyWriteOperations(void *data) {
+			t_operation *op = data;
+			return !op->read && op->disk == 0;
+		}
+
+		t_operation *op = collection_list_popfirst(dsk->operations,
+				getReadyWriteOperations);
+		if (op == NULL
+			)
+			break;
+
+		if (op->client == NULL) {
+			if (op->syncqueue == NULL) {
+				log_clientlost(dsk->log, dsk->name, op->read, op->offset);
+			} else
+				collection_blist_push(op->syncqueue, NULL);
+		} else {
+			t_nipc *nipc = operation_getnipc(op);
+			nipc_send(nipc, op->client);
+			nipc_destroy(nipc);
+		}
+		operation_destroy(op);
+	}
 
 	disks_destroy(dsk);
 }
