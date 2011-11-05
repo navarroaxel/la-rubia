@@ -9,7 +9,7 @@ extern uint32_t raidoffsetlimit;
 
 void init_syncer(t_disk *dsk);
 void *syncer(void *args);
-void enqueueread(int offset, t_blist *syncqueue);
-void enqueuewrite(t_disk *dsk, t_disk_readSectorRs *rs);
+void enqueueread(t_blist *syncqueue, uint32_t offset);
+void enqueuewrite(t_blist *syncqueue, t_disk *dsk, t_disk_readSectorRs *rs);
 
 #endif

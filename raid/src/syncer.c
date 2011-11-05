@@ -20,12 +20,15 @@ void *syncer(void *args){
 	log_info(dsk->log, thread_name, "Se inicio la sincronizacion del disco %s", dsk->name);
 
 	while (dsk->offsetlimit < raidoffsetlimit) {
-		enqueueread(dsk->offsetlimit, syncqueue);
+		enqueueread(syncqueue, dsk->offsetlimit);
 
-		t_disk_readSectorRs * rs = collection_blist_pop(syncqueue);
-		enqueuewrite(dsk, rs);
+		t_disk_readSectorRs *rs = collection_blist_pop(syncqueue);
+		enqueuewrite(syncqueue, dsk, rs);
 		dsk->offsetlimit++;
 		free(rs);
+
+		t_disk_writeSectorRs *writeRs = collection_blist_pop(syncqueue);
+		free(writeRs);
 
 		log_info(dsk->log, thread_name, "Se sincronizo el disco %s hasta el sector %i", dsk->name, dsk->offsetlimit);
 	}
@@ -34,8 +37,9 @@ void *syncer(void *args){
 	return NULL;
 }
 
-void enqueueread(int offset, t_blist *syncqueue) {
+void enqueueread(t_blist *syncqueue, uint32_t offset) {
 	t_disk *dsk = disks_getidledisk(offset);
+	dsk->pendings++;
 	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
 	rq->offset = offset;
 
@@ -49,14 +53,21 @@ void enqueueread(int offset, t_blist *syncqueue) {
 
 	nipc_send(nipc, dsk->client);
 	nipc_destroy(nipc);
-	dsk->pendings++;
 }
 
-void enqueuewrite(t_disk *dsk, t_disk_readSectorRs *rs){
+void enqueuewrite(t_blist *syncqueue, t_disk *dsk, t_disk_readSectorRs *rs){
+	t_operation *op = malloc(sizeof(t_operation));
 	t_disk_writeSectorRq *rq = malloc(sizeof(t_disk_writeSectorRq));
-	rq->offset = rs->offset;
+	op->offset = rq->offset = rs->offset;
 	memcpy(rq->data, rs->data, DISK_SECTOR_SIZE);
+	memcpy(op->data, rs->data, DISK_SECTOR_SIZE);
+
 	dsk->pendings++;
+	op->read = false;
+	op->syncqueue = syncqueue;
+	op->client = NULL;
+	op->disk = dsk->id;
+	collection_list_add(dsk->operations, op);
 
 	t_nipc *nipc = nipc_create(NIPC_WRITESECTOR_RQ);
 	nipc_setdata(nipc, rq, sizeof(t_disk_writeSectorRq));

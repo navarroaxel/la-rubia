@@ -31,6 +31,10 @@ void *disk(void *args) {
 	return NULL;
 }
 
+void log_clientlost(t_log *logFile, char *thread_name, bool read, uint32_t offset){
+	log_warning(logFile, thread_name, "Se perdio cliente de operacion de %s offset %i", read ? "lectura" : "escritura" , offset);
+}
+
 void processReadRs(t_disk *d, t_nipc *nipc) {
 	t_disk_readSectorRs *rs = (t_disk_readSectorRs *) nipc->payload;
 
@@ -40,8 +44,17 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 	}
 
 	t_operation *op = collection_list_popfirst(d->operations, findoperation);
+	if (op == NULL){
+		log_warning(d->log, d->name, "Se perdio operacion de lectura offset %i", rs->offset);
+		return;
+	}
 
 	if (op->client == NULL){
+		if (op->syncqueue == NULL){
+			log_clientlost(d->log, d->name, op->read, rs->offset);
+			operation_destroy(op);
+			return;
+		}
 		rs = malloc(sizeof(t_disk_readSectorRs));
 		memcpy(rs, nipc->payload, sizeof(t_disk_readSectorRs));
 		collection_blist_push(op->syncqueue, rs);
@@ -63,6 +76,8 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 		}
 	}
 
+	//TODO validar si se encontro la operacion.
+
 	int findoperation(void *data) {
 		t_operation *op = (t_operation *) data;
 		return !op->read && op->offset == rs->offset && op->disk == 0;
@@ -71,6 +86,17 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 	collection_list_iterator(d->operations, findrequest);
 	if (operationReady) {
 		t_operation *op = collection_list_popfirst(d->operations, findoperation);
+		if (op->client == NULL){
+			if (op->syncqueue == NULL){
+				log_clientlost(d->log, d->name, op->read, op->offset);
+				operation_destroy(op);
+				return;
+			}
+			rs = malloc(sizeof(t_disk_writeSectorRs));
+			memcpy(rs, nipc->payload, sizeof(t_disk_writeSectorRs));
+			collection_blist_push(op->syncqueue, rs);
+			return;
+		}
 		nipc_send(nipc, op->client);
 		operation_destroy(op);
 	}
