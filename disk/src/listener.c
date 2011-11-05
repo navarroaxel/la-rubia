@@ -5,6 +5,11 @@ extern config_disk * config;
 void listener(t_blist *waiting, t_log *logFile) {
 	t_socket_server *server = sockets_createServer("127.0.0.1", config->bindPort);
 
+	if (server == NULL){
+		log_error(logFile, "LISTENER", "Socket Server es NULL");
+		return;
+	}
+
 	sockets_listen(server);
 
 	t_list *servers = collection_list_create();

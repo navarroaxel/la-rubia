@@ -4,7 +4,6 @@
 #include "head.h"
 #include "dispatcher.h"
 #include "console.h"
-#include "pconsole.h"
 #include "common/utils/log.h"
 #include "common/utils/config.h"
 
@@ -12,13 +11,6 @@ config_disk *config;
 t_log *logFile;
 
 int main(void) {
-	//TODO: Revisar porque con el fork tira SIGSEGV.
-	/*if (fork() == 0) {
-	 pconsole(NULL);
-	 return EXIT_SUCCESS;
-	 }*/
-	init_pconsole();
-
 	t_xmlFile *configFile = loadConfig("config.xml");
 	config = xmlGetConfigStructDisk(configFile);
 
