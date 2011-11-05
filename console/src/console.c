@@ -5,8 +5,12 @@ int main(int argc, char * const argv[]) {
 		perror("Invalid argument count");
 		return EXIT_FAILURE;
 	}
+
 	t_socket_client *client = sockets_createClientUnix(argv[1]);
-	sockets_connectUnix(client, SOCKET_UNIX_PATH);
+	if (!sockets_connectUnix(client, SOCKET_UNIX_PATH)){
+		perror("Error al conectarse al proceso disco");
+		return EXIT_FAILURE;
+	}
 
 	t_commands *cmd = commands_createWithConext(client, ' ', '\n', ' ');
 
