@@ -94,10 +94,22 @@ int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) 
 }
 
 int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
+	t_disk *dsk;
+	t_nipc *nipc;
 	char diskname[13];
 	memcpy(diskname, rq->payload, rq->length);
 
-	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
+	dsk = disks_getbyname(diskname);
+	if (dsk != NULL){
+		log_error(log, "LISTENER", "ERROR CONEXION disco con nombre repetido: %s", diskname);
+		nipc = nipc_create(NIPC_ERROR);
+		nipc_setdata(nipc, strdup("Nombre repetido"), strlen("Nombre repetido")+1);
+		nipc_send(nipc, client);
+		nipc_destroy(nipc);
+		return false;
+	}
+
+	nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_setdata(nipc, NULL, 0);
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
@@ -115,7 +127,7 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 	if (raidoffsetlimit != 0) {
 		syncdisk = true;
 		if (chs->cylinders * chs->heads * chs->sectors < raidoffsetlimit) {
-			log_warning(log, "LISTENER", "No se pudo conectar el disco %s (%i,%i,%i)", diskname, chs->cylinders, chs->heads, chs->sectors);
+			log_warning(log, "LISTENER", "ERROR CONEXION disco con CHS invalido: %s (%i,%i,%i)", diskname, chs->cylinders, chs->heads, chs->sectors);
 			nipc_destroy(nipc);
 			nipc = nipc_create(NIPC_ERROR);
 			nipc_setdata(nipc, strdup("Invalid CHS"), strlen("Invalid CHS"));
@@ -134,13 +146,13 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 	nipc_destroy(nipc);
 
 	log_info(log, "LISTENER", "Se ha conectado el disco %s", diskname);
-	t_disk *dsk = disks_register(diskname, client, waiting, log);
+	dsk = disks_register(diskname, client, waiting, log);
 	if (syncdisk)
 		init_syncer(dsk);
 	else
 		dsk->offsetlimit = raidoffsetlimit;
 
-	return false;
+	return true;
 }
 
 void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_log *log) {

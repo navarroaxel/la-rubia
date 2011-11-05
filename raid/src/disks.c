@@ -34,7 +34,7 @@ t_disk *disks_getidledisk(uint32_t offset) {
 	struct t_disk *disk;
 	void find_idledisk(void *data) {
 		t_disk *d = data;
-		if (offset <= d->offsetlimit && d->pendings < count) {
+		if (offset < d->offsetlimit && d->pendings < count) {
 			disk = data;
 			count = d->pendings;
 		}
@@ -58,6 +58,14 @@ void disks_verifystate(){
 		perror("No hay discos en estado valido");
 		exit(EXIT_FAILURE);
 	}
+}
+
+t_disk *disks_getbyname(char *name){
+	int namecomparer(void *data){
+		return strcmp(name, ((t_disk *)data)->name) == 0;
+	}
+
+	return collection_list_popfirst(disks, namecomparer);
 }
 
 int disks_size(void) {

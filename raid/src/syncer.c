@@ -17,11 +17,10 @@ void *syncer(void *args) {
 
 	char thread_name[21];
 	sprintf(thread_name, "syncer-%s", dsk->name);
-	log_info(dsk->log, thread_name, "Se inicio la sincronizacion del disco %s",
-			dsk->name);
+	log_info(dsk->log, thread_name, "Se inicio la sincronizacion");
 
 	while (dsk->offsetlimit < raidoffsetlimit) {
-		enqueueread(syncqueue, dsk->offsetlimit);
+		enqueueread(syncqueue, dsk->offsetlimit, thread_name);
 
 		t_disk_readSectorRs *rs = collection_blist_pop(syncqueue);
 		enqueuewrite(syncqueue, dsk, rs);
@@ -37,9 +36,7 @@ void *syncer(void *args) {
 		}
 		free(writeRs);
 
-		log_info(dsk->log, thread_name,
-				"Se sincronizo el disco %s hasta el sector %i", dsk->name,
-				dsk->offsetlimit);
+		log_info(dsk->log, thread_name, "Se sincronizaron los primeros %i sectores", dsk->offsetlimit);
 	}
 	log_info(dsk->log, thread_name,
 			"Se finalizo la sincronizacion del disco %s", dsk->name);
@@ -47,7 +44,7 @@ void *syncer(void *args) {
 	return NULL;
 }
 
-void enqueueread(t_blist *syncqueue, uint32_t offset) {
+void enqueueread(t_blist *syncqueue, uint32_t offset, char *thread_name) {
 	t_disk *dsk = disks_getidledisk(offset);
 	dsk->pendings++;
 	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
@@ -61,6 +58,7 @@ void enqueueread(t_blist *syncqueue, uint32_t offset) {
 	op->syncqueue = syncqueue;
 	collection_list_add(dsk->operations, op);
 
+	log_info(dsk->log, thread_name, "LECTURA sector %i disco %s", op->offset, dsk->name);
 	nipc_send(nipc, dsk->client);
 	nipc_destroy(nipc);
 }
