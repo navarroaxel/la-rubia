@@ -1,6 +1,7 @@
 <config>
   <volumefile>/home/utn_so/fat32.disk</volumefile>
   <logfile>/home/utn_so/ppd.log</logfile>
+  <consolepath>./console</consolepath>
   <raidip>127.0.0.1</raidip>
   <raidport>7000</raidport>
   <bindip>127.0.0.1</bindip>

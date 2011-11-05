@@ -20,7 +20,7 @@ void *console(void *args) {
 	int child_pid = fork();
 	if (child_pid == 0) {
 		char* arg_list[] = { "console", config->socketunixpath, NULL };
-		execvp("./console", arg_list);
+		execvp(config->consolePath, arg_list);
 		perror("Error en execvp\n");
 		abort();
 	} else

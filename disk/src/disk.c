@@ -30,7 +30,7 @@ int main(void) {
 	} else if (strcmp(config->mode, "LISTEN") == 0) {
 		listener(waiting, logFile);
 	} else {
-		perror("Modo incorrecto");
+		log_error(logFile, "MAIN", "%s: Modo incorrecto", config->mode);
 	}
 
 	free(config);

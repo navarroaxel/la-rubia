@@ -66,7 +66,8 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 			config->bindPort + 1);
 
 	sockets_connect(client, config->raidIp, config->raidPort);
-	handshake(client);
+	if (!handshake(client, logFile))
+		return;
 
 	t_socket_buffer *buffer;
 	t_nipc *nipc;
@@ -82,11 +83,13 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 
 		while (offsetInBuffer < buffer->size) {
 			nipc = nipc_deserializer(buffer, offsetInBuffer);
-			offsetInBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
+			offsetInBuffer += nipc->length + sizeof(nipc->type)
+					+ sizeof(nipc->length);
 
 			op = getdiskoperation(nipc, client);
 			nipc_destroy(nipc);
-			if (op == NULL)
+			if (op == NULL
+				)
 				continue;
 
 			enqueueOperation(waiting, op);
@@ -98,7 +101,7 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 	sockets_destroyClient(client);
 }
 
-int handshake(t_socket_client *client) {
+int handshake(t_socket_client *client, t_log *logFile) {
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 
 	nipc_setdata(nipc, strdup(config->diskname), strlen(config->diskname) + 1);
@@ -110,7 +113,7 @@ int handshake(t_socket_client *client) {
 	nipc = nipc_deserializer(buffer, 0);
 	sockets_bufferDestroy(buffer);
 	if (nipc->type != NIPC_HANDSHAKE || nipc->length != 0) {
-		perror("Error al conectar con el RAID");
+		log_error(logFile, "LISTENER", "Error al conectar con el RAID");
 		nipc_destroy(nipc);
 		return false;
 	}
@@ -132,9 +135,15 @@ int handshake(t_socket_client *client) {
 	nipc = nipc_deserializer(buffer, 0);
 	sockets_bufferDestroy(buffer);
 
-	int ret = nipc->type == NIPC_DISKCHS || nipc->length == 0;
-	nipc_destroy(nipc);
-	return ret;
+	if (nipc->type == NIPC_DISKCHS && nipc->length == 0) {
+		nipc_destroy(nipc);
+		return true;
+	} else {
+		log_error(logFile, "LISTENER", "Error al conectar con el RAID: %s",
+				nipc->length > 0 ? nipc->payload : "");
+		nipc_destroy(nipc);
+		return false;
+	}
 }
 
 int handshakeNewClient(t_socket_client *client, t_nipc *nipc2) {

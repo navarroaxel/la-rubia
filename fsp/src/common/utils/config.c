@@ -122,6 +122,7 @@ config_disk *xmlGetConfigStructDisk(t_xmlFile *xmlFile) {
 	xmlParam->rpm = (uint16_t) atoi(xmlFileGetParam(xmlFile, "rpm"));
 	strcpy(xmlParam->volumeFilePath, xmlFileGetParam(xmlFile, "volumefile"));
 	strcpy(xmlParam->logFilePath, xmlFileGetParam(xmlFile, "logfile"));
+	strcpy(xmlParam->consolePath, xmlFileGetParam(xmlFile, "consolepath"));
 	strcpy(xmlParam->socketunixpath, xmlFileGetParam(xmlFile, "socketunixpath"));
 
 	return xmlParam;
