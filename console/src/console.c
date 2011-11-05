@@ -1,7 +1,7 @@
 #include "console.h"
 
-int main(int argc, char *const argv[]) {
-	if (argc != 2) 	{
+int main(int argc, char * const argv[]) {
+	if (argc != 2) {
 		perror("Invalid argument count");
 		return EXIT_FAILURE;
 	}
@@ -56,7 +56,7 @@ void clean(void *context, t_array *args) {
 
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	value = atol(array_get(args, 0));
-	memcpy(buffer->data + offset, &value, tmpsize = sizeof(uint32_t) );
+	memcpy(buffer->data + offset, &value, tmpsize = sizeof(uint32_t));
 	value = atol(array_get(args, 1));
 	offset += tmpsize;
 	memcpy(buffer->data + offset, &value, tmpsize);
@@ -80,7 +80,7 @@ void trace(void *context, t_array *args) {
 	uint32_t value = CONSOLE_TRACE;
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	tmpsize = sizeof(uint32_t);
-	for(i = 0; i < array_size(args); i++) {
+	for (i = 0; i < array_size(args); i++) {
 		value = atol(array_get(args, i));
 		memcpy(buffer->data + offset, &value, tmpsize);
 		offset += tmpsize;
@@ -89,12 +89,14 @@ void trace(void *context, t_array *args) {
 	sockets_sendBuffer(client, buffer);
 	sockets_bufferDestroy(buffer);
 
-	for (i = 0; i < array_size(args); i++){
+	for (i = 0; i < array_size(args);) {
 		buffer = sockets_recv(client);
-		t_headtrace *trace = headtrace_create();
-		memcpy(trace, buffer->data, buffer->size);
-		headtrace_printf(trace);
-		headtrace_destroy(trace);
+		offset = 0;
+		do {
+			headtrace_printf((t_headtrace *) (buffer->data + offset));
+			offset += sizeof(t_headtrace);
+			i++;
+		} while (offset < buffer->size);
 		sockets_bufferDestroy(buffer);
 	}
 }
