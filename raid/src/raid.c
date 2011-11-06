@@ -48,27 +48,43 @@ void listener(t_list *waiting, t_log *log) {
 	t_list *servers = collection_list_create();
 	collection_list_add(servers, server);
 
-	int recvClient(t_socket_client * client) {
+	t_socket_client *acceptClosure(t_socket_server *server){
+		t_socket_client *client= sockets_accept(server);
 		t_socket_buffer *buffer = sockets_recv(client);
-		if (buffer == NULL)
-			return 0;
+		if (buffer == NULL){
+			sockets_destroyClient(client);
+			return NULL;
+		}
 
 		t_nipc *nipc = nipc_deserializer(buffer, 0);
-		if (nipc->type == NIPC_HANDSHAKE)
-			return handshake(client, nipc, waiting, log);
+		if (nipc->type != NIPC_HANDSHAKE){
+			log_warning(log, "LISTENER", "Handshake invalido");
+			sockets_destroyClient(client);
+			return NULL;
+		}
 
+		handshake(client, nipc, waiting, log);
+		return client;
+	}
+
+	int recvClosure(t_socket_client * client) {
+		t_socket_buffer *buffer = sockets_recv(client);
+		if (buffer == NULL)
+			return false;
+
+		t_nipc *nipc = nipc_deserializer(buffer, 0);
 		enqueueoperation(nipc, client, waiting, log);
 
 		nipc_destroy(nipc);
 		sockets_bufferDestroy(buffer);
 
-		return client->socket->desc;
+		return true;
 	}
 
 	t_list *clients = collection_list_create();
 
 	while (true) {
-		sockets_select(servers, clients, 0, NULL, &recvClient);
+		sockets_select(servers, clients, 0, &acceptClosure, &recvClosure);
 	}
 }
 
@@ -157,6 +173,10 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 
 void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_log *log) {
 	t_operation *op = operation_create(nipc);
+	if (op == NULL){
+		log_warning(log, "LISTENER", "Llego un pedido invalido");
+		return;
+	}
 	op->client = client;
 	collection_list_add(waiting, op);
 	if (op->read) {
@@ -173,7 +193,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_
 			op->disk |= disk->id;
 			disk->pendings++;
 		}
-		log_info(log, "LISTENER", "ESCRITURA sector %i todos los discos.");
+		log_info(log, "LISTENER", "ESCRITURA sector %i todos los discos", op->offset);
 		collection_list_iterator(disks, sendrequest);
 	}
 }

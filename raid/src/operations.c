@@ -3,19 +3,20 @@
 t_operation *operation_create(t_nipc *nipc) {
 	t_operation *op = malloc(sizeof(t_operation));
 	switch (nipc->type) {
-	case NIPC_READSECTOR_RQ: {
-		t_disk_readSectorRq *readrq = (t_disk_readSectorRq *) nipc->payload;
+	case NIPC_READSECTOR_RQ:
 		op->read = true;
+		t_disk_readSectorRq *readrq = (t_disk_readSectorRq *) nipc->payload;
 		op->offset = readrq->offset;
-	}
 		break;
-	case NIPC_WRITESECTOR_RQ: {
-		t_disk_writeSectorRq *writerq = (t_disk_writeSectorRq *) nipc->payload;
+	case NIPC_WRITESECTOR_RQ:
 		op->read = false;
+		t_disk_writeSectorRq *writerq = (t_disk_writeSectorRq *) nipc->payload;
 		op->offset = writerq->offset;
 		memcpy(op->data, writerq->data, DISK_SECTOR_SIZE);
-	}
 		break;
+	default:
+		free(op);
+		return NULL;
 	}
 	op->client = NULL;
 	op->syncqueue = NULL;
