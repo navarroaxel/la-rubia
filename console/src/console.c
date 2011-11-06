@@ -7,6 +7,10 @@ int main(int argc, char * const argv[]) {
 	}
 
 	t_socket_client *client = sockets_createClientUnix(argv[1]);
+	if (client == NULL){
+		perror("Error al crear el socket cliente");
+		return EXIT_FAILURE;
+	}
 	if (!sockets_connectUnix(client, SOCKET_UNIX_PATH)){
 		perror("Error al conectarse al proceso disco");
 		return EXIT_FAILURE;
