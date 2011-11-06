@@ -2,6 +2,10 @@
 
 extern config_disk * config;
 
+void log_invalidhandshake(t_log *logFile){
+	log_warning(logFile, "LISTENER", "Handshake invalido");
+}
+
 void log_invalidrequest(t_log *logFile) {
 	log_warning(logFile, "LISTENER", "Llego un pedido invalido");
 }
@@ -20,12 +24,43 @@ void listener(t_blist *waiting, t_log *logFile) {
 		return;
 	}
 
-	sockets_listen(server);
+	if (!sockets_listen(server)){
+		log_error(logFile, "LISTENER", "Socket Server no puede escuchar");
+		return;
+	}
 
 	t_list *servers = collection_list_create();
 	collection_list_add(servers, server);
 
-	int recvClient(t_socket_client * client) {
+	t_socket_client *acceptClosure(t_socket_server *server){
+		t_socket_client *client = sockets_accept(server);
+		t_socket_buffer *buffer = sockets_recv(client);
+		if (buffer == NULL){
+			sockets_destroyClient(client);
+			return NULL;
+		}
+
+		t_nipc *nipc = nipc_deserializer(buffer, 0);
+		sockets_bufferDestroy(buffer);
+		if (nipc->type != NIPC_HANDSHAKE){
+			log_invalidhandshake(logFile);
+			nipc_destroy(nipc);
+			sockets_destroyClient(client);
+			return NULL;
+		}
+
+		if (!handshakeNewClient(client, nipc)){
+			log_invalidhandshake(logFile);
+			nipc_destroy(nipc);
+			sockets_destroyClient(client);
+			return NULL;
+		}
+
+		nipc_destroy(nipc);
+		return client;
+	}
+
+	int recvClosure(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
 		uint32_t offsetInBuffer = 0;
 		t_nipc *nipc;
@@ -38,14 +73,11 @@ void listener(t_blist *waiting, t_log *logFile) {
 			offsetInBuffer += nipc->length + sizeof(nipc->type)
 					+ sizeof(nipc->length);
 
-			if (nipc->type == NIPC_HANDSHAKE
-				)
-				return handshakeNewClient(client, nipc);
-
 			t_disk_operation *op = getdiskoperation(nipc, client);
 			nipc_destroy(nipc);
 			if (op == NULL) {
 				log_invalidrequest(logFile);
+				sockets_bufferDestroy(buffer);
 				return false;
 			}
 
@@ -60,7 +92,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 	t_list *clients = collection_list_create();
 
 	while (true) {
-		sockets_select(servers, clients, 0, NULL, &recvClient);
+		sockets_select(servers, clients, 0, &acceptClosure, &recvClosure);
 	}
 }
 

@@ -1,8 +1,8 @@
 #include "headHelper.h"
 
 extern config_disk *config;
-int getsectortime(){
-	return (int)(1 / (config->rpm * config->sectors / 6e4));
+int getsectortime() {
+	return (int) (1 / (config->rpm * config->sectors / 6e4));
 }
 int islimitcylinder(int cylinder) {
 	return cylinder == config->cylinders - 1;
@@ -28,31 +28,31 @@ uint16_t getsector(uint32_t offset) {
 	return offset % config->sectors;
 }
 
-uint32_t getoffset(uint16_t cylinder, uint16_t sector){
+uint32_t getoffset(uint16_t cylinder, uint16_t sector) {
 	return cylinder * config->sectors + sector;
 }
 
 void enqueueOperation(t_blist *waiting, t_disk_operation *op) {
 	//encola la operacion en base al algoritmo de R&W utilizado.
 	int enqueueDiskOperation(void *data) {
-		return getcylinder(op->offset) >= getcylinder(((t_disk_operation *) data)->offset);
+		return getcylinder(op->offset)
+				>= getcylinder(((t_disk_operation *) data)->offset);
 	}
 	collection_blist_put(waiting, op, &enqueueDiskOperation);
 }
 
 void waiting_log(t_blist *waiting, t_log *log) {
-	int length;
-
 	if (log == NULL
 		)
 		return;
 
+	int length = 0;
 	char *s = NULL;
 	int i = 0;
 	t_location *location = location_create(0);
 	void locstr(void *data) {
 		if (s == NULL
-			)
+		)
 			s = malloc((length = collection_blist_size(waiting)) * 12);
 		else
 			s[i++] = ',';
@@ -66,17 +66,17 @@ void waiting_log(t_blist *waiting, t_log *log) {
 }
 
 void inprogress_log(t_list *inprogress, t_log *log) {
-	int length;
 	if (log == NULL
 		)
 		return;
 
+	int length = 0;
 	char *s = NULL;
 	int i = 0;
 	t_location *location = location_create(0);
 	void locstr(void *data) {
 		if (s == NULL
-			)
+		)
 			s = malloc((length = collection_list_size(inprogress)) * 12);
 		else
 			s[i++] = ',';

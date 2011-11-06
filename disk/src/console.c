@@ -14,7 +14,10 @@ void init_console(t_blist *waiting) {
 void *console(void *args) {
 	t_blist *waiting = args;
 	t_socket_server *server = sockets_createServerUnix(config->socketunixpath);
-
+	if (server == NULL){
+		perror("No se pudo crear el socket server de la consola");
+		return NULL;
+	}
 	if (!sockets_listen(server)){
 		perror("Socket Server cannot listen");
 		return NULL;
