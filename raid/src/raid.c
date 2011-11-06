@@ -78,8 +78,8 @@ int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) 
 
 	if (disks_size() == 0) {
 		t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
-		nipc_setdata(nipc, strdup("There are no disks ready."),
-				strlen("There are no disks ready.") + 1);
+		nipc_setdata(nipc, strdup("No hay discos conectados."),
+				strlen("No hay discos conectados.") + 1);
 
 		nipc_send(nipc, client);
 		nipc_destroy(nipc);
@@ -152,7 +152,7 @@ int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *l
 	else
 		dsk->offsetlimit = raidoffsetlimit;
 
-	return true;
+	return false;
 }
 
 void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_log *log) {
@@ -173,7 +173,6 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_
 			op->disk |= disk->id;
 			disk->pendings++;
 		}
-		//TODO: cuando un disco se este sync discriminarlo.
 		log_info(log, "LISTENER", "ESCRITURA sector %i todos los discos.");
 		collection_list_iterator(disks, sendrequest);
 	}
