@@ -156,10 +156,24 @@ static int fuselage_flush(const char * path, struct fuse_file_info * fi){
 }
 
 static int fuselage_release(const char * path, struct fuse_file_info * fi){
-	log_debug(logFile,"FSP","START RELEAS from %s\n",path);
+	log_debug(logFile,"FSP","START RELEASE from %s\n",path);
 	fat_destroyFileCache(path);
-	log_debug(logFile,"FSP","END RELEAS from %s\n",path);
+	log_debug(logFile,"FSP","END RELEASE from %s\n",path);
 	return 0;
+}
+
+static int fuselage_unlink(const char * path){
+	log_debug(logFile,"FSP","START UNLINK from %s\n",path);
+	int ret=fat_unlink(path);
+	log_debug(logFile,"FSP","END UNLINK from %s\n",path);
+	return ret;
+}
+
+static int fuselage_rmdir(const char * path){
+	log_debug(logFile,"FSP","START RMDIR from %s\n",path);
+	int ret=fat_rmdir(path);
+	log_debug(logFile,"FSP","END RMDIR from %s\n",path);
+	return ret;
 }
 
 
@@ -174,7 +188,9 @@ static struct fuse_operations fsp_oper = {
 	.mkdir = fuselage_mkdir,
 	.create = fuselage_create,
 	.flush = fuselage_flush,
-	.release = fuselage_release
+	.release = fuselage_release,
+	.unlink = fuselage_unlink,
+	.rmdir = fuselage_rmdir
 };
 
 int main(int argc, char *argv[])

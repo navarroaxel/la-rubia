@@ -36,24 +36,24 @@ int fat_addressing_writeBlocks(uint32_t blockStart, uint32_t length, uint8_t * b
 }
 
 int fat_addressing_readCluster(uint32_t clusterNumber, t_cluster buffer){
-	/*if(!cache_isInitialized())
+	if(!cache_isInitialized())
 		cache_initialize();
 	if(cache_read(clusterNumber,buffer))
-		return 1;*/
+		return 1;
 	uint32_t blocksPerCluster = FAT_CLUSTER_SIZE / FAT_BLOCK_SIZE;
 	uint32_t clusterFirstBlock = (fat_getRootDirectoryFirstCluster() + clusterNumber -2 ) * blocksPerCluster ;
 	fat_addressing_readBlocks(clusterFirstBlock,blocksPerCluster,buffer);
-	//cache_write(clusterNumber,buffer);
+	cache_write(clusterNumber,buffer);
 	return 1;
 
 }
 int fat_addressing_writeCluster(uint32_t clusterNumber, t_cluster buffer){
-	/*if(!cache_isInitialized())
-		cache_initialize();*/
+	if(!cache_isInitialized())
+		cache_initialize();
 	uint32_t blocksPerCluster = FAT_CLUSTER_SIZE / FAT_BLOCK_SIZE;
 	uint32_t clusterFirstBlock = (fat_getRootDirectoryFirstCluster() + clusterNumber -2 ) * blocksPerCluster ;
 	fat_addressing_writeBlocks(clusterFirstBlock,blocksPerCluster,buffer);
-	//cache_write(clusterNumber,buffer);
+	cache_write(clusterNumber,buffer);
 	return 1;
 }
 

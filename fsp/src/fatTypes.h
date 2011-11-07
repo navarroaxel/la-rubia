@@ -8,7 +8,7 @@
 #ifndef FATTYPES_H_
 #define FATTYPES_H_
 #include <stdint.h>
-
+#include <semaphore.h>
 #define FAT_SECTOR_SIZE 512
 #define FAT_BLOCK_SIZE 1024
 #define FAT_CLUSTER_SIZE 4096
@@ -118,6 +118,7 @@ typedef struct {
 	char path[255];
 	int openCount;
 	uint32_t clusterStart;
+	sem_t inUse;
 	t_fat_file_cache * cache;
 } t_fat_cache_list;
 
