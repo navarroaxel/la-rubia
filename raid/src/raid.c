@@ -11,9 +11,11 @@ int main(void) {
 	config = xmlGetConfigStructRaid(configFile);
 
 	disks_init();
+
 	t_list *waiting = collection_list_create();
 	t_log *log = log_create("RAID", config->logFilePath, WARNING | DEBUG | ERROR | INFO, config->consoleEnabled ? M_CONSOLE_ENABLE : M_CONSOLE_DISABLE);
 
+	init_disklistener(waiting, log);
 	listener(waiting, log);
 
 	return EXIT_SUCCESS;
@@ -41,9 +43,16 @@ void diskconnect(void) {
 }
 
 void listener(t_list *waiting, t_log *log) {
-	t_socket_server *server = sockets_createServer(NULL, config->diskPort);
+	t_socket_server *server = sockets_createServer(NULL, config->fsPort);
+	if (server == NULL){
+		log_error(log, "FSLISTENER", "Socket Server File System es NULL");
+		return;
+	}
 
-	sockets_listen(server);
+	if (!sockets_listen(server)){
+		log_error(log, "FSLISTENER", "Socket Server File System no puede escuchar");
+		return;
+	}
 
 	t_list *servers = collection_list_create();
 	collection_list_add(servers, server);
@@ -57,15 +66,15 @@ void listener(t_list *waiting, t_log *log) {
 		}
 
 		t_nipc *nipc = nipc_deserializer(buffer, 0);
-		if (nipc->type != NIPC_HANDSHAKE){
-			log_warning(log, "LISTENER", "Handshake invalido");
+		sockets_bufferDestroy(buffer);
+		if (!handshake(client, nipc, waiting, log)){
+			nipc_destroy(nipc);
 			sockets_destroyClient(client);
 			return NULL;
 		}
-
-		handshake(client, nipc, waiting, log);
+		nipc_destroy(nipc);
 		return client;
-	}
+	}config_raid *config;
 
 	int recvClosure(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
@@ -82,20 +91,21 @@ void listener(t_list *waiting, t_log *log) {
 	}
 
 	t_list *clients = collection_list_create();
-
 	while (true) {
 		sockets_select(servers, clients, 0, &acceptClosure, &recvClosure);
 	}
 }
 
 int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
-	if (rq->length > 0)
-		return handshakedisk(client, rq, waiting, log);
+	if (rq->type != NIPC_HANDSHAKE || rq->length != 0 || rq->payload != NULL) {
+		log_warning(log, "FSLISTENER", "Handshake invalido");
+		return false;
+	}
 
 	if (disks_size() == 0) {
+		log_warning(log, "FSLISTENER", "Conexion rechazada, no hay discos conectados");
 		t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
-		nipc_setdata(nipc, strdup("No hay discos conectados."),
-				strlen("No hay discos conectados.") + 1);
+		nipc_setdata(nipc, strdup("No hay discos conectados."), strlen("No hay discos conectados.") + 1);
 
 		nipc_send(nipc, client);
 		nipc_destroy(nipc);
@@ -109,72 +119,10 @@ int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) 
 	return true;
 }
 
-int handshakedisk(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
-	t_disk *dsk;
-	t_nipc *nipc;
-	char diskname[13];
-	memcpy(diskname, rq->payload, rq->length);
-
-	dsk = disks_getbyname(diskname);
-	if (dsk != NULL){
-		log_error(log, "LISTENER", "ERROR CONEXION disco con nombre repetido: %s", diskname);
-		nipc = nipc_create(NIPC_ERROR);
-		nipc_setdata(nipc, strdup("Nombre repetido"), strlen("Nombre repetido")+1);
-		nipc_send(nipc, client);
-		nipc_destroy(nipc);
-		return false;
-	}
-
-	nipc = nipc_create(NIPC_HANDSHAKE);
-	nipc_setdata(nipc, NULL, 0);
-	nipc_send(nipc, client);
-	nipc_destroy(nipc);
-
-	t_socket_buffer *buffer = sockets_recv(client);
-	nipc = nipc_deserializer(buffer, 0);
-	sockets_bufferDestroy(buffer);
-	t_disk_chs *chs = nipc->payload;
-	if (nipc->type != NIPC_DISKCHS){
-		nipc_destroy(nipc);
-		return false;
-	}
-
-	bool syncdisk = false;
-	if (raidoffsetlimit != 0) {
-		syncdisk = true;
-		if (chs->cylinders * chs->heads * chs->sectors < raidoffsetlimit) {
-			log_warning(log, "LISTENER", "ERROR CONEXION disco con CHS invalido: %s (%i,%i,%i)", diskname, chs->cylinders, chs->heads, chs->sectors);
-			nipc_destroy(nipc);
-			nipc = nipc_create(NIPC_ERROR);
-			nipc_setdata(nipc, strdup("Invalid CHS"), strlen("Invalid CHS"));
-			nipc_send(nipc, client);
-			nipc_destroy(nipc);
-			return false;
-		}
-	} else {
-		raidoffsetlimit = chs->cylinders * chs->heads * chs->sectors;
-	}
-
-	nipc_destroy(nipc);
-	nipc = nipc_create(NIPC_DISKCHS);
-	nipc_setdata(nipc, NULL, 0);
-	nipc_send(nipc, client);
-	nipc_destroy(nipc);
-
-	log_info(log, "LISTENER", "Se ha conectado el disco %s", diskname);
-	dsk = disks_register(diskname, client, waiting, log);
-	if (syncdisk)
-		init_syncer(dsk);
-	else
-		dsk->offsetlimit = raidoffsetlimit;
-
-	return false;
-}
-
 void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_log *log) {
 	t_operation *op = operation_create(nipc);
 	if (op == NULL){
-		log_warning(log, "LISTENER", "Llego un pedido invalido");
+		log_warning(log, "FSLISTENER", "Llego un pedido invalido");
 		return;
 	}
 	op->client = client;
@@ -183,7 +131,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_
 		t_disk *dsk = disks_getidledisk(op->offset);
 		dsk->pendings++;
 		op->disk = dsk->id;
-		log_info(log, "LISTENER", "LECTURA sector %i disco %s", op->offset, dsk->name);
+		log_info(log, "FSLISTENER", "LECTURA sector %i disco %s", op->offset, dsk->name);
 		nipc_send(nipc, dsk->client);
 	} else {
 		t_socket_buffer *buffer = nipc_serializer(nipc);
@@ -193,7 +141,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting, t_
 			op->disk |= disk->id;
 			disk->pendings++;
 		}
-		log_info(log, "LISTENER", "ESCRITURA sector %i todos los discos", op->offset);
+		log_info(log, "FSLISTENER", "ESCRITURA sector %i todos los discos", op->offset);
 		collection_list_iterator(disks, sendrequest);
 	}
 }
