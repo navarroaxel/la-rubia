@@ -5,6 +5,7 @@ void diskconnect(void);
 config_raid *config;
 t_list *disks;
 uint32_t raidoffsetlimit;
+void diskconnect(void);
 
 int main(void) {
 	t_xmlFile *configFile = loadConfig("config.xml");
@@ -24,17 +25,22 @@ int main(void) {
 void diskconnect(void) {
 	t_socket_client *client = sockets_createClient(NULL, 5500);
 
-	sockets_connect(client, "127.0.0.1", 7000);
+	sockets_connect(client, "127.0.0.1", 5000);
+	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
+	nipc_setdata(nipc, NULL, 0);
+
+	nipc_send(nipc, client);
+	t_socket_buffer *buffer = sockets_recv(client);
+	nipc = nipc_deserializer(buffer, 0);
+
 	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
 	rq->offset = 0;
 
-	t_nipc *nipc = nipc_create(NIPC_READSECTOR_RQ);
+	nipc = nipc_create(NIPC_READSECTOR_RQ);
 	t_disk_readSectorRs *rs;
 	t_nipc *nipc2;
 	nipc_setdata(nipc, rq, sizeof(t_disk_readSectorRq));
-
-	t_socket_buffer *buffer = nipc_serializer(nipc);
-	sockets_send(client, buffer->data, buffer->size);
+	nipc_send(nipc, client);
 
 	buffer = sockets_recv(client);
 	nipc2 = nipc_deserializer(buffer, 0);
@@ -74,7 +80,7 @@ void listener(t_list *waiting, t_log *log) {
 		}
 		nipc_destroy(nipc);
 		return client;
-	}config_raid *config;
+	}
 
 	int recvClosure(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
@@ -97,7 +103,7 @@ void listener(t_list *waiting, t_log *log) {
 }
 
 int handshake(t_socket_client *client, t_nipc *rq, t_list *waiting, t_log *log) {
-	if (rq->type != NIPC_HANDSHAKE || rq->length != 0 || rq->payload != NULL) {
+	if (rq->type != NIPC_HANDSHAKE || rq->length != 0) {
 		log_warning(log, "FSLISTENER", "Handshake invalido");
 		return false;
 	}
