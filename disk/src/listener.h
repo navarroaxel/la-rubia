@@ -17,6 +17,6 @@ void listener(t_blist *waiting, t_log *logFile);
 void connectraid(t_blist *waiting, t_log *logFile);
 t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client);
 int handshake(t_socket_client *client, t_log *logFile);
-int handshakeNewClient(t_socket_client *client, t_nipc *rq);
+int handshakeNewClient(t_socket_client *client, t_nipc *rq, t_log *logFile);
 
 #endif

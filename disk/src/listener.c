@@ -38,7 +38,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 
 		t_nipc *nipc = nipc_deserializer(buffer, 0);
 		sockets_bufferDestroy(buffer);
-		if (!handshakeNewClient(client, nipc)){
+		if (!handshakeNewClient(client, nipc, logFile)){
 			nipc_destroy(nipc);
 			sockets_destroyClient(client);
 			return NULL;
@@ -169,7 +169,7 @@ int handshake(t_socket_client *client, t_log *logFile) {
 	}
 }
 
-int handshakeNewClient(t_socket_client *client, t_nipc *rq) {
+int handshakeNewClient(t_socket_client *client, t_nipc *rq, t_log *logFile) {
 	if (rq->type != NIPC_HANDSHAKE || rq->length != 0 || rq->payload != NULL){
 		log_warning(logFile, "LISTENER", "Handshake invalido");
 		return false;
