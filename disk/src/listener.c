@@ -170,7 +170,7 @@ int handshake(t_socket_client *client, t_log *logFile) {
 }
 
 int handshakeNewClient(t_socket_client *client, t_nipc *rq, t_log *logFile) {
-	if (rq->type != NIPC_HANDSHAKE || rq->length != 0 || rq->payload != NULL){
+	if (rq->type != NIPC_HANDSHAKE || rq->length != 0){
 		log_warning(logFile, "LISTENER", "Handshake invalido");
 		return false;
 	}
