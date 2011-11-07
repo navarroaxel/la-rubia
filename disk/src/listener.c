@@ -2,10 +2,6 @@
 
 extern config_disk * config;
 
-void log_invalidhandshake(t_log *logFile){
-	log_warning(logFile, "LISTENER", "Handshake invalido");
-}
-
 void log_invalidrequest(t_log *logFile) {
 	log_warning(logFile, "LISTENER", "Llego un pedido invalido");
 }
@@ -42,15 +38,7 @@ void listener(t_blist *waiting, t_log *logFile) {
 
 		t_nipc *nipc = nipc_deserializer(buffer, 0);
 		sockets_bufferDestroy(buffer);
-		if (nipc->type != NIPC_HANDSHAKE){
-			log_invalidhandshake(logFile);
-			nipc_destroy(nipc);
-			sockets_destroyClient(client);
-			return NULL;
-		}
-
 		if (!handshakeNewClient(client, nipc)){
-			log_invalidhandshake(logFile);
 			nipc_destroy(nipc);
 			sockets_destroyClient(client);
 			return NULL;
@@ -139,7 +127,6 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 
 int handshake(t_socket_client *client, t_log *logFile) {
 	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
-
 	nipc_setdata(nipc, strdup(config->diskname), strlen(config->diskname) + 1);
 
 	nipc_send(nipc, client);
@@ -182,17 +169,18 @@ int handshake(t_socket_client *client, t_log *logFile) {
 	}
 }
 
-int handshakeNewClient(t_socket_client *client, t_nipc *nipc2) {
-	t_nipc *nipc;
-	if (strcmp(config->mode, "LISTEN") != 0) {
-		nipc = nipc_create(NIPC_ERROR);
-		nipc_setdata(nipc, strdup("Modo invalido"),
-				strlen("Modo invalido") + 1);
-		nipc_send(nipc, client);
-		nipc_getdata_destroy(nipc);
+int handshakeNewClient(t_socket_client *client, t_nipc *rq) {
+	if (rq->type != NIPC_HANDSHAKE || rq->length != 0 || rq->payload != NULL){
+		log_warning(logFile, "LISTENER", "Handshake invalido");
 		return false;
 	}
-	nipc = nipc_create(NIPC_HANDSHAKE);
+
+	if (strcmp(config->mode, "LISTEN") != 0) {
+		log_warning(logFile, "LISTENER", "Handshake invalido");
+		return false;
+	}
+
+	t_nipc *nipc = nipc_create(NIPC_HANDSHAKE);
 	nipc_setdata(nipc, NULL, 0);
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
@@ -214,6 +202,7 @@ t_disk_operation *getdiskoperation(t_nipc *nipc, t_socket_client *client) {
 		memcpy(&operation->data, rq->data, DISK_SECTOR_SIZE);
 		break;
 	default:
+		free(operation);
 		return NULL;
 	}
 	operation->client = client;
