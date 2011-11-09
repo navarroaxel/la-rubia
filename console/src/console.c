@@ -11,7 +11,7 @@ int main(int argc, char * const argv[]) {
 		perror("Error al crear el socket cliente");
 		return EXIT_FAILURE;
 	}
-	if (!sockets_connectUnix(client, SOCKET_UNIX_PATH)){
+	if (!sockets_connectUnix(client, argv[1])){
 		perror("Error al conectarse al proceso disco");
 		return EXIT_FAILURE;
 	}

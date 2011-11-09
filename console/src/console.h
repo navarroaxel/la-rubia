@@ -13,8 +13,6 @@
 #include "common/utils/config.h"
 #include "headtrace.h"
 
-#define SOCKET_UNIX_PATH "/tmp/lol"
-
 void init_pconsole(void);
 void *pconsole(void*);
 void info(void *context, t_array *args);
