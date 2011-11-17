@@ -3,7 +3,7 @@
   <diskport>7000</diskport>
   <bindip>127.0.0.1</bindip>
   <bindport>6000</bindport>
-  <maxconnections>5</maxconnections>  
+  <maxconnections>10</maxconnections>  
   <sizecache>16384</sizecache>
   <logfile></logfile>
 </config>

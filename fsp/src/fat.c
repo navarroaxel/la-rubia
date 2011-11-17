@@ -30,45 +30,11 @@ uint32_t * fatTable;
 extern config_fsp * config;
 t_list *filesCache;
 volatile sig_atomic_t dumping=0;
-
-int main2(){
-	t_xmlFile * configFile = loadConfig("config.xml");
-	config = xmlGetConfigStructFsp(configFile);
-	//logFile= log_create("FSP",config->logFilePath,8,1);
-	fat_initialize();
-	//fat_initialize();
-	t_fat_file_list * dir, *p;
-	char fileName[15];
-	dir = fat_getRootDirectory();
-	p=dir;
-	while (p!=NULL){
-		switch (p->fileEntry.dataEntry.name[0]) {
-		case 0x00:
-			//Vacia, no hay mas
-			return 0;
-		case 0x2E:
-			puts("Entrada de punto!");
-			break;
-		case 0xE5:
-			puts("Entrada Borrada!");
-			break;
-		default:
-			fat_getName(&p->fileEntry,fileName);
-			printf("nombre:%s\n",fileName);
-			printf("LFN Checksum: %u\n",p->fileEntry.longNameEntry.checksum);
-			break;
-		}
-		p=p->next;
-
-	}
-	fat_destroyFileList(dir);
-
-	return 0;
-
-}
+sem_t fatSemaphore;
 
 void fat_initialize(){
 	disk_initialize();
+	sem_init(&fatSemaphore,0,1);
 	filesCache = collection_list_create();
 	signal(SIGUSR1,fat_signalHandler);
 	bootSector = fat_readBootSector();
@@ -317,10 +283,13 @@ void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 }
 
 int fat_addFreeClusterToChain(uint32_t lastClusterOfChain){
+	t_cluster cluster;
+	memset(cluster,0,FAT_CLUSTER_SIZE);
 	uint32_t freeCluster=fat_getNextFreeCluster(0);
 	assert(fat_getNextCluster(lastClusterOfChain)==FAT_LAST_CLUSTER);
 	fat_fat_setValue(lastClusterOfChain,freeCluster);
 	fat_fat_setValue(freeCluster,FAT_LAST_CLUSTER);
+	fat_addressing_writeCluster(freeCluster,cluster);
 	return 0;
 }
 int fat_removeLastClusterFromFile(t_fat_file_entry * file){
@@ -342,9 +311,12 @@ int fat_addClusterToFile(t_fat_file_entry * file){
 		uint32_t lastCluster = fat_getFileLastCluster(file);
 		fat_addFreeClusterToChain(lastCluster);
 	}else{
+		t_cluster cluster;
+		memset(cluster,0,FAT_CLUSTER_SIZE);
 		uint32_t firstCluster=fat_getNextFreeCluster(0);
 		fat_fat_setValue(firstCluster,FAT_LAST_CLUSTER);
 		fat_setEntryFirstCluster(firstCluster,&file->dataEntry);
+		fat_addressing_writeCluster(firstCluster,cluster);
 	}
 	return 0;
 }
@@ -507,7 +479,7 @@ int fat_write(const char *path, const char *buf, size_t size, off_t offset){
 	}
 	dataCluster = fat_getEntryFirstCluster(&fileEntry.dataEntry);
 	sizeToWrite = size;
-	clustersInWrite = ceil(((float)offset+sizeToWrite)/FAT_CLUSTER_SIZE)-((float)offset/FAT_CLUSTER_SIZE); //cuantos cluster me insume la escritura
+	clustersInWrite = ceil((((float)offset+sizeToWrite)/FAT_CLUSTER_SIZE)-((float)offset/FAT_CLUSTER_SIZE)); //cuantos cluster me insume la escritura
 	// Me ubico en el primer cluster de la escritura
 	dataCluster=fat_advanceNClusters(dataCluster,offset/FAT_CLUSTER_SIZE);
 	leftToWrite = sizeToWrite;

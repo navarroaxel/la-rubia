@@ -9,10 +9,12 @@
 #include <assert.h>
 #include "fatHelpers.h"
 #include "common/utils/utils.h"
+#include "semaphore.h"
 
 
 extern t_fat_bootsector bootSector;
 extern uint32_t * fatTable;
+extern sem_t fatSemaphore;
 
 uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	// .firstClusterHigh = 0xAB
@@ -42,16 +44,22 @@ uint32_t fat_getFATFirstBlock(){
 }
 
 uint32_t fat_getNextCluster(uint32_t currentCluster){
-	return fatTable[currentCluster];
+	sem_wait(&fatSemaphore);
+	uint32_t ret = fatTable[currentCluster];
+	sem_post(&fatSemaphore);
+	return ret;
 }
 
 int fat_fat_setValue(uint32_t clusterN,uint32_t next){
+
 	uint32_t entriesPerBlock = FAT_BLOCK_SIZE / FAT_FAT_ENTRY_SIZE;
 	uint32_t diskBlock = fat_getFATAddressOfEntry(clusterN);
 	t_block block;
+	sem_wait(&fatSemaphore);
 	fatTable[clusterN]=next;
 	memcpy(&block,&fatTable[clusterN - clusterN % entriesPerBlock],FAT_BLOCK_SIZE);
 	fat_addressing_writeBlocks(diskBlock,1,block);
+	sem_post(&fatSemaphore);
 	return 0;
 }
 
@@ -80,7 +88,7 @@ t_fat_file_entry * fat_findInDir(const t_fat_file_list * dir,char * name){
 uint32_t fat_getNextFreeCluster(uint32_t start){
 	uint32_t i;
 	for (i = start; i<bootSector.totalSectors32/bootSector.sectorPerCluster;i++){
-		if (fatTable[i]==FAT_FREE_CLUSTER)
+		if (fat_getNextCluster(i)==FAT_FREE_CLUSTER)
 			return i;
 	}
 	return 0;
