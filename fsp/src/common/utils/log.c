@@ -128,6 +128,8 @@ int log_debug(t_log *log, const char *thread_name, const char* format, ... ) {
  * @DESC: Genera el log!
  */
 inline static int log_vwrite(t_log *log, const char *thread_name, e_message_level level, const char* format, va_list args_list) {
+	if (log ==NULL)
+		return 1;
 	time_t log_time;
 	struct tm *log_tm;
 	struct timeb tmili;
