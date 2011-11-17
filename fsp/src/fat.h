@@ -41,7 +41,8 @@ void fat_createFileCache(const char * path);
 void fat_destroyFileCache(const char * path);
 void fat_fileCacheLoad(t_fat_file_cache * cache,uint32_t clusterNumber);
 void fat_fileCacheFlush(const char * path);
-
+int fat_unlink(const char * path);
+int fat_rmdir(const char * path);
 
 void fat_file_readCluster(const char * path,uint32_t clusterNumber,t_cluster cluster);
 void fat_file_writeCluster(const char * path,uint32_t clusterNumber,t_cluster cluster);

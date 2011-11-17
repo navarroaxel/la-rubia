@@ -2,5 +2,5 @@
   <ip>127.0.0.1</ip>
   <port>5100</port>
   <maxConnections>5</maxConnections>  
-  <sizeCache>6500</sizeCache>
+  <sizeCache>16384</sizeCache>
 </config>

@@ -17,13 +17,14 @@
 #include "common/utils/array.h"
 #include "assert.h"
 
-const int connPoolSize = 10;
+int connPoolSize;
 sem_t poolResources,ConnGetMutex;
 static int disk_is_initialized = 0;
 extern config_fsp * config;
 t_disk_connection * connPool;
 
 int disk_initialize() {
+	connPoolSize = config->maxConnections;
 	sem_init(&poolResources, 0, connPoolSize);
 	sem_init(&ConnGetMutex, 0, 1);
 	connPool = (t_disk_connection *) malloc(sizeof(t_disk_connection)*connPoolSize);

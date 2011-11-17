@@ -296,11 +296,13 @@ void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 		longNameUTF16[13]=0x0000;
 		unicode_utf16_to_utf8_inbuffer(longNameUTF16,13,longName,NULL);
 	}else{
-		char name[8];
-		char ext[3];
+		char name[9];
+		char ext[4];
 		char * space;
 		strncpy(name,(char *)fileEntry->dataEntry.name,8);
+		name[8]='\0';
 		strncpy(ext,(char *)fileEntry->dataEntry.extension,3);
+		ext[3]='\0';
 		if ((space=strchr(name,' '))!=NULL)
 			*space='\0';
 		if ((space=strchr(ext,' '))!=NULL)
