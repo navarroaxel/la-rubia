@@ -158,7 +158,9 @@ int fat_renameFile(const char * newName, t_fat_file_entry * destinationDir, t_fa
 		splitNameExtension(newName,nameWithoutExtension,extension);
 	}else{
 		strncpy(nameWithoutExtension,newName,8);
+		nameWithoutExtension[14]='\0';
 		strncpy(extension,"   ",3);
+		extension[3]='\0';
 	}
 	fat_generateShortName(nameWithoutExtension,destinationDir,shortName);
 	stringToUpper(extension);
