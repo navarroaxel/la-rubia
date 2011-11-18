@@ -223,7 +223,7 @@ void init_disk() {
 	if ((disk_data.diskFile = mmap(0, filesize, PROT_READ | PROT_WRITE
 	, MAP_SHARED, file, 0)) == (void *) -1)
 		fprintf(stderr, "Error mapping input file"), exit(1);
-	madvise(disk_data.diskFile, DISK_SECTOR_SIZE, MADV_SEQUENTIAL);
+	madvise(disk_data.diskFile, filesize, MADV_SEQUENTIAL);
 }
 
 int disk_read(t_location *location, t_sector *sector) {
