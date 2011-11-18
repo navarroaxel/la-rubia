@@ -30,11 +30,13 @@ uint32_t * fatTable;
 extern config_fsp * config;
 t_list *filesCache;
 volatile sig_atomic_t dumping=0;
-sem_t fatSemaphore;
+sem_t fatTableSemaphore, fatClusterChainSem;
 
 void fat_initialize(){
 	disk_initialize();
-	sem_init(&fatSemaphore,0,1);
+	sem_init(&fatTableSemaphore,0,1);
+	sem_init(&fatClusterChainSem,0,1);
+
 	filesCache = collection_list_create();
 	signal(SIGUSR1,fat_signalHandler);
 	bootSector = fat_readBootSector();
@@ -255,12 +257,16 @@ int fat_readFileContents(t_fat_file_entry * fileEntry,size_t size, off_t offset,
 void fat_getName (t_fat_file_entry * fileEntry, char * buff){
 	uint16_t longNameUTF16[14];
 	char longName[14]="";
+	int i;
 	if (fileEntry->hasLongNameEntry==1){
 		memcpy(longNameUTF16,&fileEntry->longNameEntry.nameStart,10);
 		memcpy(longNameUTF16+5,&fileEntry->longNameEntry.nameMiddle,12);
 		memcpy(longNameUTF16+11,&fileEntry->longNameEntry.nameEnd,4);
 		longNameUTF16[13]=0x0000;
-		unicode_utf16_to_utf8_inbuffer(longNameUTF16,13,longName,NULL);
+		for(i=0;i<14;i++){
+			if(longNameUTF16[i]==0x0000) break;
+		}
+		unicode_utf16_to_utf8_inbuffer(longNameUTF16,i,longName,NULL);
 	}else{
 		char name[9];
 		char ext[4];
@@ -293,6 +299,7 @@ int fat_addFreeClusterToChain(uint32_t lastClusterOfChain){
 	return 0;
 }
 int fat_removeLastClusterFromFile(t_fat_file_entry * file){
+	sem_wait(&fatClusterChainSem);
 	uint32_t lastCluster,theOneBefore;
 	lastCluster = fat_getFileLastCluster(file);
 	if(lastCluster!=fat_getEntryFirstCluster(&file->dataEntry)){
@@ -303,10 +310,12 @@ int fat_removeLastClusterFromFile(t_fat_file_entry * file){
 		fat_fat_setValue(lastCluster,FAT_FREE_CLUSTER);
 		fat_setEntryFirstCluster(0,&file->dataEntry);
 	}
+	sem_post(&fatClusterChainSem);
 	return 0;
 }
 
 int fat_addClusterToFile(t_fat_file_entry * file){
+	sem_wait(&fatClusterChainSem);
 	if(fat_getEntryFirstCluster(&file->dataEntry)!=0){
 		uint32_t lastCluster = fat_getFileLastCluster(file);
 		fat_addFreeClusterToChain(lastCluster);
@@ -318,6 +327,7 @@ int fat_addClusterToFile(t_fat_file_entry * file){
 		fat_setEntryFirstCluster(firstCluster,&file->dataEntry);
 		fat_addressing_writeCluster(firstCluster,cluster);
 	}
+	sem_post(&fatClusterChainSem);
 	return 0;
 }
 
@@ -329,7 +339,7 @@ int fat_truncate(const char * path,off_t newSize){
 	clustersNeeded =ceil((float)newSize / FAT_CLUSTER_SIZE);
 	clustersInFile = fat_getClusterCount(&file.dataEntry);
 	clustersDelta= clustersNeeded - clustersInFile;
-	if (clustersDelta<0){//lo tengo que achivar
+	if (clustersDelta<0){//lo tengo que achicar
 		for (i=0;i<abs(clustersDelta);i++){
 			fat_removeLastClusterFromFile(&file);
 		}
@@ -520,9 +530,8 @@ int fat_mkdir(const char * path){
 	fat_renameFile(name,&parentEntry,&fileEntry);
 	fileEntry.longNameEntry.sequenceN= 0x41; //Primera y ultima (0x01+0x40);
 	fileEntry.longNameEntry.attributes=0x0F;
-	clusterNumber= fat_getNextFreeCluster(0);
-	fat_fat_setValue(clusterNumber,FAT_LAST_CLUSTER);
-	fat_setEntryFirstCluster(clusterNumber,&fileEntry.dataEntry);
+	fat_setEntryFirstCluster(0,&fileEntry.dataEntry);
+	fat_addClusterToFile(&fileEntry);
 	fat_addEntry(parent,fileEntry);
 
 	memset(cleanCluster,0,FAT_CLUSTER_SIZE);
@@ -537,6 +546,9 @@ int fat_mkFile(const char * path){
 	splitPathName(path,parent,name);
 	fat_getFileFromPath(parent,&parentEntry);
 	fileEntry.dataEntry.attributes=0x20; //tengo que setarlo antes del rename
+	fileEntry.dataEntry.fileSize=0;
+	fat_setEntryFirstCluster(0,&fileEntry.dataEntry);
+	fileEntry.hasLongNameEntry=1;
 	fat_renameFile(name,&parentEntry,&fileEntry);
 	fileEntry.longNameEntry.sequenceN= 0x41; //Primera y ultima (0x01+0x40);
 	fileEntry.longNameEntry.attributes=0x0F;
@@ -584,6 +596,9 @@ void fat_createFileCache(const char * path){
 		fileNode->openCount++;
 		return;
 	}
+
+	if (config->sizeCache==0)
+		return;
 	int32_t clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
 	t_fat_file_cache * cache = (t_fat_file_cache *) malloc (sizeof(t_fat_file_cache) * clustersCached);
 	memset(cache,0xFF,sizeof(t_fat_file_cache) * clustersCached);
@@ -616,6 +631,9 @@ void fat_destroyFileCache(const char * path){
 		free(node2->cache);
 	}
 
+	if (config->sizeCache==0)
+		return;
+
 	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);
 	assert(fileNode!=NULL);
 	if (--fileNode->openCount > 0) return;
@@ -625,6 +643,8 @@ void fat_destroyFileCache(const char * path){
 
 void fat_fileCacheLoad(t_fat_file_cache * cache,uint32_t clusterNumber){
 	uint32_t i;
+	if (config->sizeCache==0)
+		return;
 	int32_t clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
 	for(i=0;i<clustersCached;i++){
 		if(cache[i].clusterNumber!=0xFFFFFFFF){
@@ -642,6 +662,11 @@ void fat_fileCacheFlush(const char * path){
 		return 0;
 
 	}
+
+	if(config->sizeCache==0){
+		return;
+	}
+
 	int32_t i,clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
 	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);
 	sem_wait(&fileNode->inUse);
@@ -658,6 +683,10 @@ void fat_file_readCluster(const char * path,uint32_t clusterNumber,t_cluster clu
 		if (strcmp(path,node2->path)==0)return 1;
 		return 0;
 
+	}
+	if(config->sizeCache==0){
+		fat_addressing_readCluster(clusterNumber, cluster);
+		return;
 	}
 	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);
 	sem_wait(&fileNode->inUse);
@@ -681,6 +710,11 @@ void fat_file_writeCluster(const char * path,uint32_t clusterNumber,t_cluster cl
 		if (strcmp(path,node2->path)==0)return 1;
 		return 0;
 
+	}
+
+	if(config->sizeCache==0){
+		fat_addressing_writeCluster(clusterNumber, cluster);
+		return;
 	}
 	int32_t clustersCached = config->sizeCache / FAT_CLUSTER_SIZE;
 	t_fat_cache_list * fileNode = collection_list_find(filesCache,findFromPath);

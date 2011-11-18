@@ -14,7 +14,7 @@
 
 extern t_fat_bootsector bootSector;
 extern uint32_t * fatTable;
-extern sem_t fatSemaphore;
+extern sem_t fatTableSemaphore;
 
 uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	// .firstClusterHigh = 0xAB
@@ -44,9 +44,9 @@ uint32_t fat_getFATFirstBlock(){
 }
 
 uint32_t fat_getNextCluster(uint32_t currentCluster){
-	sem_wait(&fatSemaphore);
+	sem_wait(&fatTableSemaphore);
 	uint32_t ret = fatTable[currentCluster];
-	sem_post(&fatSemaphore);
+	sem_post(&fatTableSemaphore);
 	return ret;
 }
 
@@ -55,11 +55,11 @@ int fat_fat_setValue(uint32_t clusterN,uint32_t next){
 	uint32_t entriesPerBlock = FAT_BLOCK_SIZE / FAT_FAT_ENTRY_SIZE;
 	uint32_t diskBlock = fat_getFATAddressOfEntry(clusterN);
 	t_block block;
-	sem_wait(&fatSemaphore);
+	sem_wait(&fatTableSemaphore);
 	fatTable[clusterN]=next;
 	memcpy(&block,&fatTable[clusterN - clusterN % entriesPerBlock],FAT_BLOCK_SIZE);
 	fat_addressing_writeBlocks(diskBlock,1,block);
-	sem_post(&fatSemaphore);
+	sem_post(&fatTableSemaphore);
 	return 0;
 }
 
@@ -167,6 +167,7 @@ int fat_renameFile(const char * newName, t_fat_file_entry * destinationDir, t_fa
 	memcpy(fileEntry->dataEntry.extension,extension,3);
 	if (needsLongName(newName)){
 		unicode_utf8_to_utf16_inbuffer(newName,strlen(newName)+1,longName,NULL);
+		memset(longName+strlen(newName)+1,0,14-(strlen(newName)+1));
 		memcpy(fileEntry->longNameEntry.nameStart,longName,10);
 		memcpy(fileEntry->longNameEntry.nameMiddle,&longName[5],12);
 		memcpy(fileEntry->longNameEntry.nameEnd,&longName[11],4);
@@ -236,14 +237,14 @@ uint8_t lfn_checksum(const unsigned char *pFcbName){
 uint32_t fat_getFreeClusterCount(){
 	uint32_t i,count=0,totalClusters=bootSector.totalSectors32/bootSector.sectorPerCluster;
 	for(i=0;i<totalClusters;i++){
-		if(fatTable[i]==FAT_FREE_CLUSTER) count++;
+		if(fat_getNextCluster(i)==FAT_FREE_CLUSTER) count++;
 	}
 	return count;
 }
 uint32_t fat_getUsedClusterCount(){
 	uint32_t i,count=0,totalClusters=bootSector.totalSectors32/bootSector.sectorPerCluster;
 	for(i=0;i<totalClusters;i++){
-		if(fatTable[i]!=FAT_FREE_CLUSTER) count++;
+		if(fat_getNextCluster(i)!=FAT_FREE_CLUSTER) count++;
 	}
 	return count;
 }

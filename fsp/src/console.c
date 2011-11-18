@@ -38,8 +38,11 @@ void finfo(void *context, t_array *args) {
 		uint32_t clusterN, i;
 		if(!fat_getFileFromPath(path,&fileEntry)) return;
 		clusterN = fat_getEntryFirstCluster(&fileEntry.dataEntry);
+		if (clusterN==0)
+			return;
+
 		for (i=0;i<20;i++){
-			if((clusterN & FAT_LAST_CLUSTER)==FAT_LAST_CLUSTER) return;
+			if(clusterN ==FAT_LAST_CLUSTER) return;
 			printf("cluster %u: %u\n",i,clusterN);
 			clusterN=fat_getNextCluster(clusterN);
 		}
