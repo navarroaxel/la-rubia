@@ -223,6 +223,7 @@ void init_disk() {
 	if ((disk_data.diskFile = mmap(0, filesize, PROT_READ | PROT_WRITE
 	, MAP_SHARED, file, 0)) == (void *) -1)
 		fprintf(stderr, "Error mapping input file"), exit(1);
+	madvise(disk_data.diskFile, DISK_SECTOR_SIZE, MADV_SEQUENTIAL);
 }
 
 int disk_read(t_location *location, t_sector *sector) {
@@ -238,6 +239,8 @@ int disk_write(t_location *location, t_sector *sector) {
 	sleep(config->writeTime);
 	memcpy(disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE
 	, sector, sizeof(t_sector));
+	msync(disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE
+			, sizeof(t_sector), MS_SYNC);
 	location_readsector(location);
 	return DISK_RESULT_SUCCESS;
 }
