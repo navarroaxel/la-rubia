@@ -1,22 +1,22 @@
 <config>
-  <volumefile>/home/utn_so/fat32.disk</volumefile>
-  <logfile>/home/utn_so/ppd.log</logfile>
+  <volumefile>/home/utn_so/fat32.disk3</volumefile>
+  <logfile>/home/utn_so/ppd3.log</logfile>
   <consolepath>./console</consolepath>
   <raidip>127.0.0.1</raidip>
   <raidport>7000</raidport>
   <bindip>127.0.0.1</bindip>
-  <bindport>5000</bindport>
+  <bindport>5002</bindport>
   <mode>CONNECT</mode>
-  <algorithm>CSCAN</algorithm>
+  <algorithm>FSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>
-  <diskname>mydisk</diskname>
-  <cylinders>1024</cylinders>
+  <diskname>mydisk3</diskname>
+  <cylinders>32768</cylinders>
   <heads>1</heads>
-  <sectors>1024</sectors>
+  <sectors>32</sectors>
   <jumptime>1</jumptime>
   <readtime>0</readtime>
   <writetime>0</writetime>
-  <rpm>7200</rpm>
-  <socketunixpath>/tmp/ppd1</socketunixpath>
+  <rpm>1875</rpm>
+  <socketunixpath>/tmp/ppd3</socketunixpath>
 </config>

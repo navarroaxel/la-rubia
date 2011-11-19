@@ -1,16 +1,16 @@
 <config>
-  <volumefile>/home/utn_so/fat32.disk</volumefile>
-  <logfile>/home/utn_so/ppd.log</logfile>
+  <volumefile>/home/utn_so/fat32.disk2</volumefile>
+  <logfile>/home/utn_so/ppd2.log</logfile>
   <consolepath>./console</consolepath>
   <raidip>127.0.0.1</raidip>
   <raidport>7000</raidport>
   <bindip>127.0.0.1</bindip>
-  <bindport>5000</bindport>
+  <bindport>5001</bindport>
   <mode>CONNECT</mode>
   <algorithm>CSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>
-  <diskname>mydisk</diskname>
+  <diskname>disk-bak</diskname>
   <cylinders>1024</cylinders>
   <heads>1</heads>
   <sectors>1024</sectors>
@@ -18,5 +18,5 @@
   <readtime>0</readtime>
   <writetime>0</writetime>
   <rpm>7200</rpm>
-  <socketunixpath>/tmp/ppd1</socketunixpath>
+  <socketunixpath>/tmp/ppd2</socketunixpath>
 </config>
