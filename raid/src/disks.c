@@ -17,7 +17,7 @@ t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting, t_l
 	dsk->operations = waiting;
 	dsk->log = log;
 	dsk->client = client;
-
+dsk->pendings=0;
 	disk_id <<= 1;
 
 	pthread_t thread;
@@ -84,6 +84,7 @@ void disks_remove(t_disk *disk) {
 }
 
 void disks_destroy(t_disk *disk) {
+	sem_destroy(&disk->pendingsMutex);
 	sockets_destroyClient(disk->client);
 	free(disk);
 }
