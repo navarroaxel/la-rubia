@@ -519,8 +519,6 @@ int fat_write(const char *path, const char *buf, size_t size, off_t offset){
 
 int fat_mkdir(const char * path){
 	char parent[255], name[15];
-	uint32_t clusterNumber;
-	t_cluster cleanCluster;
 	t_fat_file_entry fileEntry,parentEntry;
 	memset(&fileEntry,0,sizeof(fileEntry));
 	splitPathName(path,parent,name);
@@ -533,9 +531,6 @@ int fat_mkdir(const char * path){
 	fat_setEntryFirstCluster(0,&fileEntry.dataEntry);
 	fat_addClusterToFile(&fileEntry);
 	fat_addEntry(parent,fileEntry);
-
-	memset(cleanCluster,0,FAT_CLUSTER_SIZE);
-	fat_addressing_writeCluster(clusterNumber,cleanCluster);
 	return 0;
 }
 
