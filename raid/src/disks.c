@@ -90,12 +90,12 @@ void disks_destroy(t_disk *disk) {
 
 void disk_decreasepending(t_disk *dsk){
 	sem_wait(&dsk->pendingsMutex);
-	dsk->pendings++;
+	dsk->pendings--;
 	sem_post(&dsk->pendingsMutex);
 }
 
 void disk_increasepending(t_disk *dsk){
 	sem_wait(&dsk->pendingsMutex);
-	dsk->pendings--;
+	dsk->pendings++;
 	sem_post(&dsk->pendingsMutex);
 }
