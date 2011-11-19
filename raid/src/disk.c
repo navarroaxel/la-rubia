@@ -131,11 +131,13 @@ void reallocateoperations(t_disk *dsk) {
 			op->disk &= ~dsk->id;
 		} else if (op->disk == dsk->id) {
 			t_disk *d = disks_getidledisk(op->offset);
+			op->disk = d->id;
 			disk_increasepending(d);
 			t_nipc *nipc = operation_getnipc(op);
 			nipc_send(nipc, d->client);
 			nipc_destroy(nipc);
-			op->disk = d->id;
+			log_info(dsk->log, dsk->name, "LECTURA REALOCADA sector %i disco %s",
+							op->offset, d->name);
 		}
 	}
 
