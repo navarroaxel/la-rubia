@@ -1,11 +1,11 @@
 <config>
   <diskip>127.0.0.1</diskip>
-  <diskport>7000</diskport>
+  <diskport>9999</diskport>
   <bindip>127.0.0.1</bindip>
   <bindport>6000</bindport>
   <maxconnections>10</maxconnections>  
   <sizecache>0</sizecache>
-  <logfile>/home/nico/fsp.log</logfile>
+  <logfile>/home/utn_so/fsp.log</logfile>
 </config>
 
 

@@ -15,24 +15,24 @@
 #define CACHESIZE 1024
 int cache_initialized = 0;
 t_cache_entry cache[CACHESIZE];
-sem_t poolResources;
+sem_t cacheAccess;
 
 int cache_read(uint32_t clusterNumber, t_cluster buffer){
-    sem_wait(&poolResources);
+    sem_wait(&cacheAccess);
 	if (cache[clusterNumber % CACHESIZE].blockN==clusterNumber){
 		memcpy(buffer,&cache[clusterNumber % CACHESIZE].data,FAT_CLUSTER_SIZE);
-		sem_post(&poolResources);
+		sem_post(&cacheAccess);
 		return 1;
 	}
-	sem_post(&poolResources);
+	sem_post(&cacheAccess);
 	return 0;
 };
 
 int cache_write(uint32_t clusterNumber, t_cluster buffer){
-	sem_wait(&poolResources);
+	sem_wait(&cacheAccess);
 	cache[clusterNumber % CACHESIZE].blockN=clusterNumber;
 	memcpy(&(cache[clusterNumber % CACHESIZE].data),buffer,FAT_CLUSTER_SIZE);
-	sem_post(&poolResources);
+	sem_post(&cacheAccess);
 	return 1;
 }
 
@@ -42,7 +42,7 @@ void cache_initialize() {
 		cache[i].blockN=0xFFFFFFFF;
 		memset(cache[i].data,0,FAT_CLUSTER_SIZE);
 	}
-	sem_init(&poolResources, 0, 1);
+	sem_init(&cacheAccess, 0, 1);
 	cache_initialized = 1;
 }
 
