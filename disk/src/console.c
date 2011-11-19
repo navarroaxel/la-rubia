@@ -37,7 +37,7 @@ void *console(void *args) {
 	}
 	t_socket_buffer *buffer;
 	while (true) {
-		buffer = sockets_recv(client);
+		buffer = sockets_recv2(client);
 		if (buffer == NULL) {
 			perror("la consola se ha desconectado");
 			sockets_destroyClient(client);
