@@ -121,10 +121,10 @@ int disklistener_handshake(t_socket_client *client, t_nipc *rq, t_list *waiting,
 
 	log_info(log, "DISKLISTENER", "Se ha conectado el disco %s", diskname);
 	dsk = disks_register(diskname, client, waiting, log);
-	if (!syncdisk)
-		dsk->offsetlimit = raidoffsetlimit;
-	else if (config->syncerEnabled)
+	if (syncdisk && config->syncerEnabled)
 		init_syncer(dsk);
+	else
+		dsk->offsetlimit = raidoffsetlimit;
 
 	return true;
 }

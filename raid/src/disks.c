@@ -9,10 +9,9 @@ void disks_init(void) {
 }
 
 t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting, t_log *log) {
-	struct t_disk *dsk = malloc(sizeof(struct t_disk));
+	t_disk *dsk = malloc(sizeof(t_disk));
 
-	//TODO: validate duplicated name.
-
+	sem_init(&dsk->pendingsMutex, 0, 1);
 	memcpy(&dsk->name, name, strlen(name) + 1);
 	dsk->id = disk_id;
 	dsk->operations = waiting;

@@ -16,7 +16,7 @@ void *disk(void *args) {
 			return NULL;
 		}
 		while (offsetInBuffer < buffer->size) {
-			dsk->pendings--;
+			disk_decreasepending(dsk);
 			nipc = nipc_deserializer(buffer, offsetInBuffer);
 			offsetInBuffer += nipc->length + sizeof(nipc->type)
 					+ sizeof(nipc->length);
@@ -131,7 +131,7 @@ void reallocateoperations(t_disk *dsk) {
 			op->disk &= ~dsk->id;
 		} else if (op->disk == dsk->id) {
 			t_disk *d = disks_getidledisk(op->offset);
-			d->pendings++;
+			disk_increasepending(d);
 			t_nipc *nipc = operation_getnipc(op);
 			nipc_send(nipc, d->client);
 			nipc_destroy(nipc);
@@ -182,4 +182,16 @@ int getoffset(t_nipc *nipc) {
 	default:
 		return -1;
 	}
+}
+
+void disk_decreasepending(t_disk *dsk){
+	sem_wait(&dsk->pendingsMutex);
+	dsk->pendings++;
+	sem_post(&dsk->pendingsMutex);
+}
+
+void disk_increasepending(t_disk *dsk){
+	sem_wait(&dsk->pendingsMutex);
+	dsk->pendings--;
+	sem_post(&dsk->pendingsMutex);
 }

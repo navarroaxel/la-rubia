@@ -46,7 +46,7 @@ void *syncer(void *args) {
 
 void enqueueread(t_blist *syncqueue, uint32_t offset, char *thread_name) {
 	t_disk *dsk = disks_getidledisk(offset);
-	dsk->pendings++;
+	disk_increasepending(dsk);
 	t_disk_readSectorRq *rq = malloc(sizeof(t_disk_readSectorRq));
 	rq->offset = offset;
 
@@ -70,7 +70,7 @@ void enqueuewrite(t_blist *syncqueue, t_disk *dsk, t_disk_readSectorRs *rs) {
 	memcpy(rq->data, rs->data, DISK_SECTOR_SIZE);
 	memcpy(op->data, rs->data, DISK_SECTOR_SIZE);
 
-	dsk->pendings++;
+	disk_increasepending(dsk);
 	op->read = false;
 	op->syncqueue = syncqueue;
 	op->client = NULL;

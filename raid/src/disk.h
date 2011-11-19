@@ -14,4 +14,7 @@ void processReadRs(t_disk *dsk, t_nipc *nipc);
 void processWriteRs(t_disk *dsk, t_nipc *nipc);
 void reallocateoperations(t_disk *dsk);
 
+void disk_increasepending(t_disk *dsk);
+void disk_decreasepending(t_disk *dsk);
+
 #endif

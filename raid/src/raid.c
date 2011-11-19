@@ -148,7 +148,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting,
 	collection_list_add(waiting, op);
 	if (op->read) {
 		t_disk *dsk = disks_getidledisk(op->offset);
-		dsk->pendings++;
+		disk_increasepending(dsk);
 		op->disk = dsk->id;
 		log_info(log, "FSLISTENER", "LECTURA sector %i disco %s", op->offset,
 				dsk->name);
@@ -159,7 +159,7 @@ void enqueueoperation(t_nipc *nipc, t_socket_client *client, t_list *waiting,
 			struct t_disk *disk = (struct t_disk *) data;
 			sockets_sendBuffer(disk->client, buffer);
 			op->disk |= disk->id;
-			disk->pendings++;
+			disk_increasepending(disk);
 		}
 		log_info(log, "FSLISTENER", "ESCRITURA sector %i todos los discos",
 				op->offset);

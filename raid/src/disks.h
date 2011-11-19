@@ -16,7 +16,8 @@ typedef struct t_disk {
 	t_list *operations;
 	t_log *log;
 	t_socket_client *client;
-	volatile sig_atomic_t pendings; //TODO: Revisar de poner un semaphore para hacer esta operacion segura.
+	int pendings;
+	sem_t pendingsMutex;
 	uint32_t offsetlimit;
 } t_disk;
 
