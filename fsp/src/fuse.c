@@ -78,18 +78,16 @@ static int fuselage_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int fuselage_open(const char *path, struct fuse_file_info *fi)
 {
-	/*uint32_t clusterN;
-	t_fat_file_entry fileEntry;*/
+	uint32_t clusterN;
+	t_fat_file_entry fileEntry;
 	log_debug(logFile,"FSP","open archivo %s\n",path);
 	fat_createFileCache(path);
-    /*if((fi->flags & 3) != O_RDONLY)
-        return -EACCES;*/
-	/*fat_getFileFromPath(path,&fileEntry);
+	fat_getFileFromPath(path,&fileEntry);
 	clusterN=fat_getEntryFirstCluster(&fileEntry.dataEntry);
 	while (clusterN!=FAT_LAST_CLUSTER){
 		log_debug(logFile,"FSP","El archivo %s, usa el cluster %u,\n",path,clusterN);
 		clusterN = fat_getNextCluster(clusterN);
-	}*/
+	}
     return 0;
 }
 
