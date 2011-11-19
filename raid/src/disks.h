@@ -31,4 +31,7 @@ void disks_remove(t_disk *disk);
 void disks_destroy(t_disk *disk);
 void disks_verifystate();
 
+void disk_increasepending(t_disk *dsk);
+void disk_decreasepending(t_disk *dsk);
+
 #endif
