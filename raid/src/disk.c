@@ -5,28 +5,32 @@ void *disk(void *args) {
 
 	t_socket_buffer *buffer;
 	t_nipc *nipc;
+	uint32_t offsetInBuffer;
 	while (true) {
 		buffer = sockets_recv(dsk->client);
+		offsetInBuffer = 0;
 		if (buffer == NULL) {
 			log_info(dsk->log, dsk->name, "El disco %s se ha desconectado",
 					dsk->name);
 			reallocateoperations(dsk);
 			return NULL;
 		}
-
-		dsk->pendings--;
-		nipc = nipc_deserializer(buffer, 0);
-		sockets_bufferDestroy(buffer);
-
-		switch (nipc->type) {
-		case NIPC_READSECTOR_RS:
-			processReadRs(dsk, nipc);
-			break;
-		case NIPC_WRITESECTOR_RS:
-			processWriteRs(dsk, nipc);
-			break;
+		while (offsetInBuffer < buffer->size) {
+			dsk->pendings--;
+			nipc = nipc_deserializer(buffer, offsetInBuffer);
+			offsetInBuffer += nipc->length + sizeof(nipc->type)
+					+ sizeof(nipc->length);
+			switch (nipc->type) {
+			case NIPC_READSECTOR_RS:
+				processReadRs(dsk, nipc);
+				break;
+			case NIPC_WRITESECTOR_RS:
+				processWriteRs(dsk, nipc);
+				break;
+			}
+			nipc_destroy(nipc);
 		}
-		nipc_destroy(nipc);
+		sockets_bufferDestroy(buffer);
 	}
 
 	return NULL;
@@ -146,7 +150,7 @@ void reallocateoperations(t_disk *dsk) {
 		t_operation *op = collection_list_popfirst(dsk->operations,
 				getReadyWriteOperations);
 		if (op == NULL
-			)
+		)
 			break;
 
 		if (op->client == NULL) {
