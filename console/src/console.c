@@ -39,7 +39,7 @@ void info(void *context, t_array *args) {
 	char code = CONSOLE_INFO;
 	sockets_send(client, &code, sizeof(char));
 
-	t_socket_buffer *buffer = sockets_recv(client);
+	t_socket_buffer *buffer = sockets_recv2(client);
 
 	if (buffer->data[0] == CONSOLE_INFO) {
 		t_location *location = malloc(sizeof(t_location));
@@ -98,7 +98,7 @@ void trace(void *context, t_array *args) {
 	sockets_bufferDestroy(buffer);
 
 	for (i = 0; i < array_size(args);) {
-		buffer = sockets_recv(client);
+		buffer = sockets_recv2(client);
 		offset = 0;
 		do {
 			headtrace_printf((t_headtrace *) (buffer->data + offset));

@@ -113,6 +113,7 @@
 	int              sockets_sendString(t_socket_client *client, char *str);
 	int              sockets_sendSerialized(t_socket_client *client, void *data, t_socket_sbuffer *(*serializer)(void*));
 	t_socket_buffer *sockets_recv(t_socket_client *client);
+	t_socket_buffer *sockets_recv2(t_socket_client *client);
 	int 			 sockets_recvInBuffer(t_socket_client *client, t_socket_buffer *buffer);
 	int 			 sockets_recvInSBuffer(t_socket_client *client, t_socket_sbuffer *buffer);
 	void            *sockets_recvSerialized(t_socket_client *client, void *(*deserializer)(t_socket_sbuffer*));
