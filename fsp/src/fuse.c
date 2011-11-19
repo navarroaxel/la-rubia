@@ -84,6 +84,7 @@ static int fuselage_open(const char *path, struct fuse_file_info *fi)
 	fat_createFileCache(path);
 	fat_getFileFromPath(path,&fileEntry);
 	clusterN=fat_getEntryFirstCluster(&fileEntry.dataEntry);
+	if (clusterN==0) return 0;
 	while (clusterN!=FAT_LAST_CLUSTER){
 		log_debug(logFile,"FSP","El archivo %s, usa el cluster %u,\n",path,clusterN);
 		clusterN = fat_getNextCluster(clusterN);

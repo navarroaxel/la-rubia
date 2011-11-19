@@ -344,7 +344,10 @@ int sockets_recvInBuffer(t_socket_client *client, t_socket_buffer *buffer){
 	if( !sockets_isBlocked(client->socket) ){
 		fcntl(client->socket->desc, F_SETFL, O_NONBLOCK);
 	}
-	buffer->size = recv(client->socket->desc, buffer->data, DEFAULT_BUFFER_SIZE, 0);
+	buffer->size = recv(client->socket->desc, buffer->data, 3, MSG_PEEK |MSG_WAITALL);
+	uint16_t size_payload;
+	memcpy(&size_payload,buffer->data+1,2);
+	buffer->size = recv(client->socket->desc, buffer->data, size_payload + 3, MSG_WAITALL);
 	if( !sockets_isBlocked(client->socket) ){
 		fcntl(client->socket->desc, F_SETFL, O_NONBLOCK);
 	}
