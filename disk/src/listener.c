@@ -12,7 +12,7 @@ void log_incomingrequest(t_log *logFile, bool read, uint32_t offset) {
 }
 
 void listener(t_blist *waiting, t_log *logFile) {
-	t_socket_server *server = sockets_createServer("127.0.0.1",
+	t_socket_server *server = sockets_createServer(config->bindIp,
 			config->bindPort);
 
 	if (server == NULL) {
