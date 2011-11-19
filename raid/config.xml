@@ -3,6 +3,7 @@
   <fsport>9999</fsport>
   <bindipdisk>127.0.0.1</bindipdisk>
   <diskport>7000</diskport>  
-  <consoleenabled>1</consoleenabled>
+  <consoleenabled>0</consoleenabled>
+  <syncer>1</syncer>
   <logfile>/home/utn_so/raid.log</logfile>
 </config>

@@ -84,6 +84,7 @@ config_raid *xmlGetConfigStructRaid(t_xmlFile *xmlFile) {
 	xmlParam->diskPort = (uint16_t) atoi(xmlFileGetParam(xmlFile, "diskport"));
 	xmlParam->consoleEnabled = (uint16_t) atoi(
 			xmlFileGetParam(xmlFile, "consoleenabled"));
+	xmlParam->syncerEnabled = (uint16_t)atoi(xmlFileGetParam(xmlFile, "syncer"));
 	strcpy(xmlParam->logFilePath, xmlFileGetParam(xmlFile, "logfile"));
 	return xmlParam;
 }

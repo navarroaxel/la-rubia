@@ -15,6 +15,7 @@ typedef struct config_raid {
    char bindIpDisk[15];
    uint16_t diskPort;
    uint8_t consoleEnabled;
+   uint8_t syncerEnabled;
    char logFilePath[255];
 } config_raid;
 
