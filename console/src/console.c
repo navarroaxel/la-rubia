@@ -41,7 +41,7 @@ void info(void *context, t_array *args) {
 	nipc_destroy(nipc);
 
 	t_socket_buffer *buffer = sockets_recv(client);
-	nipc = nipc_deserializer(buffer);
+	nipc = nipc_deserializer(buffer, 0);
 
 	if (nipc->type == NIPC_DISKCONSOLE_INFO) {
 		t_location *location = nipc_getdata(nipc);
@@ -100,7 +100,7 @@ void trace(void *context, t_array *args) {
 	sockets_bufferDestroy(buffer);
 
 	for (i = 0; i < array_size(args);) {
-		buffer = sockets_recv2(client);
+		buffer = sockets_recv(client);
 		offset = 0;
 		do {
 			headtrace_printf((t_headtrace *) (buffer->data + offset));
