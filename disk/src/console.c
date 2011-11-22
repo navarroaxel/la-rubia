@@ -46,9 +46,9 @@ void *console(void *args) {
 			return NULL;
 		}
 		nipc = nipc_deserializer(buffer, 0);
+		sockets_bufferDestroy(buffer);
 		switch (nipc->type) {
 		case NIPC_DISKCONSOLE_INFO:
-			sockets_bufferDestroy(buffer);
 			nipc_destroy(nipc);
 			nipc = nipc_create(NIPC_DISKCONSOLE_INFO);
 			nipc_setdata(nipc, head_currentlocation(), sizeof(t_location));
@@ -59,11 +59,8 @@ void *console(void *args) {
 		case NIPC_DISKCONSOLE_CLEAN: {
 			int offset = sizeof(char);
 			int tmpsize;
-			uint32_t sector, sectorto;
-
-			memcpy(&sector, buffer->data + offset, tmpsize = sizeof(uint32_t));
-			offset += tmpsize;
-			memcpy(&sectorto, buffer->data + offset, tmpsize);
+			uint32_t sector=nipc->payload;
+			uint32_t sectorto = nipc->payload+sizeof(uint32_t);
 
 			t_disk_operation *op;
 			for (; sector <= sectorto; sector++) {
@@ -77,11 +74,11 @@ void *console(void *args) {
 		}
 			break;
 		case NIPC_DISKCONSOLE_TRACE: {
-			int offset = sizeof(char);
+			int offset = 0;
 			int tmpsize = sizeof(uint32_t);
-			while (offset < buffer->size) {
+			while (offset < nipc->length) {
 				t_disk_operation *op = malloc(sizeof(t_disk_operation));
-				memcpy(&op->offset, buffer->data + offset, tmpsize);
+				memcpy(&op->offset, nipc->payload + offset, tmpsize);
 				op->trace = true;
 				op->client = client;
 				op->read = true;
@@ -91,8 +88,6 @@ void *console(void *args) {
 		}
 			break;
 		}
-
-		sockets_bufferDestroy(buffer);
 	}
 	return NULL;
 }
