@@ -338,35 +338,6 @@ t_socket_buffer *sockets_recv(t_socket_client *client){
 	return tbuffer;
 }
 
-int sockets_recvInBuffer2(t_socket_client *client, t_socket_buffer *buffer){
-	memset(buffer->data, 0, DEFAULT_BUFFER_SIZE);
-	if( !sockets_isBlocked(client->socket) ){
-		fcntl(client->socket->desc, F_SETFL, O_NONBLOCK);
-	}
-	buffer->size = recv(client->socket->desc, buffer->data, DEFAULT_BUFFER_SIZE, 0);
-	if( !sockets_isBlocked(client->socket) ){
-		fcntl(client->socket->desc, F_SETFL, O_NONBLOCK);
-	}
-
-	if( buffer->size == -1 )
-		sockets_setState(client, SOCKETSTATE_DISCONNECTED);
-
-	return buffer->size;
-}
-
-
-t_socket_buffer *sockets_recv2(t_socket_client *client){
-	t_socket_buffer *tbuffer = malloc( sizeof(t_socket_buffer) );
-	int datasize = sockets_recvInBuffer2(client, tbuffer);
-
-	if( datasize <= 0 ){
-		free(tbuffer);
-		return NULL;
-	}
-
-	return tbuffer;
-}
-
 int sockets_recvInBuffer(t_socket_client *client, t_socket_buffer *buffer){
 	memset(buffer->data, 0, DEFAULT_BUFFER_SIZE);
 	if( !sockets_isBlocked(client->socket) ){

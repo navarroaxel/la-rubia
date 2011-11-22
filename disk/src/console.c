@@ -14,11 +14,11 @@ void init_console(t_blist *waiting) {
 void *console(void *args) {
 	t_blist *waiting = args;
 	t_socket_server *server = sockets_createServerUnix(config->socketunixpath);
-	if (server == NULL){
+	if (server == NULL) {
 		perror("No se pudo crear el socket server de la consola");
 		return NULL;
 	}
-	if (!sockets_listen(server)){
+	if (!sockets_listen(server)) {
 		perror("Socket Server cannot listen");
 		return NULL;
 	}
@@ -31,37 +31,34 @@ void *console(void *args) {
 	}
 
 	t_socket_client *client = sockets_acceptUnix(server);
-	if (client == NULL){
+	if (client == NULL) {
 		perror("No se pudo establecer conexion con el cliente de la consola");
 		return NULL;
 	}
+	t_nipc *nipc;
 	t_socket_buffer *buffer;
 	while (true) {
-		buffer = sockets_recv2(client);
+		buffer = sockets_recv(client);
 		if (buffer == NULL) {
 			perror("la consola se ha desconectado");
 			sockets_destroyClient(client);
 			sockets_destroyServer(server);
 			return NULL;
 		}
-
-		switch (buffer->data[0]) {
-		case CONSOLE_INFO:
+		nipc = nipc_deserializer(buffer, 0);
+		switch (nipc->type) {
+		case NIPC_DISKCONSOLE_INFO:
 			sockets_bufferDestroy(buffer);
-			int tmpsize;
-			int offset = sizeof(char);
-			buffer = malloc(sizeof(t_socket_buffer));
-			t_location *location = head_currentlocation();
+			nipc_destroy(nipc);
+			nipc = nipc_create(NIPC_DISKCONSOLE_INFO);
+			nipc_setdata(nipc, head_currentlocation(), sizeof(t_location));
+			nipc_send(nipc, client);
+			nipc_destroy(nipc);
 
-			buffer->data[0] = CONSOLE_INFO;
-			memcpy(buffer->data + offset, location, tmpsize =
-					sizeof(t_location));
-			buffer->size = offset + tmpsize;
-
-			sockets_sendBuffer(client, buffer);
 			break;
-		case CONSOLE_CLEAN:
-			offset = sizeof(char);
+		case NIPC_DISKCONSOLE_CLEAN: {
+			int offset = sizeof(char);
+			int tmpsize;
 			uint32_t sector, sectorto;
 
 			memcpy(&sector, buffer->data + offset, tmpsize = sizeof(uint32_t));
@@ -77,12 +74,13 @@ void *console(void *args) {
 				memset(op->data, 0, sizeof(op->data));
 				enqueueOperation(waiting, op);
 			}
+		}
 			break;
-		case CONSOLE_TRACE:
-			offset = sizeof(char);
-			tmpsize = sizeof(uint32_t);
+		case NIPC_DISKCONSOLE_TRACE: {
+			int offset = sizeof(char);
+			int tmpsize = sizeof(uint32_t);
 			while (offset < buffer->size) {
-				op = malloc(sizeof(t_disk_operation));
+				t_disk_operation *op = malloc(sizeof(t_disk_operation));
 				memcpy(&op->offset, buffer->data + offset, tmpsize);
 				op->trace = true;
 				op->client = client;
@@ -90,6 +88,7 @@ void *console(void *args) {
 				enqueueOperation(waiting, op);
 				offset += tmpsize;
 			}
+		}
 			break;
 		}
 

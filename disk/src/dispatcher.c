@@ -26,7 +26,7 @@ void *dispatcher(void *args) {
 		e = collection_blist_pop(q->processed);
 		headtrace_log(e->headtrace, q->log);
 
-		if (e->client == NULL) {
+ 		if (e->client == NULL) {
 			headtrace_destroy(e->headtrace);
 			free(e);
 			continue;
