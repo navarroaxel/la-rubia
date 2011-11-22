@@ -36,17 +36,19 @@ int main(int argc, char * const argv[]) {
 
 void info(void *context, t_array *args) {
 	t_socket_client *client = context;
-	char code = CONSOLE_INFO;
-	sockets_send(client, &code, sizeof(char));
+	t_nipc *nipc = nipc_create(NIPC_DISKCONSOLE_INFO);
+	nipc_send(nipc,client);
+	nipc_destroy(nipc);
 
-	t_socket_buffer *buffer = sockets_recv2(client);
+	t_socket_buffer *buffer = sockets_recv(client);
+	nipc = nipc_deserializer(buffer);
 
-	if (buffer->data[0] == CONSOLE_INFO) {
-		t_location *location = malloc(sizeof(t_location));
-		memcpy(location, buffer->data + sizeof(char), sizeof(t_location));
+	if (nipc->type == NIPC_DISKCONSOLE_INFO) {
+		t_location *location = nipc_getdata(nipc);
 		printf("%i:%i\n", location->cylinder, location->sector);
 	}
 
+	nipc_destroy(nipc);
 	sockets_bufferDestroy(buffer);
 }
 
@@ -60,7 +62,7 @@ void clean(void *context, t_array *args) {
 	t_socket_client *client = context;
 	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 
-	uint32_t value = CONSOLE_CLEAN;
+	uint32_t value = NIPC_DISKCONSOLE_CLEAN;
 
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	value = atol(array_get(args, 0));
@@ -85,7 +87,7 @@ void trace(void *context, t_array *args) {
 	t_socket_client *client = context;
 	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
 
-	uint32_t value = CONSOLE_TRACE;
+	uint32_t value = NIPC_DISKCONSOLE_TRACE;
 	memcpy(buffer->data, &value, offset = sizeof(char));
 	tmpsize = sizeof(uint32_t);
 	for (i = 0; i < array_size(args); i++) {

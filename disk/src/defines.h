@@ -4,10 +4,6 @@
 #include <stdbool.h>
 #include "common/nipc.h"
 
-#define CONSOLE_INFO 1
-#define CONSOLE_CLEAN 2
-#define CONSOLE_TRACE 3
-
 typedef uint8_t t_sector[DISK_SECTOR_SIZE];
 
 typedef struct t_location {
