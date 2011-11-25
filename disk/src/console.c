@@ -57,10 +57,10 @@ void *console(void *args) {
 
 			break;
 		case NIPC_DISKCONSOLE_CLEAN: {
-			int offset = sizeof(char);
-			int tmpsize;
-			uint32_t sector=nipc->payload;
-			uint32_t sectorto = nipc->payload+sizeof(uint32_t);
+			uint32_t sector;
+			uint32_t sectorto;
+			memcpy(&sector, nipc->payload, sizeof(uint32_t));
+			memcpy(&sectorto, nipc->payload + sizeof(uint32_t), sizeof(uint32_t));
 
 			t_disk_operation *op;
 			for (; sector <= sectorto; sector++) {
@@ -75,15 +75,14 @@ void *console(void *args) {
 			break;
 		case NIPC_DISKCONSOLE_TRACE: {
 			int offset = 0;
-			int tmpsize = sizeof(uint32_t);
 			while (offset < nipc->length) {
 				t_disk_operation *op = malloc(sizeof(t_disk_operation));
-				memcpy(&op->offset, nipc->payload + offset, tmpsize);
+				memcpy(&op->offset, nipc->payload + offset, sizeof(uint32_t));
 				op->trace = true;
 				op->client = client;
 				op->read = true;
 				enqueueOperation(waiting, op);
-				offset += tmpsize;
+				offset += sizeof(uint32_t);
 			}
 		}
 			break;

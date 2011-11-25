@@ -22,6 +22,7 @@ void init_dispatcher(t_blist *processed, t_log *log) {
 void *dispatcher(void *args) {
 	struct queue *q = (struct queue *) args;
 	t_disk_operation *e;
+	t_nipc *nipc;
 	while (true) {
 		e = collection_blist_pop(q->processed);
 		headtrace_log(e->headtrace, q->log);
@@ -33,17 +34,15 @@ void *dispatcher(void *args) {
 		}
 
 		if (e->trace) {
-			t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
-			memcpy(buffer->data, e->headtrace, buffer->size = sizeof(t_headtrace));
-			sockets_sendBuffer(e->client, buffer);
-			sockets_bufferDestroy(buffer);
-			headtrace_destroy(e->headtrace);
+			nipc= nipc_create(NIPC_DISKCONSOLE_TRACE);
+			nipc_setdata(nipc, e->headtrace, sizeof(t_headtrace));
+			nipc_send(nipc, e->client);
+			nipc_destroy(nipc);
 			free(e);
 			continue;
 		}
 
-		t_nipc *nipc = nipc_create(
-				e->read ? NIPC_READSECTOR_RS : NIPC_WRITESECTOR_RS);
+		nipc = nipc_create(e->read ? NIPC_READSECTOR_RS : NIPC_WRITESECTOR_RS);
 		if (e->read) {
 			t_disk_readSectorRs *rs = malloc(sizeof(t_disk_readSectorRs));
 			memcpy(rs->data, e->data, DISK_SECTOR_SIZE);
