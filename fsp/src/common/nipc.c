@@ -24,12 +24,6 @@ void nipc_destroy(t_nipc *nipc) {
 	free(nipc);
 }
 
-void *nipc_getdata_destroy(t_nipc *nipc) {
-	void *data = nipc_getdata(nipc);
-	nipc_destroy(nipc);
-	return data;
-}
-
 t_socket_buffer *nipc_serializer(t_nipc *nipc) {
 	int tmpsize, offset = 0;
 	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));

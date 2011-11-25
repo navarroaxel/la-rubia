@@ -7,11 +7,11 @@ int main(int argc, char * const argv[]) {
 	}
 
 	t_socket_client *client = sockets_createClientUnix(argv[1]);
-	if (client == NULL){
+	if (client == NULL) {
 		perror("Error al crear el socket cliente");
 		return EXIT_FAILURE;
 	}
-	if (!sockets_connectUnix(client, argv[1])){
+	if (!sockets_connectUnix(client, argv[1])) {
 		perror("Error al conectarse al proceso disco");
 		return EXIT_FAILURE;
 	}
@@ -37,7 +37,7 @@ int main(int argc, char * const argv[]) {
 void info(void *context, t_array *args) {
 	t_socket_client *client = context;
 	t_nipc *nipc = nipc_create(NIPC_DISKCONSOLE_INFO);
-	nipc_send(nipc,client);
+	nipc_send(nipc, client);
 	nipc_destroy(nipc);
 
 	t_socket_buffer *buffer = sockets_recv(client);
@@ -58,23 +58,15 @@ void clean(void *context, t_array *args) {
 		return;
 	}
 
-	int offset, tmpsize;
+	uint32_t *sectors =malloc(sizeof(uint32_t) * 2);
 	t_socket_client *client = context;
-	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
+	t_nipc *nipc = nipc_create(NIPC_DISKCONSOLE_CLEAN);
 
-	uint32_t value = NIPC_DISKCONSOLE_CLEAN;
-
-	memcpy(buffer->data, &value, offset = sizeof(char));
-	value = atol(array_get(args, 0));
-	memcpy(buffer->data + offset, &value, tmpsize = sizeof(uint32_t));
-	value = atol(array_get(args, 1));
-	offset += tmpsize;
-	memcpy(buffer->data + offset, &value, tmpsize);
-	buffer->size = offset + tmpsize;
-
-	sockets_sendBuffer(client, buffer);
-
-	sockets_bufferDestroy(buffer);
+	sectors[0] = atol(array_get(args, 0));
+	sectors[1] = atol(array_get(args, 1));
+	nipc_setdata(nipc, sectors, 2 * sizeof(uint32_t));
+	nipc_send(nipc, client);
+	nipc_destroy(nipc);
 }
 
 void trace(void *context, t_array *args) {
@@ -83,30 +75,24 @@ void trace(void *context, t_array *args) {
 		return;
 	}
 
-	int offset, tmpsize, i;
+	int i;
+	uint32_t *sectors =malloc(sizeof(uint32_t) * 5);
 	t_socket_client *client = context;
-	t_socket_buffer *buffer = malloc(sizeof(t_socket_buffer));
-
-	uint32_t value = NIPC_DISKCONSOLE_TRACE;
-	memcpy(buffer->data, &value, offset = sizeof(char));
-	tmpsize = sizeof(uint32_t);
+	t_nipc *nipc = nipc_create(NIPC_DISKCONSOLE_TRACE);
 	for (i = 0; i < array_size(args); i++) {
-		value = atol(array_get(args, i));
-		memcpy(buffer->data + offset, &value, tmpsize);
-		offset += tmpsize;
+		sectors[i] = atol(array_get(args, i));
 	}
-	buffer->size = offset;
-	sockets_sendBuffer(client, buffer);
-	sockets_bufferDestroy(buffer);
+	nipc_setdata(nipc, sectors, i * sizeof(uint32_t));
+	nipc_send(nipc, client);
+	nipc_destroy(nipc);
 
 	for (i = 0; i < array_size(args);) {
-		buffer = sockets_recv(client);
-		offset = 0;
-		do {
-			headtrace_printf((t_headtrace *) (buffer->data + offset));
-			offset += sizeof(t_headtrace);
-			i++;
-		} while (offset < buffer->size);
+		t_socket_buffer *buffer = sockets_recv(client);
+		nipc = nipc_deserializer(buffer, 0);
 		sockets_bufferDestroy(buffer);
+
+		headtrace_printf((t_headtrace *) nipc_getdata(nipc));
+
+		nipc_destroy(nipc);
 	}
 }
