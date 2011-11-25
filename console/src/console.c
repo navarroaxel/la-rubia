@@ -58,7 +58,7 @@ void clean(void *context, t_array *args) {
 		return;
 	}
 
-	uint32_t *sectors =malloc(sizeof(uint32_t) * 2);
+	uint32_t *sectors = malloc(sizeof(uint32_t) * 2);
 	t_socket_client *client = context;
 	t_nipc *nipc = nipc_create(NIPC_DISKCONSOLE_CLEAN);
 
@@ -76,7 +76,7 @@ void trace(void *context, t_array *args) {
 	}
 
 	int i;
-	uint32_t *sectors =malloc(sizeof(uint32_t) * 5);
+	uint32_t *sectors = malloc(sizeof(uint32_t) * 5);
 	t_socket_client *client = context;
 	t_nipc *nipc = nipc_create(NIPC_DISKCONSOLE_TRACE);
 	for (i = 0; i < array_size(args); i++) {
@@ -86,7 +86,7 @@ void trace(void *context, t_array *args) {
 	nipc_send(nipc, client);
 	nipc_destroy(nipc);
 
-	for (i = 0; i < array_size(args);) {
+	for (i = 0; i < array_size(args); i++) {
 		t_socket_buffer *buffer = sockets_recv(client);
 		nipc = nipc_deserializer(buffer, 0);
 		sockets_bufferDestroy(buffer);
