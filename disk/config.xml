@@ -1,13 +1,13 @@
 <config>
-  <volumefile>/home/utn_so/fat32.disk</volumefile>
-  <logfile>/home/utn_so/ppd.log</logfile>
+  <volumefile>/home/nico/big_fat32.disk</volumefile>
+  <logfile></logfile>
   <consolepath>./console</consolepath>
-  <raidip>127.0.0.1</raidip>
+  <raidip>192.168.1.106</raidip>
   <raidport>7000</raidport>
-  <bindip>127.0.0.1</bindip>
+  <bindip>192.168.1.106</bindip>
   <bindport>5000</bindport>
-  <mode>CONNECT</mode>
-  <algorithm>CSCAN</algorithm>
+  <mode>LISTEN</mode>
+  <algorithm>FSCAN</algorithm>
   <portconsole>6500</portconsole>
   <logenabled>1</logenabled>
   <diskname>mydisk</diskname>
@@ -18,5 +18,5 @@
   <readtime>0</readtime>
   <writetime>0</writetime>
   <rpm>7200</rpm>
-  <socketunixpath>/tmp/ppd1</socketunixpath>
+  <socketunixpath>/tmp/ppd</socketunixpath>
 </config>

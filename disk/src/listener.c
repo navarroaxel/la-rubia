@@ -48,34 +48,28 @@ void listener(t_blist *waiting, t_log *logFile) {
 		return client;
 	}
 
-	int recvClosure(t_socket_client * client) {
-		t_socket_buffer *buffer = sockets_recv(client);
-		uint32_t offsetInBuffer = 0;
-		t_nipc *nipc;
-		if (buffer == NULL
-		)
-			return false;
+int recvClosure(t_socket_client * client) {
+	t_socket_buffer *buffer = sockets_recv(client);
+	t_nipc *nipc;
+	if (buffer == NULL)
+		return false;
 
-		while (offsetInBuffer < buffer->size) {
-			nipc = nipc_deserializer(buffer, offsetInBuffer);
-			offsetInBuffer += nipc->length + sizeof(nipc->type)
-					+ sizeof(nipc->length);
+	nipc = nipc_deserializer(buffer, 0);
 
-			t_disk_operation *op = getdiskoperation(nipc, client);
-			nipc_destroy(nipc);
-			if (op == NULL) {
-				log_invalidrequest(logFile);
-				sockets_bufferDestroy(buffer);
-				return false;
-			}
-
-			log_incomingrequest(logFile, op->read, op->offset);
-
-			enqueueOperation(waiting, op);
-		}
+	t_disk_operation *op = getdiskoperation(nipc, client);
+	nipc_destroy(nipc);
+	if (op == NULL) {
+		log_invalidrequest(logFile);
 		sockets_bufferDestroy(buffer);
-		return true;
+		return false;
 	}
+
+	log_incomingrequest(logFile, op->read, op->offset);
+
+	enqueueOperation(waiting, op);
+	sockets_bufferDestroy(buffer);
+	return true;
+}
 
 	t_list *clients = collection_list_create();
 
