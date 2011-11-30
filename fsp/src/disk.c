@@ -114,23 +114,14 @@ int disk_readSectors(uint32_t sectorsStart,uint32_t length, uint8_t * buf) {
 		sockets_bufferDestroy(buffer);
 		nipc_destroy(nipc);
 	}
-	i=0;
-	while(i<length){
-		uint32_t offsetInSocketBuffer=0;
+	for(i=0;i<length;i++){
 		buffer = sockets_recv(conn->client);
-		while(offsetInSocketBuffer<buffer->size){
-			if(buffer==NULL){
-				printf("%d",sectorsStart +i);
-				exit(0);
-			}
-			nipc = nipc_deserializer(buffer,offsetInSocketBuffer);
-			offsetInSocketBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
-			rs = (t_disk_readSectorRs *)nipc->payload;
-			offsetInBuffer = (rs->offset - sectorsStart)*FAT_SECTOR_SIZE;
-			memcpy(buf+offsetInBuffer, rs->data,FAT_SECTOR_SIZE);
-			nipc_destroy(nipc);
-			i++;
-		}
+		assert(buffer!=NULL);
+		nipc = nipc_deserializer(buffer,0);
+		rs = (t_disk_readSectorRs *)nipc->payload;
+		offsetInBuffer = (rs->offset - sectorsStart)*FAT_SECTOR_SIZE;
+		memcpy(buf+offsetInBuffer, rs->data,FAT_SECTOR_SIZE);
+		nipc_destroy(nipc);
 		sockets_bufferDestroy(buffer);
 	}
 	disk_ReleaseConnection(conn);
@@ -156,21 +147,16 @@ int disk_writeSectors(uint32_t sectorsStart,uint32_t length, uint8_t * buf) {
 		sockets_bufferDestroy(buffer);
 		nipc_destroy(nipc);
 	}
-	i=0;
-	while(i<length){
+	for(i=0;i<length;i++){
 		uint32_t offsetInSocketBuffer=0;
 		buffer = sockets_recv(conn->client);
-		while(offsetInSocketBuffer<buffer->size){
-			if(buffer==NULL){
-				printf("%d",sectorsStart +i);
-				exit(0);
-			}
-			nipc = nipc_deserializer(buffer,offsetInSocketBuffer);
-			offsetInSocketBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
-			rs = (t_disk_writeSectorRs *)nipc->payload;
-			nipc_destroy(nipc);
-			i++;
-		}
+
+		assert(buffer!=NULL);
+		nipc = nipc_deserializer(buffer,offsetInSocketBuffer);
+		offsetInSocketBuffer += nipc->length + sizeof(nipc->type) + sizeof(nipc->length);
+		rs = (t_disk_writeSectorRs *)nipc->payload;
+		nipc_destroy(nipc);
+
 		sockets_bufferDestroy(buffer);
 	}
 	disk_ReleaseConnection(conn);
