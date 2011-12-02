@@ -87,22 +87,15 @@ void listener(t_list *waiting, t_log *log) {
 
 	int recvClosure(t_socket_client * client) {
 		t_socket_buffer *buffer = sockets_recv(client);
-		uint32_t offsetInBuffer = 0;
 		t_nipc *nipc;
-		if (buffer == NULL
-			)
+		if (buffer == NULL)
 			return false;
 
-		while (offsetInBuffer < buffer->size) {
-			nipc = nipc_deserializer(buffer, offsetInBuffer);
-			offsetInBuffer += nipc->length + sizeof(nipc->type)
-					+ sizeof(nipc->length);
-			enqueueoperation(nipc, client, waiting, log);
+		nipc = nipc_deserializer(buffer, 0);
+		enqueueoperation(nipc, client, waiting, log);
 
-			nipc_destroy(nipc);
-		}
+		nipc_destroy(nipc);
 		sockets_bufferDestroy(buffer);
-
 		return true;
 	}
 

@@ -88,32 +88,25 @@ void connectraid(t_blist *waiting, t_log *logFile) {
 
 	t_socket_buffer *buffer;
 	t_nipc *nipc;
-	int offsetInBuffer;
 	t_disk_operation *op;
 	while (true) {
-		offsetInBuffer = 0;
 		buffer = sockets_recv(client);
 		if (buffer == NULL) {
 			log_error(logFile, "LISTENER", "RAID Desconectado");
 			return;
 		}
 
-		while (offsetInBuffer < buffer->size) {
-			nipc = nipc_deserializer(buffer, offsetInBuffer);
-			offsetInBuffer += nipc->length + sizeof(nipc->type)
-					+ sizeof(nipc->length);
-
-			op = getdiskoperation(nipc, client);
-			nipc_destroy(nipc);
-			if (op == NULL) {
-				log_invalidrequest(logFile);
-				continue;
-			}
-
-			enqueueOperation(waiting, op);
-
-			log_incomingrequest(logFile, op->read, op->offset);
+		nipc = nipc_deserializer(buffer, 0);
+		op = getdiskoperation(nipc, client);
+		nipc_destroy(nipc);
+		if (op == NULL) {
+			log_invalidrequest(logFile);
+			continue;
 		}
+
+		enqueueOperation(waiting, op);
+
+		log_incomingrequest(logFile, op->read, op->offset);
 		sockets_bufferDestroy(buffer);
 	}
 	sockets_destroyClient(client);

@@ -17,7 +17,7 @@ t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting, t_l
 	dsk->operations = waiting;
 	dsk->log = log;
 	dsk->client = client;
-dsk->pendings=0;
+	dsk->pendings=0;
 	disk_id <<= 1;
 
 	pthread_t thread;
