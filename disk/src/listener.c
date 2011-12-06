@@ -80,7 +80,7 @@ int recvClosure(t_socket_client * client) {
 
 void connectraid(t_blist *waiting, t_log *logFile) {
 	t_socket_client *client = sockets_createClient(config->bindIp,
-			config->bindPort + 1);
+			config->bindPort);
 
 	sockets_connect(client, config->raidIp, config->raidPort);
 	if (!handshake(client, logFile))
