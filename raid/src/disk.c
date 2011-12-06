@@ -66,6 +66,7 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 		rs = malloc(sizeof(t_disk_readSectorRs));
 		memcpy(rs, nipc->payload, sizeof(t_disk_readSectorRs));
 		collection_blist_push(op->syncqueue, rs);
+		operation_destroy(op);
 		return;
 	}
 
@@ -108,6 +109,7 @@ void processWriteRs(t_disk *d, t_nipc *nipc) {
 			rs = malloc(sizeof(t_disk_writeSectorRs));
 			memcpy(rs, nipc->payload, sizeof(t_disk_writeSectorRs));
 			collection_blist_push(op->syncqueue, rs);
+			operation_destroy(op);
 			return;
 		}
 		nipc_send(nipc, op->client);

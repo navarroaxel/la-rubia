@@ -18,25 +18,36 @@ void *syncer(void *args) {
 	char thread_name[21];
 	sprintf(thread_name, "syncer-%s", dsk->name);
 	log_info(dsk->log, thread_name, "Se inicio la sincronizacion");
-
+	int i;
 	while (dsk->offsetlimit < raidoffsetlimit) {
-		enqueueread(syncqueue, dsk->offsetlimit, thread_name);
+		for (i = 0;
+				raidoffsetlimit && i < 8
+						&& dsk->offsetlimit + i < raidoffsetlimit; i++)
+			enqueueread(syncqueue, dsk->offsetlimit + i, thread_name);
 
-		t_disk_readSectorRs *rs = collection_blist_pop(syncqueue);
-		enqueuewrite(syncqueue, dsk, rs);
-		dsk->offsetlimit++;
-		free(rs);
-
-		t_disk_writeSectorRs *writeRs = collection_blist_pop(syncqueue);
-		if (writeRs == NULL) {
-			log_warning(dsk->log, thread_name,
-					"Se interrumpio la sincronizacion");
-			collection_blist_destroy(syncqueue);
-			return NULL;
+		for (i = 0;
+				raidoffsetlimit && i < 8
+						&& dsk->offsetlimit + i < raidoffsetlimit; i++) {
+			t_disk_readSectorRs *rs = collection_blist_pop(syncqueue);
+			enqueuewrite(syncqueue, dsk, rs);
+			free(rs);
 		}
-		free(writeRs);
+		dsk->offsetlimit += 8;
 
-		log_info(dsk->log, thread_name, "Se sincronizaron los primeros %i sectores", dsk->offsetlimit);
+		for (i = 0;
+				raidoffsetlimit && i < 8
+						&& dsk->offsetlimit + i < raidoffsetlimit; i++) {
+			t_disk_writeSectorRs *writeRs = collection_blist_pop(syncqueue);
+			if (writeRs == NULL) {
+				log_warning(dsk->log, thread_name,
+						"Se interrumpio la sincronizacion");
+				collection_blist_destroy(syncqueue);
+				return NULL;
+			}
+			free(writeRs);
+		}
+		log_info(dsk->log, thread_name,
+				"Se sincronizaron los primeros %i sectores", dsk->offsetlimit);
 	}
 	log_info(dsk->log, thread_name,
 			"Se finalizo la sincronizacion del disco %s", dsk->name);
@@ -58,7 +69,8 @@ void enqueueread(t_blist *syncqueue, uint32_t offset, char *thread_name) {
 	op->syncqueue = syncqueue;
 	collection_list_add(dsk->operations, op);
 
-	log_info(dsk->log, thread_name, "LECTURA sector %i disco %s", op->offset, dsk->name);
+	log_info(dsk->log, thread_name, "LECTURA sector %i disco %s", op->offset,
+			dsk->name);
 	nipc_send(nipc, dsk->client);
 	nipc_destroy(nipc);
 }
