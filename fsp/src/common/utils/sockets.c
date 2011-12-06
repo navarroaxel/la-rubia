@@ -39,7 +39,7 @@
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <time.h>
-
+#include <netinet/tcp.h>
 #include "sockets.h"
 #include "../collections/list.h"
 
@@ -93,6 +93,8 @@ void *sockets_makeaddrUnix(char *path){
 t_socket *sockets_create(char* ip, int port){
 	t_socket* sckt = malloc( sizeof(t_socket) );
 	sckt->desc = socket(AF_INET, SOCK_STREAM, 0);
+	int flag = 1;
+	setsockopt(sckt->desc, SOL_TCP, TCP_NODELAY, &flag, sizeof(flag));
 	if( !sockets_bind(sckt, ip, port) ){
 		free(sckt);
 		return NULL;
