@@ -473,7 +473,7 @@ void sockets_select(t_list* servers, t_list* clients, int usec_timeout,  t_socke
 	int select_return;
     struct timeval tv;
     t_list *close_clients = NULL;
-
+    FD_ZERO(&conexions_set);
     tv.tv_sec = 0;
     tv.tv_usec = usec_timeout;
 
@@ -491,6 +491,7 @@ void sockets_select(t_list* servers, t_list* clients, int usec_timeout,  t_socke
     	int curr_desc = server->socket->desc;
     	FD_SET(curr_desc, &conexions_set);
     	if( max_desc < curr_desc ) max_desc = curr_desc;
+
     }
 
     if( servers != NULL && collection_list_size(servers) > 0 ){
