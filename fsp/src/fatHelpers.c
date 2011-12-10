@@ -23,7 +23,7 @@ uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 	uint32_t firstCluster;
 
 	firstCluster = (uint32_t)(fileEntry->firstClusterHigh); // Deberia hacer que 0xAB sea 0x00AB
-	firstCluster = firstCluster << 8; // Pongo los bits altos en la posicion que corresponden 0xAB00
+	firstCluster = firstCluster << 16; // Pongo los bits altos en la posicion que corresponden 0xAB00
 	firstCluster = firstCluster | (uint32_t) (fileEntry->firstClusterLow); //Convierto el Low a uint32 y lo OR'eo bit a bit
 	// 0xAB00  1010 1101 0000 0000
 	// 0x00CD  0000 0000 1100 1101
@@ -35,7 +35,7 @@ uint32_t fat_getEntryFirstCluster(t_fat_file_data_entry * fileEntry ){
 
 void fat_setEntryFirstCluster(uint32_t firstCluster ,t_fat_file_data_entry * fileEntry ){
 	fileEntry->firstClusterLow=firstCluster & 0x0000FFFF;
-	fileEntry->firstClusterHigh=firstCluster >> 8;
+	fileEntry->firstClusterHigh=firstCluster >> 16;
 	return;
 }
 
