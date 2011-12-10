@@ -20,23 +20,15 @@ void *syncer(void *args) {
 	log_info(dsk->log, thread_name, "Se inicio la sincronizacion");
 	int i;
 	while (dsk->offsetlimit < raidoffsetlimit) {
-		for (i = 0;
-				raidoffsetlimit && i < 8
-						&& dsk->offsetlimit + i < raidoffsetlimit; i++)
+		for (i = 0; i < 8 && dsk->offsetlimit + i < raidoffsetlimit; i++)
 			enqueueread(syncqueue, dsk->offsetlimit + i, thread_name);
 
-		for (i = 0;
-				raidoffsetlimit && i < 8
-						&& dsk->offsetlimit + i < raidoffsetlimit; i++) {
+		for (i = 0; i < 8 && dsk->offsetlimit + i < raidoffsetlimit; i++) {
 			t_disk_readSectorRs *rs = collection_blist_pop(syncqueue);
 			enqueuewrite(syncqueue, dsk, rs);
 			free(rs);
 		}
-		dsk->offsetlimit += 8;
-
-		for (i = 0;
-				raidoffsetlimit && i < 8
-						&& dsk->offsetlimit + i < raidoffsetlimit; i++) {
+		for (i = 0; i < 8 && dsk->offsetlimit + i < raidoffsetlimit; i++) {
 			t_disk_writeSectorRs *writeRs = collection_blist_pop(syncqueue);
 			if (writeRs == NULL) {
 				log_warning(dsk->log, thread_name,
@@ -46,6 +38,7 @@ void *syncer(void *args) {
 			}
 			free(writeRs);
 		}
+		dsk->offsetlimit += 8;
 		log_info(dsk->log, thread_name,
 				"Se sincronizaron los primeros %i sectores", dsk->offsetlimit);
 	}
