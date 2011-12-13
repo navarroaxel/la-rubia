@@ -40,6 +40,7 @@ typedef struct t_disk_operation {
 
 struct t_disk_config {
 	char path[255];
+	uint32_t fileSize;
 	void *diskFile;
 };
 

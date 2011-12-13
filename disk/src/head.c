@@ -214,16 +214,15 @@ t_headtrace *head_fscanmove(uint32_t requested, bool asc) {
 void init_disk() {
 	strcpy(disk_data.path, config->volumeFilePath);
 	int file;
-	uint32_t filesize;
 	if ((file = open(disk_data.path, O_RDWR)) > 0) {
-		filesize = lseek(file, 0, SEEK_END);
+		disk_data.fileSize = lseek(file, 0, SEEK_END);
 	} else {
 		fprintf(stderr, "Error opening input file"), exit(1);
 	}
-	if ((disk_data.diskFile = mmap(0, filesize, PROT_READ | PROT_WRITE
+	if ((disk_data.diskFile = mmap(0, disk_data.fileSize, PROT_READ | PROT_WRITE
 	, MAP_SHARED, file, 0)) == (void *) -1)
 		fprintf(stderr, "Error mapping input file"), exit(1);
-	madvise(disk_data.diskFile, filesize, MADV_SEQUENTIAL);
+	madvise(disk_data.diskFile, disk_data.fileSize, MADV_SEQUENTIAL);
 }
 
 int disk_read(t_location *location, t_sector *sector) {
@@ -236,11 +235,16 @@ int disk_read(t_location *location, t_sector *sector) {
 }
 
 int disk_write(t_location *location, t_sector *sector) {
+	static int sectorsWritten;
+	sectorsWritten++;
 	sleep(config->writeTime);
 	memcpy(disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE
 	, sector, sizeof(t_sector));
-	msync(disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE
-			, sizeof(t_sector), MS_SYNC);
+	if (sectorsWritten == 32){
+		msync(disk_data.diskFile , disk_data.fileSize, MS_SYNC);
+		sectorsWritten=0;
+	}
+
 	location_readsector(location);
 	return DISK_RESULT_SUCCESS;
 }

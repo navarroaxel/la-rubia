@@ -1,19 +1,19 @@
 <config>
-  <volumefile>/home/nico/big_fat32.disk</volumefile>
+  <volumefile>/home/nico/artifacts.xml2</volumefile>
   <logfile></logfile>
   <consolepath>./console</consolepath>
-  <raidip>192.168.1.106</raidip>
+  <raidip>127.0.0.1</raidip>
   <raidport>7000</raidport>
-  <bindip>192.168.1.106</bindip>
-  <bindport>5000</bindport>
-  <mode>LISTEN</mode>
+  <bindip>127.0.0.1</bindip>
+  <bindport>5003</bindport>
+  <mode>CONNECT</mode>
   <algorithm>FSCAN</algorithm>
   <portconsole>6500</portconsole>
-  <logenabled>1</logenabled>
-  <diskname>mydisk</diskname>
-  <cylinders>1024</cylinders>
+  <logenabled>0</logenabled>
+  <diskname>mydisk2</diskname>
+  <cylinders>1</cylinders>
   <heads>1</heads>
-  <sectors>1024</sectors>
+  <sectors>32</sectors>
   <jumptime>1</jumptime>
   <readtime>0</readtime>
   <writetime>0</writetime>
