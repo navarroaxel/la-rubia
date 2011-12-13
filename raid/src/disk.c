@@ -22,6 +22,9 @@ void *disk(void *args) {
 		case NIPC_WRITESECTOR_RS:
 			processWriteRs(dsk, nipc);
 			break;
+		default:
+			log_error(dsk->log, dsk->name, "Invalid response %i", nipc->type);
+			break;
 		}
 		nipc_destroy(nipc);
 		sockets_bufferDestroy(buffer);

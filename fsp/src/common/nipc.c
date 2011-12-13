@@ -40,19 +40,16 @@ t_socket_buffer *nipc_serializer(t_nipc *nipc) {
 	return buffer;
 }
 
-t_nipc *nipc_deserializer(t_socket_buffer *buffer,uint32_t offsetinBuffer) {
-	int tmpsize, offset = 0;
+t_nipc *nipc_deserializer(t_socket_buffer *buffer, uint32_t offsetinBuffer) {
+	int tmpsize, offset;
 	t_nipc *nipc = malloc(sizeof(t_nipc));
 
-	char * dataStart =  buffer->data +offsetinBuffer;
-	memcpy(&nipc->type, dataStart, tmpsize = sizeof(uint8_t));
-	offset += tmpsize;
-
-	memcpy(&nipc->length, dataStart + offset, tmpsize = sizeof(uint16_t));
+	memcpy(&nipc->type, buffer->data, offset = sizeof(uint8_t));
+	memcpy(&nipc->length, buffer->data + offset, tmpsize = sizeof(uint16_t));
 	offset += tmpsize;
 
 	nipc->payload = malloc(nipc->length);
-	memcpy(nipc->payload, dataStart + offset, nipc->length);
+	memcpy(nipc->payload, buffer->data + offset, nipc->length);
 
 	return nipc;
 }
