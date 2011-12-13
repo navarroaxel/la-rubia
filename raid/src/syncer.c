@@ -13,7 +13,8 @@ void init_syncer(t_disk *dsk) {
 void *syncer(void *args) {
 	t_disk *dsk = args;
 	dsk->offsetlimit = 0;
-	t_blist *syncqueue = collection_blist_create(50);
+	t_blist *reads = collection_blist_create(50);
+	t_blist *writes = collection_blist_create(50);
 
 	char thread_name[21];
 	sprintf(thread_name, "syncer-%s", dsk->name);
@@ -21,19 +22,20 @@ void *syncer(void *args) {
 	int i;
 	while (dsk->offsetlimit < raidoffsetlimit) {
 		for (i = 0; i < 8 && dsk->offsetlimit + i < raidoffsetlimit; i++)
-			enqueueread(syncqueue, dsk->offsetlimit + i, thread_name);
+			enqueueread(reads, dsk->offsetlimit + i, thread_name);
 
 		for (i = 0; i < 8 && dsk->offsetlimit + i < raidoffsetlimit; i++) {
-			t_disk_readSectorRs *rs = collection_blist_pop(syncqueue);
-			enqueuewrite(syncqueue, dsk, rs);
+			t_disk_readSectorRs *rs = collection_blist_pop(reads);
+			enqueuewrite(writes, dsk, rs);
 			free(rs);
 		}
 		for (i = 0; i < 8 && dsk->offsetlimit + i < raidoffsetlimit; i++) {
-			t_disk_writeSectorRs *writeRs = collection_blist_pop(syncqueue);
+			t_disk_writeSectorRs *writeRs = collection_blist_pop(writes);
 			if (writeRs == NULL) {
 				log_warning(dsk->log, thread_name,
 						"Se interrumpio la sincronizacion");
-				collection_blist_destroy(syncqueue);
+				collection_blist_destroy(reads);
+				collection_blist_destroy(writes);
 				return NULL;
 			}
 			free(writeRs);
@@ -44,7 +46,8 @@ void *syncer(void *args) {
 	}
 	log_info(dsk->log, thread_name,
 			"Se finalizo la sincronizacion del disco %s", dsk->name);
-	collection_blist_destroy(syncqueue);
+	collection_blist_destroy(reads);
+	collection_blist_destroy(writes);
 	return NULL;
 }
 
