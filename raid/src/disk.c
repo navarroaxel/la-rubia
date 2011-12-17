@@ -48,6 +48,7 @@ void log_lostoperation(t_log *logFile, char *thread_name, bool read,
 
 void processReadRs(t_disk *d, t_nipc *nipc) {
 	t_disk_readSectorRs *rs = (t_disk_readSectorRs *) nipc->payload;
+	log_info(d->log, d->name, "Retorno LECTURA sector %i", rs->offset);
 
 	int findoperation(void *data) {
 		t_operation *op = (t_operation *) data;
@@ -79,6 +80,8 @@ void processReadRs(t_disk *d, t_nipc *nipc) {
 
 void processWriteRs(t_disk *d, t_nipc *nipc) {
 	t_disk_writeSectorRs *rs = (t_disk_writeSectorRs *) nipc->payload;
+	log_info(d->log, d->name, "Retorno ESCRITURA sector %i", rs->offset);
+
 	bool operationReady = false;
 	void findrequest(void *data) {
 		t_operation *op = (t_operation *) data;

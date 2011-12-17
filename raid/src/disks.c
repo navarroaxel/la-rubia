@@ -30,17 +30,17 @@ t_disk *disks_register(char *name, t_socket_client *client, t_list *waiting, t_l
 
 t_disk *disks_getidledisk(uint32_t offset) {
 	int count = INT_MAX;
-	struct t_disk *disk;
+	struct t_disk *dsk;
 	void find_idledisk(void *data) {
 		t_disk *d = data;
 		if (offset < d->offsetlimit && d->pendings < count) {
-			disk = data;
+			dsk = d;
 			count = d->pendings;
 		}
 	}
 
 	collection_list_iterator(disks, find_idledisk);
-	return disk;
+	return dsk;
 }
 
 void disks_verifystate(){
