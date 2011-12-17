@@ -240,7 +240,7 @@ int disk_write(t_location *location, t_sector *sector) {
 	sleep(config->writeTime);
 	memcpy(disk_data.diskFile + location_getoffset(location) * DISK_SECTOR_SIZE
 	, sector, sizeof(t_sector));
-	if (sectorsWritten == 32){
+	if (sectorsWritten == 8192){
 		msync(disk_data.diskFile , disk_data.fileSize, MS_SYNC);
 		sectorsWritten=0;
 	}
